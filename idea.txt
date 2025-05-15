@@ -1,0 +1,46 @@
+my idea is this:
+
+I do have resvice emails from the bank that shows my transactions (income/expanse) I want to make a program that will be connect
+to the email to handle all the email messages that come from the bank, then parss and extract this data from the email :
+{
+transction_id,
+date_time,
+bank_name,
+account_number,
+transction_type,
+trasction_resvier,
+transction_maker,
+}
+this example of expanse email:
+(Dear Customer,
+Your Debit card number 4837**** ****1518 has been utilised as follows:
+
+Account number : xxxx0019
+Description : 448311-JENAN TEA AIRP
+Amount : OMR 0.1
+Date/Time : 13 MAY 25 17:20
+Transaction Country : Oman
+
+Kind Regards,
+Bank Muscat)
+and this example for income:
+(Dear customer,
+You have received OMR 65.000 from ABDUL HAMID MOHAMED AL HADHRAMI in your a/c xxxx0019 using Mobile Payment services/mobile wallet.
+Txn Id BMCT009962940757.
+Kind regards,
+Bank muscat )
+and this also: (
+Dear customer,
+Your account xxxx0027 with 0442 - Br Maabela Ind has been credited by OMR 60.000 with value date 05/02/25.
+Details of this transaction are provided below for your reference.
+Transfer
+Mazin contribution
+MOOSA MOHAMMED KHASIB ALHADHRAMI )
+and this example for a transfare:
+(Dear customer,
+You have sent OMR 20.000 to MOOS from your a/c xxxx0019 using Mobile Payment services/mobile wallet.
+Txn Id BMCT009507891425.
+
+Kind regards,
+Bank muscat )
+after extract the date the program should save it to db calcute the how much in each acount,
