@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Account Details - {{ account.account_number }} - Bank Email Parser{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('accounts') }}">Accounts</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ account.account_number }}</li>
+            </ol>
+        </nav>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Account Details</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>{{ account.account_number }}</h3>
+                        <h5 class="text-muted">{{ account.bank_name }}</h5>
+                        <h4 class="mt-3">Balance: {{ account.current_balance }} {{ account.currency }}</h4>
+                        <p class="text-muted">Last updated: {{ account.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Transaction Summary</h4>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Count</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-success">Income</span></td>
+                                    <td>{{ summary.income_count }}</td>
+                                    <td>{{ summary.income_total }} {{ account.currency }}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-danger">Expense</span></td>
+                                    <td>{{ summary.expense_count }}</td>
+                                    <td>{{ summary.expense_total }} {{ account.currency }}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">Transfer</span></td>
+                                    <td>{{ summary.transfer_count }}</td>
+                                    <td>N/A</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Transaction History</h2>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Sender/Receiver</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                    <tr>
+                                        <td>
+                                            {% if transaction.date_time %}
+                                                {{ transaction.date_time.strftime('%Y-%m-%d %H:%M') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'income' %}
+                                                <span class="badge bg-success">Income</span>
+                                            {% elif transaction.transaction_type == 'expense' %}
+                                                <span class="badge bg-danger">Expense</span>
+                                            {% elif transaction.transaction_type == 'transfer' %}
+                                                <span class="badge bg-info">Transfer</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Unknown</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'income' %}
+                                                +{{ transaction.amount }} {{ transaction.currency }}
+                                            {% elif transaction.transaction_type == 'expense' %}
+                                                -{{ transaction.amount }} {{ transaction.currency }}
+                                            {% else %}
+                                                {{ transaction.amount }} {{ transaction.currency }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ transaction.description or 'N/A' }}</td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'income' %}
+                                                From: {{ transaction.transaction_sender or 'Unknown' }}
+                                            {% elif transaction.transaction_type == 'expense' %}
+                                                To: {{ transaction.transaction_receiver or 'Unknown' }}
+                                            {% elif transaction.transaction_type == 'transfer' %}
+                                                {% if transaction.transaction_sender %}
+                                                    From: {{ transaction.transaction_sender }}
+                                                {% endif %}
+                                                {% if transaction.transaction_receiver %}
+                                                    To: {{ transaction.transaction_receiver }}
+                                                {% endif %}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading">No transactions found!</h4>
+                        <p>This account doesn't have any transactions yet. Parse some bank emails to add transactions.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <a href="{{ url_for('index') }}" class="btn btn-primary">Parse Email</a>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Results - Bank Email Parser{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Transaction Results</h1>
+        
+        <div class="card transaction-card">
+            <div class="card-header">
+                <h3>
+                    {% if transaction.transaction_type == 'income' %}
+                        Income Transaction
+                    {% elif transaction.transaction_type == 'expense' %}
+                        Expense Transaction
+                    {% elif transaction.transaction_type == 'transfer' %}
+                        Transfer Transaction
+                    {% else %}
+                        Unknown Transaction Type
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Transaction Details</h4>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Account Number</th>
+                                    <td>{{ transaction.account_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Bank</th>
+                                    <td>{{ transaction.bank_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Amount</th>
+                                    <td>{{ transaction.amount }} {{ transaction.currency }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Transaction Type</th>
+                                    <td>
+                                        {% if transaction.transaction_type == 'income' %}
+                                            <span class="badge bg-success">Income</span>
+                                        {% elif transaction.transaction_type == 'expense' %}
+                                            <span class="badge bg-danger">Expense</span>
+                                        {% elif transaction.transaction_type == 'transfer' %}
+                                            <span class="badge bg-info">Transfer</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if transaction.date_time %}
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <td>{{ transaction.date_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if transaction.transaction_id %}
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <td>{{ transaction.transaction_id }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h4>Additional Information</h4>
+                        <table class="table">
+                            <tbody>
+                                {% if transaction.transaction_sender %}
+                                <tr>
+                                    <th>Sender</th>
+                                    <td>{{ transaction.transaction_sender }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if transaction.transaction_receiver %}
+                                <tr>
+                                    <th>Receiver</th>
+                                    <td>{{ transaction.transaction_receiver }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if transaction.description %}
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ transaction.description }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if transaction.country %}
+                                <tr>
+                                    <th>Country</th>
+                                    <td>{{ transaction.country }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if transaction.email_id %}
+                                <tr>
+                                    <th>Email ID</th>
+                                    <td>{{ transaction.email_id }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Parse Another Email</a>
+                <a href="{{ url_for('accounts') }}" class="btn btn-secondary">View Accounts</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

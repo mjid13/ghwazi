@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Bank Email Parser{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron">
+            <h1 class="display-4">Bank Email Parser & Account Tracker</h1>
+            <p class="lead">Parse transaction data from bank emails and track your accounts.</p>
+            <hr class="my-4">
+            <p>Choose one of the options below to parse your bank email.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="form-section">
+            <h3>Fetch Emails</h3>
+            <form action="{{ url_for('fetch_emails') }}" method="post">
+                <div class="mb-3">
+                    <label for="folder" class="form-label">Email Folder</label>
+                    <input type="text" class="form-control" id="folder" name="folder" value="INBOX">
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="unread_only" name="unread_only" value="true" checked>
+                    <label class="form-check-label" for="unread_only">Only fetch unread emails</label>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="save_to_db" name="save_to_db" value="yes">
+                    <label class="form-check-label" for="save_to_db">Save transactions to database</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Fetch Emails</button>
+                <div class="form-text mt-2">This will connect to your email account and fetch bank emails.</div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-section">
+            <h3>Paste Email Content</h3>
+            <form action="{{ url_for('parse_email') }}" method="post">
+                <input type="hidden" name="source" value="paste">
+
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Email Subject (optional)</label>
+                    <input type="text" class="form-control" id="subject" name="subject" placeholder="Transaction Alert">
+                </div>
+
+                <div class="mb-3">
+                    <label for="from" class="form-label">From (optional)</label>
+                    <input type="text" class="form-control" id="from" name="from" placeholder="bank@example.com">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email_content" class="form-label">Email Content *</label>
+                    <textarea class="form-control" id="email_content" name="email_content" rows="10" required></textarea>
+                    <div class="form-text">Paste the full email content including headers and body.</div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="save_to_db" name="save_to_db" value="yes">
+                    <label class="form-check-label" for="save_to_db">Save transaction to database</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Parse Email</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-section">
+            <h3>Upload Email File</h3>
+            <form action="{{ url_for('parse_email') }}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="source" value="upload">
+
+                <div class="mb-3">
+                    <label for="from" class="form-label">From (optional)</label>
+                    <input type="text" class="form-control" id="from" name="from" placeholder="bank@example.com">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email_file" class="form-label">Email File *</label>
+                    <input class="form-control" type="file" id="email_file" name="email_file" required>
+                    <div class="form-text">Upload a text file containing the email content.</div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="save_to_db" name="save_to_db" value="yes">
+                    <label class="form-check-label" for="save_to_db">Save transaction to database</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Parse Email</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>Instructions</h3>
+            </div>
+            <div class="card-body">
+                <h5>How to use this tool:</h5>
+                <ol>
+                    <li>Choose one of the options above:
+                        <ul>
+                            <li><strong>Fetch Emails</strong>: Connect directly to your email account and fetch bank emails</li>
+                            <li><strong>Paste Email Content</strong>: Manually paste email content</li>
+                            <li><strong>Upload Email File</strong>: Upload a text file containing email content</li>
+                        </ul>
+                    </li>
+                    <li>The parser will extract transaction data from the email(s).</li>
+                    <li>You'll see the extracted data on the results page.</li>
+                    <li>Optionally, you can save the transaction(s) to the database for tracking.</li>
+                </ol>
+
+                <h5>Supported Banks:</h5>
+                <ul>
+                    <li>Bank Muscat</li>
+                </ul>
+
+                <h5>Supported Transaction Types:</h5>
+                <ul>
+                    <li>Income (money received)</li>
+                    <li>Expense (money spent)</li>
+                    <li>Transfer (money moved between accounts)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
