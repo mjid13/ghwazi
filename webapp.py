@@ -200,8 +200,28 @@ def account_details(account_number):
 def fetch_emails():
     """Fetch emails directly from the email account."""
     try:
+        # Get email settings from form
+        email_host = request.form.get('email_host')
+        email_port = request.form.get('email_port')
+        email_username = request.form.get('email_username')
+        email_password = request.form.get('email_password')
+        email_use_ssl = request.form.get('email_use_ssl') == 'true'
+        bank_email_addresses = request.form.get('bank_email_addresses')
+        bank_email_subjects = request.form.get('bank_email_subjects')
+
+        # Create a custom email service with user-provided settings
+        custom_email_service = EmailService(
+            host=email_host if email_host else None,
+            port=int(email_port) if email_port and email_port.isdigit() else None,
+            username=email_username if email_username else None,
+            password=email_password if email_password else None,
+            use_ssl=email_use_ssl,
+            bank_email_addresses=bank_email_addresses.split(',') if bank_email_addresses else None,
+            bank_email_subjects=bank_email_subjects.split(',') if bank_email_subjects else None
+        )
+
         # Connect to email
-        if not email_service.connect():
+        if not custom_email_service.connect():
             flash('Failed to connect to email server. Check your email settings.', 'error')
             return redirect(url_for('index'))
 
@@ -209,7 +229,7 @@ def fetch_emails():
         folder = request.form.get('folder', 'INBOX')
         unread_only = request.form.get('unread_only', 'true') == 'true'
 
-        emails = email_service.get_bank_emails(folder=folder, unread_only=unread_only)
+        emails = custom_email_service.get_bank_emails(folder=folder, unread_only=unread_only)
 
         if not emails:
             flash('No bank emails found', 'info')
@@ -255,7 +275,7 @@ def fetch_emails():
                 db.close_session(db_session)
 
         # Disconnect from email
-        email_service.disconnect()
+        custom_email_service.disconnect()
 
         return redirect(url_for('results'))
     except Exception as e:

@@ -19,6 +19,46 @@
         <div class="form-section">
             <h3>Fetch Emails</h3>
             <form action="{{ url_for('fetch_emails') }}" method="post">
+                <h5 class="mt-3 mb-2">Email Connection Settings</h5>
+                <div class="mb-3">
+                    <label for="email_host" class="form-label">Email Host</label>
+                    <input type="text" class="form-control" id="email_host" name="email_host" placeholder="imap.gmail.com">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email_port" class="form-label">Email Port</label>
+                    <input type="number" class="form-control" id="email_port" name="email_port" placeholder="993">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email_username" class="form-label">Email Username</label>
+                    <input type="email" class="form-control" id="email_username" name="email_username" placeholder="your_email@gmail.com">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email_password" class="form-label">Email Password</label>
+                    <input type="password" class="form-control" id="email_password" name="email_password" placeholder="your_app_password">
+                    <div class="form-text">For Gmail, use an App Password instead of your regular password.</div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="email_use_ssl" name="email_use_ssl" value="true" checked>
+                    <label class="form-check-label" for="email_use_ssl">Use SSL</label>
+                </div>
+
+                <div class="mb-3">
+                    <label for="bank_email_addresses" class="form-label">Bank Email Addresses</label>
+                    <input type="text" class="form-control" id="bank_email_addresses" name="bank_email_addresses" placeholder="bankmuscat@bankmuscat.com">
+                    <div class="form-text">Comma-separated list of bank email addresses.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="bank_email_subjects" class="form-label">Bank Email Subjects</label>
+                    <input type="text" class="form-control" id="bank_email_subjects" name="bank_email_subjects" placeholder="transaction,alert,notification">
+                    <div class="form-text">Comma-separated list of keywords to look for in email subjects.</div>
+                </div>
+
+                <h5 class="mt-4 mb-2">Fetch Settings</h5>
                 <div class="mb-3">
                     <label for="folder" class="form-label">Email Folder</label>
                     <input type="text" class="form-control" id="folder" name="folder" value="INBOX">
