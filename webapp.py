@@ -19,7 +19,8 @@ from money_tracker.config import settings
 
 # Setup logging
 logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
+    level=logging.DEBUG,
+    # level=getattr(logging, settings.LOG_LEVEL),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -116,7 +117,8 @@ def parse_email():
     session['transaction_data'] = transaction_data
 
     # Optionally save to database if requested
-    if request.form.get('save_to_db') == 'yes':
+    save_to_db = 'save_to_db' in request.form
+    if save_to_db:
         db_session = db.get_session()
         try:
             transaction = TransactionRepository.create_transaction(db_session, transaction_data)
@@ -227,7 +229,7 @@ def fetch_emails():
 
         # Get bank emails
         folder = request.form.get('folder', 'INBOX')
-        unread_only = request.form.get('unread_only', 'true') == 'true'
+        unread_only = 'unread_only' in request.form
 
         emails = custom_email_service.get_bank_emails(folder=folder, unread_only=unread_only)
 
@@ -253,7 +255,8 @@ def fetch_emails():
         session['transaction_data'] = parsed_emails[0]['transaction']
 
         # Optionally save to database if requested
-        if request.form.get('save_to_db') == 'yes':
+        save_to_db = 'save_to_db' in request.form
+        if save_to_db:
             db_session = db.get_session()
             try:
                 saved_count = 0
