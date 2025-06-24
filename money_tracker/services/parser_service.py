@@ -275,21 +275,21 @@ class TransactionParser:
                     break
 
             # Determine transaction type and extract amount
-            if 'has been debited' in body.lower():
+            if 'been debited' in body.lower():
                 transaction_data['transaction_type'] = 'expense'
                 amount_str = self._extract_pattern(body, self.bank_muscat_patterns['debit_amount'])
-            elif 'has been credited' in body.lower():
-                transaction_data['transaction_type'] = 'income'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['credit_amount'])
-            elif 'you have received' in body.lower():
-                transaction_data['transaction_type'] = 'income'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['received_amount'])
-            elif 'you have sent' in body.lower():
+            elif 'have sent' in body.lower():
                 transaction_data['transaction_type'] = 'expense'
                 amount_str = self._extract_pattern(body, self.bank_muscat_patterns['sent_amount'])
             elif 'debit card' in body.lower() or 'card number' in body.lower():
                 transaction_data['transaction_type'] = 'expense'
                 amount_str = self._extract_pattern(body, self.bank_muscat_patterns['card_amount'])
+            elif 'been credited' in body.lower():
+                transaction_data['transaction_type'] = 'income'
+                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['credit_amount'])
+            elif 'have received' in body.lower():
+                transaction_data['transaction_type'] = 'income'
+                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['received_amount'])
             else:
                 # Default to transfer if we can't determine the type
                 transaction_data['transaction_type'] = 'transfer'
