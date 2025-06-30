@@ -305,14 +305,12 @@ if __name__ == "__main__":
         clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
 
         return clean_text.strip()
-
-
     import re
     from typing import Optional, Dict
 
     def _get_name(email_text):
         counterparty_re1 = re.compile(
-            r'(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))', re.IGNORECASE
+            r'(?:from|to)\s+([A-Z][A-Z\sX]+[A-Z])(?=\s|$)', re.IGNORECASE
 
         )
         counterparty_match = counterparty_re1.search(email_text)

@@ -8,6 +8,7 @@ import html
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import dateutil.parser
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -16,95 +17,233 @@ class TransactionParser:
 
     def __init__(self):
         """Initialize the transaction parser."""
-        # Define regex patterns for different transaction types
-        self.patterns = {
-            # Account number pattern - updated to handle "Your account xxxx0027"
-            'account_number': r'(?:account\s+(?:number|no|#)\s*[:]\s*|a/c\s+|your\s+account\s+)([a-z0-9]+)',
+        pass
 
-            # Amount pattern - updated to handle "credited by OMR"
-            'amount': r'(?:amount\s*[:]\s*|you\s+have\s+received\s+|you\s+have\s+sent\s+|credited\s+by\s+|debited\s+by\s+)(?:omr|OMR)\s*([0-9,]+(?:\.[0-9]+)?)',
+    def clean_text(self, raw_html: str) -> str:
+        """
+        Clean HTML text that may be in quoted-printable format.
+        Handles Bank Muscat email format with proper quoted-printable decoding.
+        """
+        # Step 1: Handle quoted-printable encoding
+        # Remove soft line breaks (= at end of line followed by newline)
+        text = re.sub(r'=\r?\n', '', raw_html)
 
-            # Date patterns
-            'date': [
-                r'(?:date/time|date)\s*[:]\s*([0-9]{1,2}\s+[a-zA-Z]{3}\s+[0-9]{2}\s+[0-9]{1,2}:[0-9]{1,2})',  # 13 MAY 25 17:20
-                r'(?:date/time|date)\s*[:]\s*([0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4})',  # 05/02/25
-                r'value\s+date\s+([0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4})'  # value date 05/02/25
-            ],
-
-            # Transaction ID pattern
-            'transaction_id': r'(?:txn\s+id|transaction\s+id|reference)\s+([a-zA-Z0-9]+)',
-
-            # Sender/receiver patterns - updated for transfer emails
-            'sender': r'(?:from\s+([a-zA-Z0-9\s]+)\s+in\s+your|(?:transfer.*?\n.*?\n)(.*?)(?:\n|$))',
-            'receiver': r'(?:to|received by)\s+([a-zA-Z0-9\s]+)(?:\s+from|\s+using)',
-
-            # Description pattern
-            'description': r'description\s*[:]\s*([^\n]+)',
-
-            # Transaction country
-            'country': r'transaction\s+country\s*[:]\s*([^\n]+)',
+        # Decode quoted-printable sequences
+        # =3D -> =, =20 -> space, =0D -> \r, =0A -> \n, etc.
+        quoted_printable_patterns = {
+            '=3D': '=',
+            '=20': ' ',
+            '=0D': '\r',
+            '=0A': '\n',
+            '=09': '\t',
+            '=22': '"',
+            '=27': "'",
+            '=3C': '<',
+            '=3E': '>',
+            '=26': '&',
         }
 
-        # Define patterns for identifying transaction types - updated transfer patterns
-        self.transaction_type_patterns = {
-            'expense': [
-                r'debit\s+card.*has\s+been\s+utilised',
-                r'you\s+have\s+sent',
-                r'has\s+been\s+debited'
-            ],
-            'income': [
-                r'you\s+have\s+received',
-            ],
-            'transfer': [
-                r'transfer',
-                r'contribution',
-                r'has\s+been\s+credited.*value\s+date',  # For transfer emails with "credited"
-                r'has\s+been\s+credited\s+by.*value\s+date'
-            ]
+        for encoded, decoded in quoted_printable_patterns.items():
+            text = text.replace(encoded, decoded)
+
+        # Handle any remaining =XX patterns (hexadecimal encoded characters)
+        def decode_hex(match):
+            try:
+                hex_value = match.group(1)
+                return chr(int(hex_value, 16))
+            except (ValueError, OverflowError):
+                return match.group(0)  # Return original if can't decode
+
+        text = re.sub(r'=([0-9A-F]{2})', decode_hex, text)
+
+        # Step 2: Decode HTML entities
+        text = html.unescape(text)
+
+        # Step 3: Parse HTML with BeautifulSoup
+        soup = BeautifulSoup(text, 'html.parser')
+
+        # Remove images and non-essential elements for cleaner text
+        for tag in soup.find_all(['img', 'style', 'script']):
+            tag.decompose()
+
+        # Step 4: Extract text with proper formatting
+        # Handle BR tags as line breaks
+        for br in soup.find_all('br'):
+            br.replace_with('\n')
+
+        # Extract text with newlines as separators for block elements
+        text = soup.get_text(separator='\n')
+
+        # Step 5: Clean up whitespace and empty lines
+        lines = []
+        for line in text.split('\n'):
+            # Normalize whitespace within each line - this fixes "Dear cus    tomer" issue
+            line = re.sub(r'\s+', ' ', line.strip())
+            if line:  # Only keep non-empty lines
+                lines.append(line)
+
+        if len(lines) > 2:
+            lines = lines[:-2]  # Remove last 2 lines
+
+        # Join lines with single newlines
+        clean_text = '\n'.join(lines)
+
+        # Remove multiple consecutive newlines
+        clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+
+        return clean_text.strip()
+
+    def _get_name(self, email_text: str) -> Optional[str]:
+        """Extract counterparty name from email text."""
+        counterparty_re1 = re.compile(
+            r'(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))', re.IGNORECASE
+        )
+        counterparty_match = counterparty_re1.search(email_text)
+        if counterparty_match:
+            # Clean up spaces, remove extra whitespace
+            name = ' '.join(counterparty_match.group(1).split())
+            return name
+        else:
+            # fallback: try to find uppercase name lines near transaction details (like Email #1)
+            # This will match 2+ uppercase words together
+            counterparty_re2 = re.compile(r'\n([A-Z][A-Z\s]{4,})\n', re.MULTILINE)
+            names = counterparty_re2.findall(email_text)
+            if names:  # Check if names list is not empty
+                name = ' '.join(names[0].split())
+                return name
+            else:
+                return None
+
+    def determine_transaction_type(self, email_text: str) -> str:
+        """
+        Determine transaction type based on bank email content.
+        Returns one of: 'income', 'expense', 'transfer', 'unknown'.
+        """
+        text = email_text.lower()
+
+        # Typical wording for type detection (customize these as needed)
+        income_patterns = [
+            r'credited',
+            r'received',
+            r'deposited',
+        ]
+
+        expense_patterns = [
+            r'debit',
+            r'utilised',
+            r'sent',
+            r'payment',
+            r'purchase',
+            r'withdrawal',
+            r'spent',
+        ]
+
+        for pattern in income_patterns:
+            if re.search(pattern, text):
+                return 'income'
+
+        for pattern in expense_patterns:
+            if re.search(pattern, text):
+                return 'expense'
+
+        return 'unknown'
+
+    def extract_bank_email_data(self, email_text: str) -> Dict[str, Optional[str]]:
+        """Extract structured data from bank email text."""
+        data = {
+            "account_number": None,
+            "branch": None,
+            "transaction_type": None,
+            "amount": None,
+            "date": None,
+            "transaction_details": None,
+            "counterparty_name": None,
+            "transaction_id": None,
+            "description": None,
+            "type": None,
+            "from": None,
+            "to": None,
         }
 
-        # Bank Muscat specific patterns
-        self.bank_muscat_patterns = {
-            # Account number patterns - multiple formats
-            'account_number': [
-                r'your\s+account\s+(xxxx\d+)',
-                r'a/c\s+(xxxx\d+)',
-                r'account\s+number\s*:\s*(xxxx\d+)'
-            ],
+        # Account number (xxxx + digits)
+        account_re = re.compile(
+            r'account\s+(xxxx\d{4})|Account number\s*:\s*(xxxx\d{4})|a/c\s+(xxxx\d{4})',
+            re.IGNORECASE
+        )
+        acc_match = account_re.search(email_text)
+        if acc_match:
+            data['account_number'] = acc_match.group(1) or acc_match.group(2) or acc_match.group(3)
 
-            # Amount patterns
-            'debit_amount': r'has\s+been\s+debited\s+by\s+OMR\s+([0-9,.]+)',
-            'credit_amount': r'has\s+been\s+credited\s+by\s+OMR\s+([0-9,.]+)',
-            'received_amount': r'you\s+have\s+received\s+OMR\s+([0-9,.]+)',
-            'sent_amount': r'you\s+have\s+sent\s+OMR\s+([0-9,.]+)',
-            'card_amount': r'amount\s*:\s*OMR\s+([0-9,.]+)',
+        # Branch/location (digits + 'Br' + text)
+        branch_re = re.compile(r'with\s+([\d\- ]*Br [A-Za-z ]+)', re.IGNORECASE)
+        branch_match = branch_re.search(email_text)
+        if branch_match:
+            data['branch'] = branch_match.group(1).strip()
 
-            # Date patterns
-            'value_date': r'value\s+date\s+(\d{2}/\d{2}/\d{2})',
-            'card_date': r'date/time\s*:\s*(\d{1,2}\s+[A-Z]{3}\s+\d{2}\s+\d{1,2}:\d{1,2})',
+        # Transaction type: debited, credited, received, sent
+        type_re = re.compile(r'\b(debited|credited|received|sent)\b', re.IGNORECASE)
+        type_match = type_re.search(email_text)
+        if type_match:
+            data['transaction_type'] = type_match.group(1).lower()
 
-            # Transaction details
-            'transaction_type': r'details.*?reference.*?([A-Z]+)',
-            'transaction_id': r'txn\s+id\s+([A-Z0-9]+)',
-            'card_description': r'description\s*:\s*([^<\n]+)',
+        # Amount: OMR with decimal or integer (with optional commas)
+        amount_re = re.compile(r'OMR\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
+        amount_match = amount_re.search(email_text)
+        if amount_match:
+            data['amount'] = amount_match.group(1).replace(',', '')
 
-            # Sender/receiver
-            'sender': r'from\s+([A-Z][A-Z\s]+[A-Z])\s+in\s+your',
-            'receiver': r'to\s+([A-Z][A-Z\s]+[A-Z])\s+from',
+        # Date (two formats): "value date dd/mm/yy" or "Date/Time : 22 JUN 25 20:29"
+        date_re1 = re.compile(r'value date\s+(\d{2}/\d{2}/\d{2})', re.IGNORECASE)
+        date_re2 = re.compile(r'Date/Time\s*:\s*([\d]{1,2}\s+[A-Z]{3}\s+\d{2}\s+[\d:]+)', re.IGNORECASE)
+        date_match = date_re1.search(email_text) or date_re2.search(email_text)
+        if date_match:
+            data['date'] = date_match.group(1).strip()
 
-            # Branch
-            'branch': r'with\s+([\d-]+\s+-\s+[^\s]+)',
+        # Transaction details keywords: e.g., TRANSFER, Cash Dep, SALARY, Mobile Payment
+        # We'll pick the first occurrence from a known list, case-insensitive
+        txn_details_list = ['TRANSFER', 'Cash Dep', 'SALARY', 'Mobile Payment', 'Salary']
+        for detail in txn_details_list:
+            if re.search(r'\b' + re.escape(detail) + r'\b', email_text, re.IGNORECASE):
+                data['transaction_details'] = detail
+                break
 
-            # Transaction details after reference line
-            'details_line': r'reference.*?\n([^\n]+)',
+        # Description: "Description : <text>"
+        desc_re = re.compile(r'Description\s*:\s*(.+)', re.IGNORECASE)
+        desc_match = desc_re.search(email_text)
+        if desc_match:
+            data['description'] = desc_match.group(1).strip()
 
-            # Name in capital letters (usually sender or receiver)
-            'name': r'\n([A-Z][A-Z\s]+[A-Z])\s*\n',
-        }
+        # Counterparty (Sender/Receiver) name
+        data['counterparty_name'] = self._get_name(email_text)
+
+        # Transaction ID: "Txn Id <id>"
+        txn_id_re = re.compile(r'Txn Id\s+(\w+)', re.IGNORECASE)
+        txn_id_match = txn_id_re.search(email_text)
+        if txn_id_match:
+            data['transaction_id'] = txn_id_match.group(1)
+
+        # Determine transaction type using the helper function
+        txn_type = self.determine_transaction_type(email_text)
+        data['type'] = txn_type
+
+        # Determine "from" and "to" according to type
+        if txn_type == 'expense':
+            # "Me" is sender, Recipient is 'to'
+            data['from'] = 'me'
+            data['to'] = self._get_name(email_text)
+        elif txn_type == 'income':
+            # Extract sender as 'from', "Me" is receiving
+            data['from'] = self._get_name(email_text)
+            data['to'] = 'me'
+        else:
+            data['from'] = None
+            data['to'] = None
+
+        return data
 
     def parse_email(self, email_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
-        Parse an email and extract transaction data.
+        Parse an email and extract transaction data using the new approach.
 
         Args:
             email_data (Dict[str, Any]): Email data dictionary.
@@ -118,147 +257,13 @@ class TransactionParser:
                 logger.warning("Email body is empty, cannot parse transaction")
                 return None
 
-            # Check if this is a Bank Muscat email with the specific format
-            if '=3D' in body and 'bank muscat' in body.lower():
-                # Use the specialized Bank Muscat parser
-                return self.parse_bank_muscat_email(email_data)
+            # Clean the email text first
+            clean_text = self.clean_text(body)
 
-            # For other emails, use the original parsing logic
-            return self._parse_generic_email(email_data)
+            # Extract bank email data using the new function
+            extracted_data = self.extract_bank_email_data(clean_text)
 
-        except Exception as e:
-            logger.error(f"Error parsing email: {str(e)}")
-            return None
-
-    def _parse_generic_email(self, email_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Parse a generic email and extract transaction data.
-
-        Args:
-            email_data (Dict[str, Any]): Email data dictionary.
-
-        Returns:
-            Optional[Dict[str, Any]]: Extracted transaction data or None if parsing fails.
-        """
-        try:
-            body = email_data.get('body', '')
-
-            # Determine transaction type
-            transaction_type = self._determine_transaction_type(body)
-
-            # Extract transaction data
-            transaction_data = {
-                'transaction_type': transaction_type,
-                'bank_name': 'Bank Muscat',  # Default based on examples
-                'email_id': email_data.get('id'),
-                'email_date': email_data.get('date')
-            }
-
-            # Extract account number
-            account_number = self._extract_pattern(body, self.patterns['account_number'])
-            if account_number:
-                transaction_data['account_number'] = account_number
-
-            # Extract amount
-            amount_str = self._extract_pattern(body, self.patterns['amount'])
-            if amount_str:
-                # Remove commas and convert to float
-                amount = float(amount_str.replace(',', ''))
-                transaction_data['amount'] = amount
-                transaction_data['currency'] = 'OMR'  # Default based on examples
-
-            # Extract date
-            date_str = None
-            for date_pattern in self.patterns['date']:
-                date_str = self._extract_pattern(body, date_pattern)
-                if date_str:
-                    break
-
-            if date_str:
-                try:
-                    # Parse date string to datetime object
-                    transaction_date = self._parse_date(date_str)
-                    if transaction_date:
-                        transaction_data['date_time'] = transaction_date
-                except Exception as e:
-                    logger.warning(f"Failed to parse date '{date_str}': {str(e)}")
-
-            # Extract transaction ID
-            transaction_id = self._extract_pattern(body, self.patterns['transaction_id'])
-            if transaction_id:
-                transaction_data['transaction_id'] = transaction_id
-
-            # Extract sender/receiver based on transaction type
-            if transaction_type == 'income':
-                sender = self._extract_pattern(body, self.patterns['sender'])
-                if sender:
-                    transaction_data['transaction_sender'] = sender.strip()
-            elif transaction_type == 'expense':
-                receiver = self._extract_pattern(body, self.patterns['receiver'])
-                if receiver:
-                    transaction_data['transaction_receiver'] = receiver.strip()
-
-                # For expenses, also try to get description
-                description = self._extract_pattern(body, self.patterns['description'])
-                if description:
-                    transaction_data['description'] = description.strip()
-
-                # Get transaction country if available
-                country = self._extract_pattern(body, self.patterns['country'])
-                if country:
-                    transaction_data['country'] = country.strip()
-
-            # For transfers, try to extract both sender and receiver
-            if transaction_type == 'transfer':
-                # For transfers, extract sender from the end of the email
-                lines = body.strip().split('\n')
-                # Look for the sender name (usually the last non-empty line)
-                for line in reversed(lines):
-                    line = line.strip()
-                    if line and not line.lower().startswith('kind regards') and not line.lower().startswith('bank'):
-                        # This is likely the sender name
-                        transaction_data['transaction_sender'] = line
-                        break
-
-                # For transfers, also look for description
-                # Look for lines after "Transfer" keyword
-                for i, line in enumerate(lines):
-                    if 'transfer' in line.lower() and i + 1 < len(lines):
-                        next_line = lines[i + 1].strip()
-                        if next_line and not next_line.upper().isupper():  # Not all caps (likely not name)
-                            transaction_data['description'] = next_line
-                            break
-
-            # Validate extracted data
-            if not self._validate_transaction_data(transaction_data):
-                logger.warning("Extracted transaction data is incomplete")
-                return None
-
-            return transaction_data
-        except Exception as e:
-            logger.error(f"Error parsing generic email: {str(e)}")
-            return None
-
-    def parse_bank_muscat_email(self, email_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Parse a Bank Muscat email with the specific format and extract transaction data.
-
-        Args:
-            email_data (Dict[str, Any]): Email data dictionary.
-
-        Returns:
-            Optional[Dict[str, Any]]: Extracted transaction data or None if parsing fails.
-        """
-        try:
-            body = email_data.get('body', '')
-
-            # Clean up the email body - replace =3D with = and handle line breaks
-            body = body.replace('=3D', '=').replace('=\n', '')
-
-            # Convert HTML entities
-            body = html.unescape(body)
-
-            # Initialize transaction data
+            # Convert to the format expected by the rest of the system
             transaction_data = {
                 'bank_name': 'Bank Muscat',
                 'email_id': email_data.get('id'),
@@ -266,151 +271,63 @@ class TransactionParser:
                 'currency': 'OMR'
             }
 
-            # Extract account number - try each pattern
-            account_number = None
-            for pattern in self.bank_muscat_patterns['account_number']:
-                account_number = self._extract_pattern(body, pattern)
-                if account_number:
-                    transaction_data['account_number'] = account_number
-                    break
+            # Map the extracted data to transaction_data
+            if extracted_data.get('account_number'):
+                transaction_data['account_number'] = extracted_data['account_number']
 
-            # Determine transaction type and extract amount
-            if 'been debited' in body.lower():
-                transaction_data['transaction_type'] = 'expense'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['debit_amount'])
-            elif 'have sent' in body.lower():
-                transaction_data['transaction_type'] = 'expense'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['sent_amount'])
-            elif 'debit card' in body.lower() or 'card number' in body.lower():
-                transaction_data['transaction_type'] = 'expense'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['card_amount'])
-            elif 'been credited' in body.lower():
-                transaction_data['transaction_type'] = 'income'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['credit_amount'])
-            elif 'have received' in body.lower():
-                transaction_data['transaction_type'] = 'income'
-                amount_str = self._extract_pattern(body, self.bank_muscat_patterns['received_amount'])
-            else:
-                # Default to transfer if we can't determine the type
-                transaction_data['transaction_type'] = 'transfer'
-                # Try to find any amount pattern
-                for pattern_name in ['credit_amount', 'debit_amount', 'received_amount', 'sent_amount', 'card_amount']:
-                    amount_str = self._extract_pattern(body, self.bank_muscat_patterns[pattern_name])
-                    if amount_str:
-                        break
-
-            # Process amount
-            if amount_str:
-                # Remove commas and convert to float
-                amount = float(amount_str.replace(',', ''))
-                transaction_data['amount'] = amount
-
-            # Extract date
-            date_str = self._extract_pattern(body, self.bank_muscat_patterns['value_date'])
-            if not date_str:
-                date_str = self._extract_pattern(body, self.bank_muscat_patterns['card_date'])
-
-            if date_str:
+            if extracted_data.get('amount'):
                 try:
-                    # Parse date string to datetime object
-                    transaction_date = self._parse_date(date_str)
+                    transaction_data['amount'] = float(extracted_data['amount'])
+                except (ValueError, TypeError):
+                    logger.warning(f"Could not convert amount to float: {extracted_data['amount']}")
+
+            if extracted_data.get('type'):
+                transaction_data['transaction_type'] = extracted_data['type']
+            elif extracted_data.get('transaction_type'):
+                transaction_data['transaction_type'] = extracted_data['transaction_type']
+            else:
+                transaction_data['transaction_type'] = 'unknown'
+
+            if extracted_data.get('date'):
+                try:
+                    transaction_date = self._parse_date(extracted_data['date'])
                     if transaction_date:
                         transaction_data['date_time'] = transaction_date
                 except Exception as e:
-                    logger.warning(f"Failed to parse date '{date_str}': {str(e)}")
+                    logger.warning(f"Failed to parse date '{extracted_data['date']}': {str(e)}")
 
-            # Extract transaction ID
-            transaction_id = self._extract_pattern(body, self.bank_muscat_patterns['transaction_id'])
-            if transaction_id:
-                transaction_data['transaction_id'] = transaction_id
+            if extracted_data.get('transaction_id'):
+                transaction_data['transaction_id'] = extracted_data['transaction_id']
 
-            # Extract description
-            description = self._extract_pattern(body, self.bank_muscat_patterns['card_description'])
-            if description:
-                transaction_data['description'] = description.strip()
-            else:
-                # Look for transaction details after "reference" line
-                details = self._extract_pattern(body, self.bank_muscat_patterns['details_line'])
-                if details:
-                    transaction_data['description'] = details.strip()
+            if extracted_data.get('description'):
+                transaction_data['description'] = extracted_data['description']
 
-            # Extract sender/receiver
-            if transaction_data['transaction_type'] == 'income':
-                sender = self._extract_pattern(body, self.bank_muscat_patterns['sender'])
-                if sender:
-                    transaction_data['transaction_sender'] = sender.strip()
-            elif transaction_data['transaction_type'] == 'expense':
-                receiver = self._extract_pattern(body, self.bank_muscat_patterns['receiver'])
-                if receiver:
-                    transaction_data['transaction_receiver'] = receiver.strip()
+            if extracted_data.get('branch'):
+                transaction_data['branch'] = extracted_data['branch']
 
-            # If we couldn't find sender/receiver, look for names in capital letters
-            if ('transaction_sender' not in transaction_data and 
-                'transaction_receiver' not in transaction_data):
-                names = re.findall(self.bank_muscat_patterns['name'], body)
-                if names:
-                    # Use the first name as sender or receiver based on transaction type
-                    if transaction_data['transaction_type'] == 'income':
-                        transaction_data['transaction_sender'] = names[0].strip()
-                    elif transaction_data['transaction_type'] == 'expense':
-                        transaction_data['transaction_receiver'] = names[0].strip()
+            # Handle sender/receiver based on transaction type
+            if extracted_data.get('from') and extracted_data.get('from') != 'me':
+                transaction_data['transaction_sender'] = extracted_data['from']
 
-            # Extract country if available (usually for card transactions)
-            country_match = re.search(r'transaction\s+country\s*[:]\s*([^<\n]+)', body, re.IGNORECASE)
-            if country_match:
-                transaction_data['country'] = country_match.group(1).strip()
+            if extracted_data.get('to') and extracted_data.get('to') != 'me':
+                transaction_data['transaction_receiver'] = extracted_data['to']
 
-            # Validate extracted data
+            # Add the new fields
+            transaction_data['from_party'] = extracted_data.get('from')
+            transaction_data['to_party'] = extracted_data.get('to')
+            transaction_data['counterparty_name'] = extracted_data.get('counterparty_name')
+            transaction_data['transaction_details'] = extracted_data.get('transaction_details')
+
+            # Validate that we have minimum required data
             if not self._validate_transaction_data(transaction_data):
                 logger.warning("Extracted transaction data is incomplete")
                 return None
 
             return transaction_data
+
         except Exception as e:
-            logger.error(f"Error parsing Bank Muscat email: {str(e)}")
+            logger.error(f"Error parsing email: {str(e)}")
             return None
-
-    def _determine_transaction_type(self, body: str) -> str:
-        """
-        Determine the transaction type based on email body content.
-
-        Args:
-            body (str): Email body text.
-
-        Returns:
-            str: Transaction type ('income', 'expense', 'transfer', or 'unknown').
-        """
-        body_lower = body.lower()
-
-        # Check transfer patterns first (more specific)
-        for pattern in self.transaction_type_patterns['transfer']:
-            if re.search(pattern, body_lower, re.IGNORECASE):
-                return 'transfer'
-
-        # Check other patterns
-        for transaction_type in ['expense', 'income']:
-            patterns = self.transaction_type_patterns[transaction_type]
-            for pattern in patterns:
-                if re.search(pattern, body_lower, re.IGNORECASE):
-                    return transaction_type
-
-        return 'unknown'
-
-    def _extract_pattern(self, text: str, pattern: str) -> Optional[str]:
-        """
-        Extract data using a regex pattern.
-
-        Args:
-            text (str): Text to search in.
-            pattern (str): Regex pattern to use.
-
-        Returns:
-            Optional[str]: Extracted data or None if not found.
-        """
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(1)
-        return None
 
     def _parse_date(self, date_str: str) -> Optional[datetime]:
         """
