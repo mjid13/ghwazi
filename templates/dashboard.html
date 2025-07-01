@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Bank Email Parser{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron">
+            <h1 class="display-4">Welcome, {{ session.username }}!</h1>
+            <p class="lead">Manage your bank accounts and transactions.</p>
+            <hr class="my-4">
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-primary me-2">Profile</a>
+                <a href="{{ url_for('email_config') }}" class="btn btn-info me-2">Email Settings</a>
+                <a href="{{ url_for('add_account') }}" class="btn btn-success me-2">Add Bank Account</a>
+                <a href="{{ url_for('accounts') }}" class="btn btn-secondary me-2">View All Accounts</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Your Bank Accounts</h3>
+            </div>
+            <div class="card-body">
+                {% if accounts %}
+                <div class="list-group">
+                    {% for account in accounts %}
+                    <a href="{{ url_for('account_details', account_number=account.account_number) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ account.bank_name }}</h5>
+                            <small>{{ account.currency }} {{ account.balance }}</small>
+                        </div>
+                        <p class="mb-1">Account: {{ account.account_number }}</p>
+                        <small>Holder: {{ account.account_holder }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>You don't have any bank accounts yet. <a href="{{ url_for('add_account') }}">Add one now</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Process Email</h3>
+            </div>
+            <div class="card-body">
+                {% if accounts %}
+                <form action="{{ url_for('fetch_emails') }}" method="post">
+                    <div class="mb-3">
+                        <label for="account_number" class="form-label">Select Account</label>
+                        <select class="form-select" id="account_number" name="account_number" required>
+                            <option value="">Select an account</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.account_number }}">{{ account.bank_name }} - {{ account.account_number }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="folder" class="form-label">Email Folder</label>
+                        <input type="text" class="form-control" id="folder" name="folder" value="INBOX">
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="unread_only" name="unread_only" checked>
+                        <label class="form-check-label" for="unread_only">Only fetch unread emails</label>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="save_to_db" name="save_to_db" checked>
+                        <label class="form-check-label" for="save_to_db">Save transactions to database</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Fetch Emails</button>
+                </form>
+
+                <hr>
+
+                <h4 class="mt-4">Manual Entry</h4>
+                <div class="d-flex">
+                    <a href="{{ url_for('dashboard') }}?mode=paste" class="btn btn-outline-primary me-2">Paste Email</a>
+                    <a href="{{ url_for('dashboard') }}?mode=upload" class="btn btn-outline-secondary">Upload Email</a>
+                </div>
+
+                {% if request.args.get('mode') == 'paste' %}
+                <div class="mt-3">
+                    <form action="{{ url_for('parse_email') }}" method="post">
+                        <input type="hidden" name="source" value="paste">
+                        
+                        <div class="mb-3">
+                            <label for="account_number" class="form-label">Select Account</label>
+                            <select class="form-select" id="account_number" name="account_number" required>
+                                <option value="">Select an account</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.account_number }}">{{ account.bank_name }} - {{ account.account_number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Email Subject (optional)</label>
+                            <input type="text" class="form-control" id="subject" name="subject" placeholder="Transaction Alert">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="from" class="form-label">From (optional)</label>
+                            <input type="text" class="form-control" id="from" name="from" placeholder="bank@example.com">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email_content" class="form-label">Email Content *</label>
+                            <textarea class="form-control" id="email_content" name="email_content" rows="10" required></textarea>
+                            <div class="form-text">Paste the full email content including headers and body.</div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="save_to_db" name="save_to_db" checked>
+                            <label class="form-check-label" for="save_to_db">Save transaction to database</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Parse Email</button>
+                    </form>
+                </div>
+                {% elif request.args.get('mode') == 'upload' %}
+                <div class="mt-3">
+                    <form action="{{ url_for('parse_email') }}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="source" value="upload">
+                        
+                        <div class="mb-3">
+                            <label for="account_number" class="form-label">Select Account</label>
+                            <select class="form-select" id="account_number" name="account_number" required>
+                                <option value="">Select an account</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.account_number }}">{{ account.bank_name }} - {{ account.account_number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="from" class="form-label">From (optional)</label>
+                            <input type="text" class="form-control" id="from" name="from" placeholder="bank@example.com">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email_file" class="form-label">Email File *</label>
+                            <input class="form-control" type="file" id="email_file" name="email_file" required>
+                            <div class="form-text">Upload a text file containing the email content.</div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="save_to_db" name="save_to_db" checked>
+                            <label class="form-check-label" for="save_to_db">Save transaction to database</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Parse Email</button>
+                    </form>
+                </div>
+                {% endif %}
+                {% else %}
+                <p>You need to add a bank account before you can process emails. <a href="{{ url_for('add_account') }}">Add one now</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
