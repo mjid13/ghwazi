@@ -56,7 +56,7 @@ def example_get_account_summaries():
             logger.info(f"Income transactions: {summary['income_count']} (Total: {summary['income_total']})")
             logger.info(f"Expense transactions: {summary['expense_count']} (Total: {summary['expense_total']})")
             logger.info(f"Transfer transactions: {summary['transfer_count']}")
-            logger.info(f"Last updated: {summary['last_updated']}")
+            # logger.info(f"Last updated: {summary['last_updated']}")
             logger.info("---")
     finally:
         service.close()

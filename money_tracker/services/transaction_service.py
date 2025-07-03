@@ -88,7 +88,8 @@ class TransactionService:
                 # Get summary for each account
                 summaries = []
                 for account in accounts:
-                    summary = TransactionRepository.get_account_summary(session, account.account_number)
+                    summary = TransactionRepository.get_account_summary(session, account.user_id,
+                                                                        account.account_number)
                     if summary:
                         summaries.append(summary)
                 

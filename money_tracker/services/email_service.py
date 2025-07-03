@@ -20,13 +20,13 @@ class EmailService:
 
     def __init__(self, host=None, port=None, username=None, password=None, use_ssl=None, 
                  bank_email_addresses=None, bank_email_subjects=None, user_id=None, user_accounts=None):
-        self.host = host if host is not None else settings.EMAIL_HOST
-        self.port = port if port is not None else settings.EMAIL_PORT
-        self.username = username if username is not None else settings.EMAIL_USERNAME
-        self.password = password if password is not None else settings.EMAIL_PASSWORD
-        self.use_ssl = use_ssl if use_ssl is not None else settings.EMAIL_USE_SSL
-        self.bank_email_addresses = bank_email_addresses if bank_email_addresses is not None else settings.BANK_EMAIL_ADDRESSES
-        self.bank_email_subjects = bank_email_subjects if bank_email_subjects is not None else settings.BANK_EMAIL_SUBJECTS
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+        self.use_ssl = use_ssl
+        self.bank_email_addresses = bank_email_addresses
+        self.bank_email_subjects = bank_email_subjects
         self.user_id = user_id
         self.user_accounts = user_accounts or []  # List of user's bank accounts
         self.connection = None

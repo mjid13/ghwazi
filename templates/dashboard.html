@@ -33,7 +33,7 @@
                     <a href="{{ url_for('account_details', account_number=account.account_number) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ account.bank_name }}</h5>
-                            <small>{{ account.currency }} {{ account.balance }}</small>
+                            <small>{{ account.currency }} {{ "{:,.3f}".format(account.balance) }}</small>
                         </div>
                         <p class="mb-1">Account: {{ account.account_number }}</p>
                         <small>Holder: {{ account.account_holder }}</small>

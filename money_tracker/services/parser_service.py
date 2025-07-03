@@ -265,10 +265,10 @@ class TransactionParser:
 
             # Convert to the format expected by the rest of the system
             transaction_data = {
-                'bank_name': 'Bank Muscat',
+                'bank_name': 'Bank Muscat', # TODO: Make this dynamic from the user input
                 'email_id': email_data.get('id'),
                 'email_date': email_data.get('date'),
-                'currency': 'OMR'
+                'currency': 'OMR' # TODO: Try to figure a way to make this dynamic
             }
 
             # Map the extracted data to transaction_data

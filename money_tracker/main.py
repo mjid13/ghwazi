@@ -62,7 +62,7 @@ def print_account_summary(summary):
     """Print account summary in a formatted way."""
     print(f"Account: {summary['account_number']} ({summary['bank_name']})")
     print(f"Balance: {summary['current_balance']} {summary['currency']}")
-    print(f"Last Updated: {summary['last_updated']}")
+    # print(f"Last Updated: {summary['last_updated']}")
 
     # Create a table for transaction counts
     counts_table = [
