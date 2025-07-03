@@ -406,7 +406,7 @@ class TransactionRepository:
                 transaction_type=transaction_type,
                 amount=transaction_data.get('amount', 0.0),
                 currency=transaction_data.get('currency', 'OMR'),
-                date_time=transaction_data.get('date_time', datetime.utcnow()),
+                date_time=transaction_data.get('date_time', None),
                 description=transaction_data.get('description'),
                 transaction_id=transaction_data.get('transaction_id'),
                 bank_name=transaction_data.get('bank_name'),
@@ -469,15 +469,23 @@ class TransactionRepository:
             total_income = sum(t.amount for t in transactions if t.transaction_type == TransactionType.INCOME)
             total_expense = sum(t.amount for t in transactions if t.transaction_type == TransactionType.EXPENSE)
             total_transfer = sum(t.amount for t in transactions if t.transaction_type == TransactionType.TRANSFER)
+            income_count = len([t for t in transactions if t.transaction_type == TransactionType.INCOME])
+            expense_count = len([t for t in transactions if t.transaction_type == TransactionType.EXPENSE])
 
             return {
-                'account': account,
+                'account_number': account.account_number,
+                'bank_name': account.bank_name,
+                'account_holder': account.account_holder,
+                'balance': account.balance,
+                'currency': account.currency,
                 'transaction_count': len(transactions),
                 'total_income': total_income,
                 'total_expense': total_expense,
                 'total_transfer': total_transfer,
                 'net_balance': total_income - total_expense,
-                'transactions': transactions
+                'transactions': transactions,
+                'income_count': income_count,
+                'expense_count': expense_count,
             }
 
         except Exception as e:
@@ -643,3 +651,71 @@ class TransactionRepository:
         except Exception as e:
             logger.error(f"Error getting transactions by date range: {str(e)}")
             return []
+
+    @staticmethod
+    def get_account_transaction_history(session: Session, user_id: int, account_number: str,
+                                        page: int = 1, per_page: int = 200) -> Dict[str, Any]:
+        """
+        Get paginated transaction history for an account with HTML-friendly formatting.
+
+        Args:
+            session (Session): Database session.
+            user_id (int): User ID.
+            account_number (str): Account number.
+            page (int): Page number (1-based).
+            per_page (int): Number of items per page.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing transactions and pagination info.
+        """
+        try:
+            account = session.query(Account).filter(
+                Account.user_id == user_id,
+                Account.account_number == account_number
+            ).first()
+
+            if not account:
+                return {
+                    'transactions': [],
+                    'total': 0,
+                    'pages': 0,
+                    'current_page': page,
+                    'per_page': per_page,
+                    'account': None
+                }
+
+            query = session.query(Transaction).filter(
+                Transaction.account_id == account.id
+            )
+
+            total = query.count()
+            pages = (total + per_page - 1) // per_page
+
+            transactions = query.order_by(Transaction.date_time.desc()) \
+                .offset((page - 1) * per_page) \
+                .limit(per_page) \
+                .all()
+
+            # Convert enum values to uppercase strings for template compatibility
+            for transaction in transactions:
+                transaction.transaction_type = transaction.transaction_type.value.upper()
+
+            return {
+                'transactions': transactions,
+                'total': total,
+                'pages': pages,
+                'current_page': page,
+                'per_page': per_page,
+                'account': account
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting account transaction history: {str(e)}")
+            return {
+                'transactions': [],
+                'total': 0,
+                'pages': 0,
+                'current_page': page,
+                'per_page': per_page,
+                'account': None
+            }

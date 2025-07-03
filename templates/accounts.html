@@ -15,9 +15,10 @@
                             <div class="card-header">
                                 <h3>{{ summary.account_number }}</h3>
                                 <h6 class="text-muted">{{ summary.bank_name }}</h6>
+                                <h6 class="text-muted">holder: {{ summary.account_holder }}</h6>
                             </div>
                             <div class="card-body">
-                                <h4 class="mb-3">Balance: {{ summary.current_balance }} {{ summary.currency }}</h4>
+                                <h4 class="mb-3">Balance: {{ "{:,.3f}".format(summary.balance) }} {{ summary.currency }}</h4>
                                 
                                 <h5>Transaction Summary</h5>
                                 <table class="table">
@@ -32,12 +33,12 @@
                                         <tr>
                                             <td><span class="badge bg-success">Income</span></td>
                                             <td>{{ summary.income_count }}</td>
-                                            <td>{{ summary.income_total }} {{ summary.currency }}</td>
+                                            <td>{{ summary.total_income }} {{ summary.currency }}</td>
                                         </tr>
                                         <tr>
                                             <td><span class="badge bg-danger">Expense</span></td>
                                             <td>{{ summary.expense_count }}</td>
-                                            <td>{{ summary.expense_total }} {{ summary.currency }}</td>
+                                            <td>{{ summary.total_expense }} {{ summary.currency }}</td>
                                         </tr>
                                         <tr>
                                             <td><span class="badge bg-info">Transfer</span></td>
@@ -47,7 +48,6 @@
                                     </tbody>
                                 </table>
                                 
-                                <p class="text-muted mt-3">Last updated: {{ summary.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                             </div>
                             <div class="card-footer">
                                 <a href="{{ url_for('account_details', account_number=summary.account_number) }}" class="btn btn-primary">View Details</a>

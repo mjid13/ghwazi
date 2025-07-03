@@ -11,7 +11,7 @@
                 <li class="breadcrumb-item active" aria-current="page">{{ account.account_number }}</li>
             </ol>
         </nav>
-        
+
         <div class="card mb-4">
             <div class="card-header">
                 <h2>Account Details</h2>
@@ -21,7 +21,7 @@
                     <div class="col-md-6">
                         <h3>{{ account.account_number }}</h3>
                         <h5 class="text-muted">{{ account.bank_name }}</h5>
-                        <h4 class="mt-3">Balance: {{ account.current_balance }} {{ account.currency }}</h4>
+                        <h4 class="mt-3">Balance: {{ "{:,.3f}".format(account.balance)  }} {{ account.currency }}</h4>
                         <p class="text-muted">Last updated: {{ account.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                     </div>
                     <div class="col-md-6">
@@ -38,12 +38,12 @@
                                 <tr>
                                     <td><span class="badge bg-success">Income</span></td>
                                     <td>{{ summary.income_count }}</td>
-                                    <td>{{ summary.income_total }} {{ account.currency }}</td>
+                                    <td>{{ summary.total_income }} {{ account.currency }}</td>
                                 </tr>
                                 <tr>
                                     <td><span class="badge bg-danger">Expense</span></td>
                                     <td>{{ summary.expense_count }}</td>
-                                    <td>{{ summary.expense_total }} {{ account.currency }}</td>
+                                    <td>{{ summary.total_expense }} {{ account.currency }}</td>
                                 </tr>
                                 <tr>
                                     <td><span class="badge bg-info">Transfer</span></td>
@@ -56,7 +56,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-header">
                 <h2>Transaction History</h2>
@@ -74,7 +74,7 @@
                                     <th>Sender/Receiver</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                             <tbody>
                                 {% for transaction in transactions %}
                                     <tr>
                                         <td>
@@ -85,20 +85,20 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            {% if transaction.transaction_type == 'income' %}
+                                            {% if transaction.transaction_type == 'INCOME' %}
                                                 <span class="badge bg-success">Income</span>
-                                            {% elif transaction.transaction_type == 'expense' %}
+                                            {% elif transaction.transaction_type == 'EXPENSE' %}
                                                 <span class="badge bg-danger">Expense</span>
-                                            {% elif transaction.transaction_type == 'transfer' %}
+                                            {% elif transaction.transaction_type == 'TRANSFER' %}
                                                 <span class="badge bg-info">Transfer</span>
                                             {% else %}
                                                 <span class="badge bg-secondary">Unknown</span>
                                             {% endif %}
                                         </td>
                                         <td>
-                                            {% if transaction.transaction_type == 'income' %}
+                                            {% if transaction.transaction_type == 'INCOME' %}
                                                 +{{ transaction.amount }} {{ transaction.currency }}
-                                            {% elif transaction.transaction_type == 'expense' %}
+                                            {% elif transaction.transaction_type == 'EXPENSE' %}
                                                 -{{ transaction.amount }} {{ transaction.currency }}
                                             {% else %}
                                                 {{ transaction.amount }} {{ transaction.currency }}
@@ -106,16 +106,16 @@
                                         </td>
                                         <td>{{ transaction.description or 'N/A' }}</td>
                                         <td>
-                                            {% if transaction.transaction_type == 'income' %}
-                                                From: {{ transaction.transaction_sender or 'Unknown' }}
-                                            {% elif transaction.transaction_type == 'expense' %}
-                                                To: {{ transaction.transaction_receiver or 'Unknown' }}
-                                            {% elif transaction.transaction_type == 'transfer' %}
-                                                {% if transaction.transaction_sender %}
-                                                    From: {{ transaction.transaction_sender }}
+                                            {% if transaction.transaction_type == 'INCOME' %}
+                                                {{ transaction.from_party or 'Unknown' }}
+                                            {% elif transaction.transaction_type == 'EXPENSE' %}
+                                                {{ transaction.to_party or 'Unknown' }}
+                                            {% elif transaction.transaction_type == 'TRANSFER' %}
+                                                {% if transaction.from_party %}
+                                                    From: {{ transaction.from_party }}
                                                 {% endif %}
-                                                {% if transaction.transaction_receiver %}
-                                                    To: {{ transaction.transaction_receiver }}
+                                                {% if transaction.to_party %}
+                                                    To: {{ transaction.to_party }}
                                                 {% endif %}
                                             {% else %}
                                                 N/A
@@ -124,8 +124,87 @@
                                     </tr>
                                 {% endfor %}
                             </tbody>
+
                         </table>
                     </div>
+
+                {% if pagination and pagination.pages > 1 %}
+                <div class="mt-4">
+                    <nav aria-label="Transaction pagination">
+                        <ul class="pagination justify-content-center">
+                            <!-- Previous button -->
+                            <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link"
+                                   href="{{ url_for('account_details', account_number=account.account_number, page=pagination.current_page-1) }}"
+                                   aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+
+                            <!-- Page numbers -->
+                            {% set start_page = [1, pagination.current_page - 2]|max %}
+                            {% set end_page = [pagination.pages, start_page + 4]|min %}
+                            {% set start_page = [1, end_page - 4]|max %}
+
+                            {% if start_page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="{{ url_for('account_details', account_number=account.account_number, page=1) }}">
+                                        1
+                                    </a>
+                                </li>
+                                {% if start_page > 2 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endif %}
+                            {% for page_num in range(start_page, end_page + 1) %}
+                                {% if page_num == pagination.current_page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           href="{{ url_for('account_details', account_number=account.account_number, page=page_num) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if end_page < pagination.pages %}
+                                {% if end_page < pagination.pages - 1 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="{{ url_for('account_details', account_number=account.account_number, page=pagination.pages) }}">
+                                        {{ pagination.pages }}
+                                    </a>
+                                </li>
+                            {% endif %}
+
+
+                            <!-- Next button -->
+                            <li class="page-item {% if pagination.current_page == pagination.pages %}disabled{% endif %}">
+                                <a class="page-link"
+                                   href="{{ url_for('account_details', account_number=account.account_number, page=pagination.current_page+1) }}"
+                                   aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <p class="text-center text-muted">
+                        Showing page {{ pagination.current_page }} of {{ pagination.pages }}
+                        ({{ pagination.total }} total transactions)
+                    </p>
+                </div>
+                {% endif %}
                 {% else %}
                     <div class="alert alert-info">
                         <h4 class="alert-heading">No transactions found!</h4>

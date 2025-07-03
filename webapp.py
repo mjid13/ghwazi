@@ -497,6 +497,8 @@ def accounts():
 def account_details(account_number):
     """Display details for a specific account."""
     user_id = session.get('user_id')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 200, type=int)
     db_session = db.get_session()
     try:
         # Get account for this user
@@ -509,15 +511,15 @@ def account_details(account_number):
             flash(f'Account {account_number} not found or you do not have permission to view it', 'error')
             return redirect(url_for('accounts'))
 
-        transactions = db_session.query(Transaction).filter(
-            Transaction.account_id == account.id
-        ).order_by(Transaction.date_time.desc()).all()
-
+        transactions_history = TransactionRepository.get_account_transaction_history(
+            db_session, user_id, account_number, page=page, per_page=200
+        )
         summary = TransactionRepository.get_account_summary(db_session, user_id, account_number)
 
         return render_template('account_details.html', 
                               account=account, 
-                              transactions=transactions, 
+                              transactions=transactions_history['transactions'],
+                              pagination=transactions_history,
                               summary=summary)
     except Exception as e:
         logger.error(f"Error getting account details: {str(e)}")
@@ -652,7 +654,7 @@ def fetch_emails():
                 'id': email_data.get('id'),
                 'subject': email_data.get('subject', ''),
                 'from': email_data.get('from', ''),
-                'to': email_data.get('to', ''),
+                # 'to': email_data.get('to', ''), TODO: Add 'to' from the user email, it not in the email data
                 'date': email_data.get('date', ''),
                 'body': email_data.get('body', ''),
                 'processed': True
