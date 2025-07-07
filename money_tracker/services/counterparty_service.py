@@ -121,11 +121,29 @@ class CounterpartyService:
                 from sqlalchemy import and_
                 from money_tracker.models.models import Account
 
-                # Find all transactions with this counterparty_name and description
+                # Find all transactions with this counterparty_name or description
+                from sqlalchemy import or_
+
+                # Build the filter conditions based on what was provided
+                filter_conditions = [Account.user_id == user_id]
+
+                if counterparty_name and description:
+                    # If both are provided, find transactions with either match
+                    filter_conditions.append(
+                        or_(
+                            Transaction.counterparty_name == counterparty_name,
+                            Transaction.description == description
+                        )
+                    )
+                elif counterparty_name:
+                    # Only counterparty_name provided
+                    filter_conditions.append(Transaction.counterparty_name == counterparty_name)
+                elif description:
+                    # Only description provided
+                    filter_conditions.append(Transaction.description == description)
+
                 transactions = session.query(Transaction).join(Account).filter(
-                    Account.user_id == user_id,
-                    Transaction.counterparty_name == counterparty_name,
-                    Transaction.description == description
+                    *filter_conditions
                 ).all()
 
                 # Update each transaction with the new category

@@ -42,11 +42,56 @@ class User(Base):
 
     def set_password(self, password):
         """Set password hash."""
-        self.password_hash = generate_password_hash(password)
+        try:
+            logger.info(f"Setting password hash for user: {self.username}")
+            if not password:
+                logger.error("Password is empty or None")
+                raise ValueError("Password cannot be empty")
+
+            # Check if werkzeug.security is properly imported
+            if not hasattr(generate_password_hash, '__call__'):
+                logger.error("generate_password_hash is not callable")
+                raise ImportError("generate_password_hash is not properly imported")
+
+            # Generate password hash
+            password_hash = generate_password_hash(password)
+            logger.info(f"Password hash generated successfully: {password_hash[:10]}...")
+
+            # Set password hash
+            self.password_hash = password_hash
+            logger.info("Password hash set successfully")
+        except Exception as e:
+            logger.error(f"Error in set_password: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise
 
     def check_password(self, password):
         """Check password against hash."""
-        return check_password_hash(self.password_hash, password)
+        try:
+            logger.info(f"Checking password for user: {self.username}")
+            if not password:
+                logger.error("Password is empty or None")
+                return False
+
+            if not self.password_hash:
+                logger.error("Password hash is empty or None")
+                return False
+
+            # Check if werkzeug.security is properly imported
+            if not hasattr(check_password_hash, '__call__'):
+                logger.error("check_password_hash is not callable")
+                raise ImportError("check_password_hash is not properly imported")
+
+            # Check password
+            result = check_password_hash(self.password_hash, password)
+            logger.info(f"Password check result: {result}")
+            return result
+        except Exception as e:
+            logger.error(f"Error in check_password: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return False
 
 class EmailConfiguration(Base):
     """Email configuration model for storing user's email settings."""
@@ -677,6 +722,9 @@ class TransactionRepository:
             Optional[User]: Created user or None if creation fails.
         """
         try:
+            # Debug logging
+            logger.info(f"TransactionRepository.create_user called with username: {user_data.get('username')}, email: {user_data.get('email')}")
+
             # Check if user already exists
             existing_user = session.query(User).filter(
                 (User.username == user_data['username']) | (User.email == user_data['email'])
@@ -686,20 +734,37 @@ class TransactionRepository:
                 logger.info(f"User {user_data['username']} or email {user_data['email']} already exists")
                 return None
 
+            # Create user object
+            logger.info("Creating User object")
             user = User(
                 username=user_data['username'],
                 email=user_data['email']
             )
-            user.set_password(user_data['password'])
 
+            # Set password
+            logger.info("Setting password hash")
+            try:
+                user.set_password(user_data['password'])
+            except Exception as pw_error:
+                logger.error(f"Error setting password: {str(pw_error)}")
+                raise
+
+            # Add to session and commit
+            logger.info("Adding user to session")
             session.add(user)
+
+            logger.info("Committing session")
             session.commit()
-            logger.info(f"Created user: {user.username}")
+
+            logger.info(f"Created user: {user.username} with ID: {user.id}")
             return user
 
         except Exception as e:
             session.rollback()
             logger.error(f"Error creating user: {str(e)}")
+            # Print exception traceback for debugging
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return None
 
     @staticmethod

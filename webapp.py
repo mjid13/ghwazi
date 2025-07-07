@@ -278,17 +278,22 @@ def register():
                 'password': password
             }
 
+            # Debug logging
+            logger.info(f"Attempting to create user with username: {username}, email: {email}")
+
             user = TransactionRepository.create_user(db_session, user_data)
             if user:
+                logger.info(f"User created successfully: {user.username}")
                 flash('Registration successful! Please log in.', 'success')
                 return redirect(url_for('login'))
             else:
+                logger.error("TransactionRepository.create_user returned None")
                 flash('Error creating user', 'error')
                 return render_template('register.html')
 
         except Exception as e:
             logger.error(f"Error registering user: {str(e)}")
-            flash('Error registering user. Please try again.', 'error')
+            flash(f'Error registering user: {str(e)}', 'error')
             return render_template('register.html')
         finally:
             db.close_session(db_session)
