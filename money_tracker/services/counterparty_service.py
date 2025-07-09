@@ -38,38 +38,54 @@ class CounterpartyService:
 
             try:
                 # Get all unique counterparty_name values from transactions
-                from sqlalchemy import distinct, func
+                from sqlalchemy import distinct, func, case
                 from money_tracker.models.models import Account
 
-                # Query for unique counterparty_name values
-                counterparty_query = session.query(
-                    Transaction.counterparty_name,
-                    Transaction.description,
-                    Transaction.transaction_details,
-                    Category.name.label('category_name'),
-                    Category.id.label('category_id')
+                # First get all unique counterparty names
+                counterparty_names = session.query(
+                    distinct(Transaction.counterparty_name)
                 ).join(
                     Account, Account.id == Transaction.account_id
-                ).outerjoin(
-                    Category, Category.id == Transaction.category_id
                 ).filter(
                     Account.user_id == user_id,
-                    Transaction.counterparty_name != None
-                ).distinct(
-                    Transaction.counterparty_name,
-                    Transaction.description
+                    Transaction.counterparty_name != None,
+                    Transaction.counterparty_name != ''
                 ).all()
 
-                # Convert to list of dictionaries
+                # For each unique counterparty name, get the most recent transaction
                 result = []
-                for cp in counterparty_query:
-                    result.append({
-                        'counterparty_name': cp.counterparty_name,
-                        'description': cp.description,
-                        'transaction_details': cp.transaction_details,
-                        'category_name': cp.category_name,
-                        'category_id': cp.category_id
-                    })
+                for cp_name in counterparty_names:
+                    counterparty_name = cp_name[0]
+
+                    # Get the most recent transaction for this counterparty
+                    latest_transaction = session.query(
+                        Transaction,
+                        Category.name.label('category_name'),
+                        Category.id.label('category_id')
+                    ).join(
+                        Account, Account.id == Transaction.account_id
+                    ).outerjoin(
+                        Category, Category.id == Transaction.category_id
+                    ).filter(
+                        Account.user_id == user_id,
+                        Transaction.counterparty_name == counterparty_name
+                    ).order_by(
+                        Transaction.date_time.desc()
+                    ).first()
+
+                    if latest_transaction:
+                        transaction = latest_transaction[0]
+                        result.append({
+                            'counterparty_name': counterparty_name,
+                            'description': transaction.description,
+                            'transaction_details': transaction.transaction_details,
+                            'category_name': latest_transaction.category_name,
+                            'category_id': latest_transaction.category_id,
+                            'last_transaction_date': transaction.date_time
+                        })
+
+                # Sort by counterparty name
+                result.sort(key=lambda x: x['counterparty_name'].lower() if x['counterparty_name'] else '')
 
                 return result
             finally:
@@ -93,6 +109,20 @@ class CounterpartyService:
             bool: True if categorization was successful, False otherwise.
         """
         try:
+            # Validate inputs
+            if not category_id:
+                logger.error("Category ID is required")
+                return False
+
+            # Clean inputs
+            counterparty_name = counterparty_name.strip() if counterparty_name else None
+            description = description.strip() if description else None
+
+            # At least one of counterparty_name or description must be provided
+            if not counterparty_name and not description:
+                logger.error("Either counterparty_name or description must be provided")
+                return False
+
             session = self.db.get_session()
 
             try:
@@ -108,21 +138,22 @@ class CounterpartyService:
 
                 # Create mappings for both counterparty_name and description if they exist
                 if counterparty_name:
-                    CategoryRepository.create_category_mapping(
+                    mapping = CategoryRepository.create_category_mapping(
                         session, category_id, user_id, CategoryType.COUNTERPARTY, counterparty_name
                     )
+                    if not mapping:
+                        logger.warning(f"Failed to create mapping for counterparty: {counterparty_name}")
 
                 if description:
-                    CategoryRepository.create_category_mapping(
+                    mapping = CategoryRepository.create_category_mapping(
                         session, category_id, user_id, CategoryType.DESCRIPTION, description
                     )
+                    if not mapping:
+                        logger.warning(f"Failed to create mapping for description: {description}")
 
                 # Update all matching transactions with this category
-                from sqlalchemy import and_
+                from sqlalchemy import and_, or_
                 from money_tracker.models.models import Account
-
-                # Find all transactions with this counterparty_name or description
-                from sqlalchemy import or_
 
                 # Build the filter conditions based on what was provided
                 filter_conditions = [Account.user_id == user_id]
@@ -142,16 +173,23 @@ class CounterpartyService:
                     # Only description provided
                     filter_conditions.append(Transaction.description == description)
 
-                transactions = session.query(Transaction).join(Account).filter(
+                # Count transactions before update
+                transaction_count = session.query(Transaction).join(Account).filter(
                     *filter_conditions
-                ).all()
+                ).count()
 
-                # Update each transaction with the new category
-                for transaction in transactions:
-                    transaction.category_id = category_id
+                if transaction_count == 0:
+                    logger.info(f"No transactions found matching counterparty {counterparty_name} or description {description}")
+                    # Still return True because we created the mappings successfully
+                    return True
+
+                # Update all matching transactions
+                session.query(Transaction).join(Account).filter(
+                    *filter_conditions
+                ).update({Transaction.category_id: category_id}, synchronize_session=False)
 
                 session.commit()
-                logger.info(f"Categorized counterparty {counterparty_name} with description {description} as {category.name}")
+                logger.info(f"Categorized {transaction_count} transactions with counterparty {counterparty_name} or description {description} as {category.name}")
                 return True
             except Exception as e:
                 session.rollback()

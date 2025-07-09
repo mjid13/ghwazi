@@ -618,9 +618,21 @@ class CategoryRepository:
                     Category.user_id == user_id
                 ).all()
 
-                # Check each pattern
+                # Check each pattern - use word boundaries for more accurate matching
                 for mapping in counterparty_mappings:
-                    if mapping.pattern in transaction.counterparty_name:
+                    # Skip empty patterns
+                    if not mapping.pattern or not mapping.pattern.strip():
+                        continue
+
+                    # Check if pattern is a whole word or part of a word
+                    pattern = mapping.pattern.lower()
+                    counterparty = transaction.counterparty_name.lower()
+
+                    # Check for word boundaries or exact match
+                    if (f" {pattern} " in f" {counterparty} " or 
+                        counterparty.startswith(f"{pattern} ") or 
+                        counterparty.endswith(f" {pattern}") or 
+                        counterparty == pattern):
                         transaction.category_id = mapping.category_id
                         session.commit()
                         logger.info(f"Auto-categorized transaction {transaction_id} by counterparty_name pattern match")
@@ -634,9 +646,21 @@ class CategoryRepository:
                     Category.user_id == user_id
                 ).all()
 
-                # Check each pattern
+                # Check each pattern - use word boundaries for more accurate matching
                 for mapping in description_mappings:
-                    if mapping.pattern in transaction.description:
+                    # Skip empty patterns
+                    if not mapping.pattern or not mapping.pattern.strip():
+                        continue
+
+                    # Check if pattern is a whole word or part of a word
+                    pattern = mapping.pattern.lower()
+                    description = transaction.description.lower()
+
+                    # Check for word boundaries or exact match
+                    if (f" {pattern} " in f" {description} " or 
+                        description.startswith(f"{pattern} ") or 
+                        description.endswith(f" {pattern}") or 
+                        description == pattern):
                         transaction.category_id = mapping.category_id
                         session.commit()
                         logger.info(f"Auto-categorized transaction {transaction_id} by description pattern match")
@@ -932,23 +956,17 @@ class TransactionRepository:
                 logger.error("No user_id provided for transaction")
                 return None
 
-            account = session.query(Account).filter(
-                Account.user_id == user_id,
-                Account.account_number == account_number
-            ).first()
+            account_data = {
+                'user_id': user_id,
+                'account_number': account_number,
+                'bank_name': transaction_data.get('bank_name', 'Unknown'),
+                'currency': transaction_data.get('currency', 'OMR'),
+                'balance': transaction_data.get('balance', 0.0)
+            }
+            account = TransactionRepository.create_account(session, account_data)
 
             if not account:
-                # Create account if it doesn't exist
-                account_data = {
-                    'user_id': user_id,
-                    'account_number': account_number,
-                    'bank_name': transaction_data.get('bank_name', 'Unknown'),
-                    'currency': transaction_data.get('currency', 'OMR'),
-                    'balance': transaction_data.get('balance', 0.0)
-                }
-                account = TransactionRepository.create_account(session, account_data)
-                if not account:
-                    return None
+                return None
 
             # Check if transaction already exists (by transaction_id and date)
             if transaction_data.get('transaction_id'):
@@ -1020,14 +1038,21 @@ class TransactionRepository:
                     Transaction.account_id == account.id,
                     Transaction.id != transaction.id  # Exclude the current transaction
                 ).count()
-                is_first_scrape = existing_transactions_count == 0
+                is_first_scrape = existing_transactions_count > 0
 
             # Update balance if we're not preserving balance or if this is not the first scrape
-            if not (preserve_balance and is_first_scrape):
+            # if not (preserve_balance and is_first_scrape): # This Only update balance if not preserving or not first scrape
+            if is_first_scrape:
                 if transaction_type == TransactionType.INCOME:
                     account.balance += transaction.amount
                 elif transaction_type == TransactionType.EXPENSE:
                     account.balance -= transaction.amount
+                elif transaction_type == TransactionType.TRANSFER:
+                    # For transfers, we don't change the balance by default
+                    # This would need to be handled differently if transfers between accounts are tracked
+                    logger.info(f"Transfer transaction: {transaction.id} - not updating balance")
+                elif transaction_type == TransactionType.UNKNOWN:
+                    logger.warning(f"Unknown transaction type for transaction: {transaction.id} - not updating balance")
                 session.commit()
 
             logger.info(f"Created transaction: {transaction.id}")
@@ -1060,15 +1085,41 @@ class TransactionRepository:
             if not account:
                 return None
 
-            transactions = session.query(Transaction).filter(
-                Transaction.account_id == account.id
-            ).all()
+            # Use more efficient SQL aggregation instead of loading all transactions
+            from sqlalchemy import func, case
 
-            total_income = sum(t.amount for t in transactions if t.transaction_type == TransactionType.INCOME)
-            total_expense = sum(t.amount for t in transactions if t.transaction_type == TransactionType.EXPENSE)
-            total_transfer = sum(t.amount for t in transactions if t.transaction_type == TransactionType.TRANSFER)
-            income_count = len([t for t in transactions if t.transaction_type == TransactionType.INCOME])
-            expense_count = len([t for t in transactions if t.transaction_type == TransactionType.EXPENSE])
+            # Get transaction counts and sums by type
+            transaction_stats = session.query(
+                func.count(Transaction.id).label('total_count'),
+                func.sum(case([(Transaction.transaction_type == TransactionType.INCOME, Transaction.amount)], else_=0)).label('total_income'),
+                func.sum(case([(Transaction.transaction_type == TransactionType.EXPENSE, Transaction.amount)], else_=0)).label('total_expense'),
+                func.sum(case([(Transaction.transaction_type == TransactionType.TRANSFER, Transaction.amount)], else_=0)).label('total_transfer'),
+                func.count(case([(Transaction.transaction_type == TransactionType.INCOME, 1)], else_=None)).label('income_count'),
+                func.count(case([(Transaction.transaction_type == TransactionType.EXPENSE, 1)], else_=None)).label('expense_count')
+            ).filter(
+                Transaction.account_id == account.id
+            ).first()
+
+            # Handle case where there are no transactions
+            if not transaction_stats or transaction_stats.total_count == 0:
+                total_income = 0
+                total_expense = 0
+                total_transfer = 0
+                income_count = 0
+                expense_count = 0
+                transaction_count = 0
+            else:
+                total_income = transaction_stats.total_income or 0
+                total_expense = transaction_stats.total_expense or 0
+                total_transfer = transaction_stats.total_transfer or 0
+                income_count = transaction_stats.income_count or 0
+                expense_count = transaction_stats.expense_count or 0
+                transaction_count = transaction_stats.total_count or 0
+
+            # Get the most recent transactions for display
+            recent_transactions = session.query(Transaction).filter(
+                Transaction.account_id == account.id
+            ).order_by(Transaction.date_time.desc()).limit(10).all()
 
             return {
                 'account_number': account.account_number,
@@ -1076,12 +1127,12 @@ class TransactionRepository:
                 'account_holder': account.account_holder,
                 'balance': account.balance,
                 'currency': account.currency,
-                'transaction_count': len(transactions),
+                'transaction_count': transaction_count,
                 'total_income': total_income,
                 'total_expense': total_expense,
                 'total_transfer': total_transfer,
                 'net_balance': total_income - total_expense,
-                'transactions': transactions,
+                'transactions': recent_transactions,  # Only include recent transactions
                 'income_count': income_count,
                 'expense_count': expense_count,
             }

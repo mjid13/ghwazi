@@ -152,33 +152,23 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
             # Parse email to extract transaction data
             transaction_data = parser.parse_email(email_data, bank_name)
 
-            # Save email metadata
-            if transaction_data:
-                email_metadata = TransactionRepository.create_email_metadata(db_session, {
-                    'user_id': user_id,
-                    'id': email_data.get('id'),
-                    'subject': email_data.get('subject', ''),
-                    'from': email_data.get('from', ''),
-                    'date': email_data.get('date', ''),
-                    'body': email_data.get('body', ''),
-                    'cleaned_body': transaction_data.get('cleaned_email_content', ''),  # Save the cleaned email content
-                    'processed': True
-                })
-            else:
-                email_metadata = TransactionRepository.create_email_metadata(db_session, {
-                    'user_id': user_id,
-                    'id': email_data.get('id'),
-                    'subject': email_data.get('subject', ''),
-                    'from': email_data.get('from', ''),
-                    'date': email_data.get('date', ''),
-                    'body': email_data.get('body', ''),
-                    'processed': True
-                })
 
             if transaction_data:
                 # Check if the account is different
                 if account_number[-4:] not in transaction_data.get('account_number'):
                     continue
+
+                # Save email metadata
+                email_metadata = TransactionRepository.create_email_metadata(db_session, {
+                    'user_id': user_id,
+                    'id': email_data.get('id'),
+                    'subject': email_data.get('subject', ''),
+                    'from': email_data.get('from', ''),
+                    'date': email_data.get('date', ''),
+                    'body': email_data.get('body', ''),
+                    'cleaned_body': transaction_data.get('cleaned_email_content', ''),
+                    'processed': True
+                })
 
                 # Add user_id, account_number, and email_metadata_id to transaction data
                 transaction_data['user_id'] = user_id

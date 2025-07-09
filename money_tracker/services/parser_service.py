@@ -343,6 +343,13 @@ class TransactionParser:
         Returns:
             Optional[datetime]: Parsed datetime or None if parsing fails.
         """
+        if not date_str:
+            logger.warning("Empty date string provided")
+            return None
+
+        # Clean the date string
+        date_str = date_str.strip()
+
         try:
             # First try custom parsing for specific formats to ensure DD/MM/YY interpretation
 
@@ -355,19 +362,43 @@ class TransactionParser:
                     'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12
                 }
                 month = month_map.get(month_str.upper(), 1)
-                year = 2000 + int(year)  # Assume 20xx
-                return datetime(year, month, int(day), int(hour), int(minute))
 
-            # Format: DD/MM/YY - Force DD/MM/YY interpretation for Bank Muscat
-            match = re.match(r'(\d{1,2})/(\d{1,2})/(\d{2,4})', date_str)
+                # Handle two-digit years properly
+                current_year = datetime.now().year
+                year_prefix = str(current_year)[0:2]  # Get first 2 digits of current year
+                full_year = int(year_prefix + year)
+
+                # If the resulting year is more than 10 years in the future, assume previous century
+                if full_year > current_year + 10:
+                    full_year -= 100
+
+                return datetime(full_year, month, int(day), int(hour), int(minute))
+
+            # Format: DD/MM/YY HH:MM - Handle time component
+            match = re.match(r'(\d{1,2})/(\d{1,2})/(\d{2,4})(?:\s+(\d{1,2}):(\d{1,2}))?', date_str)
             if match:
-                day, month, year = match.groups()
+                groups = match.groups()
+                day, month, year = groups[0:3]
+
+                # Handle two-digit years properly
                 if len(year) == 2:
-                    year = 2000 + int(year)  # Assume 20xx
+                    current_year = datetime.now().year
+                    year_prefix = str(current_year)[0:2]  # Get first 2 digits of current year
+                    full_year = int(year_prefix + year)
+
+                    # If the resulting year is more than 10 years in the future, assume previous century
+                    if full_year > current_year + 10:
+                        full_year -= 100
                 else:
-                    year = int(year)
+                    full_year = int(year)
+
+                # Handle time component if present
+                hour, minute = 0, 0
+                if len(groups) > 3 and groups[3] is not None and groups[4] is not None:
+                    hour, minute = int(groups[3]), int(groups[4])
+
                 # Explicitly use DD/MM/YY format (day first, then month)
-                return datetime(year, int(month), int(day))
+                return datetime(full_year, int(month), int(day), hour, minute)
 
         except Exception as e:
             logger.warning(f"Failed to parse date with custom parser: {str(e)}")
@@ -377,10 +408,17 @@ class TransactionParser:
             # Use dayfirst=True to prioritize DD/MM/YY format over MM/DD/YY
             dt = dateutil.parser.parse(date_str, dayfirst=True)
 
-            # Handle two-digit years
+            # Handle two-digit years properly
             if dt.year < 100:
-                # Assume 20xx for years less than 100
-                dt = dt.replace(year=2000 + dt.year)
+                current_year = datetime.now().year
+                year_prefix = str(current_year)[0:2]  # Get first 2 digits of current year
+                full_year = int(year_prefix + str(dt.year).zfill(2))
+
+                # If the resulting year is more than 10 years in the future, assume previous century
+                if full_year > current_year + 10:
+                    full_year -= 100
+
+                dt = dt.replace(year=full_year)
 
             return dt
         except Exception as e:
@@ -390,7 +428,8 @@ class TransactionParser:
 
     def _validate_transaction_data(self, data: Dict[str, Any]) -> bool:
         """
-        Validate that the extracted transaction data has the minimum required fields.
+        Validate that the extracted transaction data has the minimum required fields
+        and that the values are of the correct type and within valid ranges.
 
         Args:
             data (Dict[str, Any]): Transaction data to validate.
@@ -398,11 +437,45 @@ class TransactionParser:
         Returns:
             bool: True if data is valid, False otherwise.
         """
+        # Check required fields exist
         required_fields = ['transaction_type', 'account_number', 'amount']
-
         for field in required_fields:
             if field not in data or data[field] is None:
                 logger.warning(f"Missing required field: {field}")
+                return False
+
+        # Validate transaction_type
+        valid_types = ['income', 'expense', 'transfer', 'unknown']
+        if data['transaction_type'] not in valid_types:
+            logger.warning(f"Invalid transaction_type: {data['transaction_type']}")
+            data['transaction_type'] = 'unknown'  # Set to default if invalid
+
+        # Validate account_number
+        if not isinstance(data['account_number'], str) or not data['account_number'].strip():
+            logger.warning(f"Invalid account_number: {data['account_number']}")
+            return False
+
+        # Validate amount
+        try:
+            # Ensure amount is a float
+            if not isinstance(data['amount'], float):
+                data['amount'] = float(data['amount'])
+
+            # Check for unreasonable amounts (e.g., negative or extremely large)
+            if data['amount'] < 0:
+                logger.warning(f"Negative amount: {data['amount']}")
+                # Don't return False, just log the warning
+            elif data['amount'] > 1000000:  # Arbitrary large amount threshold
+                logger.warning(f"Unusually large amount: {data['amount']}")
+                # Don't return False, just log the warning
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid amount: {data['amount']}")
+            return False
+
+        # Validate date_time if present
+        if 'date_time' in data and data['date_time'] is not None:
+            if not isinstance(data['date_time'], datetime):
+                logger.warning(f"Invalid date_time: {data['date_time']}")
                 return False
 
         return True
