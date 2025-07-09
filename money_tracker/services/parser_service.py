@@ -187,12 +187,19 @@ class TransactionParser:
         if type_match:
             data['transaction_type'] = type_match.group(1).lower()
 
-        # Amount and currency: Currency code with decimal or integer (with optional commas)
-        amount_re = re.compile(r'([A-Z]{3})\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
+
+            # Amount and currency: Currency code with decimal or integer (with optional commas)
+        currency_re = re.compile(r'\s([A-Z]{3})\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
+        currency_match = currency_re.search(email_text)
+        if currency_match:
+            data['currency'] = currency_match.group(1).upper()
+
+
+        amount_re = re.compile(rf'{currency_match.group(1).upper()}\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
+
         amount_match = amount_re.search(email_text)
         if amount_match:
-            data['currency'] = amount_match.group(1).upper()
-            data['amount'] = amount_match.group(2).replace(',', '')
+            data['amount'] = amount_match.group(1).replace(',', '')
 
         # Date (two formats): "value date dd/mm/yy" or "Date/Time : 22 JUN 25 20:29"
         date_re1 = re.compile(r'value date\s+(\d{2}/\d{2}/\d{2})', re.IGNORECASE)
@@ -437,6 +444,8 @@ class TransactionParser:
         Returns:
             bool: True if data is valid, False otherwise.
         """
+
+        logger.info(f"Validating transaction data: {data}")
         # Check required fields exist
         required_fields = ['transaction_type', 'account_number', 'amount']
         for field in required_fields:
