@@ -220,12 +220,15 @@ class TransactionParser:
         desc_re = re.compile(r'Description\s*:\s*(.+)', re.IGNORECASE)
         desc_match = desc_re.search(email_text)
         if desc_match:
-            data['description'] = desc_match.group(1).strip()
+            description= desc_match.group(1).strip()
+            data['description'] = description
 
         # Counterparty (Sender/Receiver) name
-        data['counterparty_name'] = self._get_name(email_text)
-
-        # Transaction ID: "Txn Id <id>"
+        counterparty_name = self._get_name(email_text)
+        if counterparty_name:
+            data['counterparty_name'] = counterparty_name
+        else:
+            data['counterparty_name'] = '-'.join(description.split('-')[1:]).strip() if description else None
         txn_id_re = re.compile(r'Txn Id\s+(\w+)', re.IGNORECASE)
         txn_id_match = txn_id_re.search(email_text)
         if txn_id_match:

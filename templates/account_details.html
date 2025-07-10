@@ -373,7 +373,10 @@
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger">Delete Account</button>
+                <form method="post" action="{{ url_for('delete_account', account_id=account.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete Account</button>
+                </form>
             </div>
         </div>
     </div>

@@ -555,15 +555,10 @@ def delete_account(account_id):
             flash('Account not found or you do not have permission to delete it', 'error')
             return redirect(url_for('dashboard'))
 
-        # Check if account has transactions
-        transactions = db_session.query(Transaction).filter(
-            Transaction.account_id == account.id
-        ).first()
+        # First delete all transactions associated with the account
+        db_session.query(Transaction).filter(Transaction.account_id == account.id).delete()
 
-        if transactions:
-            flash('Cannot delete account with transactions', 'error')
-            return redirect(url_for('dashboard'))
-
+        # Then delete the account
         db_session.delete(account)
         db_session.commit()
         flash('Account deleted successfully', 'success')
