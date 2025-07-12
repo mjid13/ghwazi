@@ -102,6 +102,10 @@ class TransactionParser:
         if counterparty_match:
             # Clean up spaces, remove extra whitespace
             name = ' '.join(counterparty_match.group(1).split())
+            if name.upper().startswith('TRANSFER'):
+                name = name[8:].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
+            if name.endswith('from your a') or name.endswith('in your a'):
+                name = ' '.join(name.split()[:-3]).strip()  # Remove 'from your account' or 'in your account'
             return name
         else:
             # fallback: try to find uppercase name lines near transaction details (like Email #1)
@@ -110,6 +114,10 @@ class TransactionParser:
             names = counterparty_re2.findall(email_text)
             if names:  # Check if names list is not empty
                 name = ' '.join(names[0].split())
+                if name.upper().startswith('TRANSFER'):
+                    name = name[8:].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
+                if name.endswith('from your a') or name.endswith('in your a'):
+                    name = ' '.join(name.split()[:-3]).strip()  # Remove 'from your account' or 'in your account'
                 return name
             else:
                 return None
