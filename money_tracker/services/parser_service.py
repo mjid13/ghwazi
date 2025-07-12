@@ -196,12 +196,24 @@ class TransactionParser:
             data['transaction_type'] = type_match.group(1).lower()
 
 
-            # Amount and currency: Currency code with decimal or integer (with optional commas)
-        currency_re = re.compile(r'\s([A-Z]{3})\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
+        # Amount and currency: Currency code with decimal or integer (with optional commas)
+        # Valid currency codes (ISO 4217)
+        valid_currencies = [
+            'OMR', 'USD', 'EUR', 'GBP', 'AED', 'SAR', 'QAR', 'KWD', 'BHD', 'JPY',
+            # 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF',
+            # 'TRY', 'ZAR', 'INR', 'CNY', 'SGD', 'HKD', 'MYR', 'THB', 'IDR', 'PHP',
+            # 'KRW', 'TWD', 'VND', 'BRL', 'MXN', 'CLP', 'COP', 'PEN', 'ARS', 'UYU',
+            # 'EGP', 'MAD', 'TND', 'DZD', 'LYD', 'SDG', 'ETB', 'KES', 'UGX', 'TZS',
+            # 'GHS', 'NGN', 'XOF', 'XAF', 'ZMW', 'BWP', 'MZN', 'AOA', 'RUB', 'UAH',
+            # 'BYN', 'GEL', 'AMD', 'AZN', 'KZT', 'UZS', 'KGS', 'TJS', 'TMT', 'MNT'
+        ]
+
+        # Create pattern that matches valid currency codes
+        currency_pattern = r'\s(' + '|'.join(valid_currencies) + r')\s*([\d,]+\.\d+|[\d,]+)'
+        currency_re = re.compile(currency_pattern, re.IGNORECASE)
         currency_match = currency_re.search(email_text)
         if currency_match:
             data['currency'] = currency_match.group(1).upper()
-
 
         amount_re = re.compile(rf'{currency_match.group(1).upper()}\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
 
