@@ -1033,7 +1033,7 @@ class TransactionRepository:
                 transaction_type=transaction_type,
                 amount=transaction_data.get('amount', 0.0),
                 currency=transaction_data.get('currency', 'OMR'),
-                value_date=transaction_data.get('date_time', None),  # Using date_time from input for backward compatibility
+                value_date=transaction_data.get('value_date', None),  # Using date_time from input for backward compatibility
                 description=transaction_data.get('description'),
                 transaction_id=transaction_data.get('transaction_id'),
                 bank_name=transaction_data.get('bank_name'),
@@ -1046,7 +1046,7 @@ class TransactionRepository:
                 transaction_details=transaction_data.get('transaction_details'),
                 country=transaction_data.get('country'),
                 email_id=transaction_data.get('email_id'),
-                post_date=transaction_data.get('email_date'),  # Using email_date from input for backward compatibility
+                post_date=transaction_data.get('post_date'),  # Using email_date from input for backward compatibility
                 cleaned_email_content=transaction_data.get('cleaned_email_content')
             )
 
