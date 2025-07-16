@@ -181,7 +181,6 @@ class Category(Base):
         UniqueConstraint('user_id', 'name', name='_user_category_uc'),
     )
 
-
 class CategoryMapping(Base):
     """Model for mapping transactions to categories based on counterparty or description."""
     __tablename__ = 'category_mappings'
@@ -200,7 +199,6 @@ class CategoryMapping(Base):
     __table_args__ = (
         UniqueConstraint('category_id', 'mapping_type', 'pattern', name='_category_mapping_uc'),
     )
-
 
 class Transaction(Base):
     """Transaction model representing a financial transaction."""
@@ -760,7 +758,6 @@ class CategoryRepository:
             session.rollback()
             logger.error(f"Error categorizing transaction: {str(e)}")
             return None
-
 
 class TransactionRepository:
     """Repository class for transaction operations."""
