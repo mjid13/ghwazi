@@ -198,14 +198,9 @@ class TransactionParser:
 
         # Amount and currency: Currency code with decimal or integer (with optional commas)
         # Valid currency codes (ISO 4217)
+        # TODO: This list shuld be dynamic or configurable by the user or admin
         valid_currencies = [
             'OMR', 'USD', 'EUR', 'GBP', 'AED', 'SAR', 'QAR', 'KWD', 'BHD', 'JPY',
-            # 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF',
-            # 'TRY', 'ZAR', 'INR', 'CNY', 'SGD', 'HKD', 'MYR', 'THB', 'IDR', 'PHP',
-            # 'KRW', 'TWD', 'VND', 'BRL', 'MXN', 'CLP', 'COP', 'PEN', 'ARS', 'UYU',
-            # 'EGP', 'MAD', 'TND', 'DZD', 'LYD', 'SDG', 'ETB', 'KES', 'UGX', 'TZS',
-            # 'GHS', 'NGN', 'XOF', 'XAF', 'ZMW', 'BWP', 'MZN', 'AOA', 'RUB', 'UAH',
-            # 'BYN', 'GEL', 'AMD', 'AZN', 'KZT', 'UZS', 'KGS', 'TJS', 'TMT', 'MNT'
         ]
 
         # Create pattern that matches valid currency codes
@@ -236,6 +231,12 @@ class TransactionParser:
                 data['transaction_details'] = detail
                 break
 
+        # Country: "Transaction Country : <text>"
+        country_re = re.compile(r'Transaction Country\s*:\s*(.+)', re.IGNORECASE)
+        country_match = country_re.search(email_text)
+        if country_match:
+            data['country'] = country_match.group(1).strip()
+
         # Description: "Description : <text>"
         desc_re = re.compile(r'Description\s*:\s*(.+)', re.IGNORECASE)
         desc_match = desc_re.search(email_text)
@@ -244,18 +245,13 @@ class TransactionParser:
             description = desc_match.group(1).strip()
             data['description'] = description
 
-        # Country: "Transaction Country : <text>"
-        country_re = re.compile(r'Transaction Country\s*:\s*(.+)', re.IGNORECASE)
-        country_match = country_re.search(email_text)
-        if country_match:
-            data['country'] = country_match.group(1).strip()
-
         # Counterparty (Sender/Receiver) name
         counterparty_name = self._get_name(email_text)
         if counterparty_name:
             data['counterparty_name'] = counterparty_name
         elif description:
             data['counterparty_name'] = '-'.join(description.split('-')[1:]).strip()
+
         txn_id_re = re.compile(r'Txn Id\s+(\w+)', re.IGNORECASE)
         txn_id_match = txn_id_re.search(email_text)
         if txn_id_match:
@@ -269,10 +265,10 @@ class TransactionParser:
         if txn_type == 'expense':
             # "Me" is sender, Recipient is 'to'
             data['from'] = 'me'
-            data['to'] = self._get_name(email_text)
+            data['to'] = data['counterparty_name']
         elif txn_type == 'income':
             # Extract sender as 'from', "Me" is receiving
-            data['from'] = self._get_name(email_text)
+            data['from'] = data['counterparty_name']
             data['to'] = 'me'
         else:
             data['from'] = None
@@ -307,9 +303,9 @@ class TransactionParser:
             transaction_data = {
                 'bank_name': bank_name,
                 'email_id': email_data.get('id'),
-                'post_date': email_data.get('date'),  # Renamed from email_date
+                'post_date': email_data.get('date'),
                 'currency': extracted_data.get('currency', 'OMR'),
-                'cleaned_email_content': clean_text  # Include the cleaned email content
+                'cleaned_email_content': clean_text
             }
 
             # Map the extracted data to transaction_data
@@ -343,22 +339,12 @@ class TransactionParser:
             if extracted_data.get('transaction_id'):
                 transaction_data['transaction_id'] = extracted_data['transaction_id']
 
-            if extracted_data.get('description'):
-                transaction_data['description'] = extracted_data['description']
 
             if extracted_data.get('branch'):
                 transaction_data['branch'] = extracted_data['branch']
 
-            # Handle sender/receiver based on transaction type
-            if extracted_data.get('from') and extracted_data.get('from') != 'me':
-                transaction_data['transaction_sender'] = extracted_data['from']
-
-            if extracted_data.get('to') and extracted_data.get('to') != 'me':
-                transaction_data['transaction_receiver'] = extracted_data['to']
-
-            # Add the new fields
-            transaction_data['from_party'] = extracted_data.get('from')
-            transaction_data['to_party'] = extracted_data.get('to')
+            transaction_data['transaction_sender'] = extracted_data.get('from')
+            transaction_data['transaction_receiver'] = extracted_data.get('to')
             transaction_data['counterparty_name'] = extracted_data.get('counterparty_name')
             transaction_data['transaction_details'] = extracted_data.get('transaction_details')
 

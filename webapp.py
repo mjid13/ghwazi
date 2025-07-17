@@ -60,8 +60,25 @@ scraping_accounts = {}
 
 def process_emails_task(task_id, user_id, account_number, bank_name, folder, unread_only, save_to_db, preserve_balance):
     """Background task for processing emails."""
-    db_session = db.get_session()
+    logger.debug(f"Starting background task {task_id} for user {user_id} on account {account_number}")
+
     try:
+
+        db_session = db.get_session()
+        email_service = EmailService.from_user_config(db_session, user_id)
+        if not email_service:
+            logger.error(f"Failed to create email service for user {user_id}")
+            return
+
+        logger.debug(f"Email service created successfully for user {user_id}")
+
+        # Check if connection succeeds
+        if not email_service.connect():
+            logger.error(f"Failed to connect to email server for user {user_id}")
+            return
+
+        logger.debug(f"Connected to email server for user {user_id}")
+
         # Update task status
         with email_tasks_lock:
             email_tasks[task_id]['status'] = 'processing'
@@ -78,6 +95,7 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
             with email_tasks_lock:
                 email_tasks[task_id]['status'] = 'error'
                 email_tasks[task_id]['message'] = 'Account not found'
+            logger.error(f"Account {account_number} not found for user {user_id}")
             return
 
         # Check if the account has an associated email configuration
@@ -85,6 +103,7 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
             with email_tasks_lock:
                 email_tasks[task_id]['status'] = 'error'
                 email_tasks[task_id]['message'] = 'This account does not have an associated email configuration'
+            logger.error(f"Account {account_number} does not have an associated email configuration for user {user_id}")
             return
 
         # Get the email configuration for this account
@@ -96,9 +115,11 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
             with email_tasks_lock:
                 email_tasks[task_id]['status'] = 'error'
                 email_tasks[task_id]['message'] = 'Email configuration not found'
+            logger.error(f"Email configuration not found for account {account_number} of user {user_id}")
             return
 
         # Create email service from the account's email configuration
+        logger.debug(f"Creating email service for account {account_number}")
         email_service = EmailService(
             host=email_config.email_host,
             port=email_config.email_port,
@@ -114,10 +135,12 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
             with email_tasks_lock:
                 email_tasks[task_id]['status'] = 'error'
                 email_tasks[task_id]['message'] = 'Failed to connect to email server'
+            logger.debug(f"Failed to connect to email server for account {account_number}")
             return
 
         # Get bank emails
         emails = email_service.get_bank_emails(folder=folder, unread_only=unread_only)
+        logger.debug(f"Fetched {len(emails)} emails for account {account_number} in folder '{folder}'")
 
         if not emails:
             with email_tasks_lock:
@@ -125,6 +148,7 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
                 email_tasks[task_id]['message'] = 'No bank emails found'
                 email_tasks[task_id]['progress'] = 100
                 email_tasks[task_id]['end_time'] = time.time()
+            logger.debug(f"No bank emails found for account {account_number}")
             return
 
         # Parse each email and store results
@@ -1065,10 +1089,12 @@ def fetch_emails():
 
         # Start background thread
         try:
+            logger.debug('starting email processing thread')
             thread = threading.Thread(
                 target=process_emails_task,
                 args=(task_id, user_id, account_number, bank_name, folder, unread_only, save_to_db, preserve_balance)
             )
+            logger.debug(f'Starting thread for task {task_id} for account {account_number}')
             thread.daemon = True
             thread.start()
         except Exception as e:
