@@ -231,6 +231,12 @@ class TransactionParser:
                 data['transaction_details'] = detail
                 break
 
+        # Country: "Transaction Country : <text>"
+        country_re = re.compile(r'Transaction Country\s*:\s*(.+)', re.IGNORECASE)
+        country_match = country_re.search(email_text)
+        if country_match:
+            data['country'] = country_match.group(1).strip()
+
         # Description: "Description : <text>"
         desc_re = re.compile(r'Description\s*:\s*(.+)', re.IGNORECASE)
         desc_match = desc_re.search(email_text)
@@ -239,18 +245,13 @@ class TransactionParser:
             description = desc_match.group(1).strip()
             data['description'] = description
 
-        # Country: "Transaction Country : <text>"
-        country_re = re.compile(r'Transaction Country\s*:\s*(.+)', re.IGNORECASE)
-        country_match = country_re.search(email_text)
-        if country_match:
-            data['country'] = country_match.group(1).strip()
-
         # Counterparty (Sender/Receiver) name
         counterparty_name = self._get_name(email_text)
         if counterparty_name:
             data['counterparty_name'] = counterparty_name
         elif description:
             data['counterparty_name'] = '-'.join(description.split('-')[1:]).strip()
+
         txn_id_re = re.compile(r'Txn Id\s+(\w+)', re.IGNORECASE)
         txn_id_match = txn_id_re.search(email_text)
         if txn_id_match:
@@ -264,10 +265,10 @@ class TransactionParser:
         if txn_type == 'expense':
             # "Me" is sender, Recipient is 'to'
             data['from'] = 'me'
-            data['to'] = self._get_name(email_text)
+            data['to'] = data['counterparty_name']
         elif txn_type == 'income':
             # Extract sender as 'from', "Me" is receiving
-            data['from'] = self._get_name(email_text)
+            data['from'] = data['counterparty_name']
             data['to'] = 'me'
         else:
             data['from'] = None
