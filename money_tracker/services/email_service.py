@@ -182,192 +182,192 @@ class EmailService:
             logger.debug("Exception in get_bank_emails: ", exc_info=True)
             return []
 
-def _fetch_email(self, email_id: bytes) -> Optional[Dict[str, Any]]:
-    """
-    Fetch and parse an email by ID with retry logic.
+    def _fetch_email(self, email_id: bytes) -> Optional[Dict[str, Any]]:
+        """
+        Fetch and parse an email by ID with retry logic.
 
-    Args:
-        email_id (bytes): Email ID to fetch.
+        Args:
+            email_id (bytes): Email ID to fetch.
 
-    Returns:
-        Optional[Dict[str, Any]]: Email data dictionary or None if error.
-    """
-    for attempt in range(self.max_retries):
-        try:
-            logger.debug("Fetching email using ID: %s (attempt %d/%d)",
-                         email_id, attempt + 1, self.max_retries)
+        Returns:
+            Optional[Dict[str, Any]]: Email data dictionary or None if error.
+        """
+        for attempt in range(self.max_retries):
+            try:
+                logger.debug("Fetching email using ID: %s (attempt %d/%d)",
+                             email_id, attempt + 1, self.max_retries)
 
-            # Check connection before fetching
-            if not self._reconnect_if_needed():
-                logger.error("Cannot establish connection for email fetch")
-                return None
-
-            status, data = self.connection.fetch(email_id, '(RFC822)')
-            logger.debug("Fetch status: %s, data length: %d", status, len(data) if data else 0)
-
-            if status != 'OK':
-                logger.error(f"Failed to fetch email {email_id}")
-                # Try with different fetch parameters on next attempt
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying with different fetch parameters...")
-                    time.sleep(self.retry_delay)
-                    continue
-                return None
-
-            # Validate the response structure
-            if not data or len(data) == 0:
-                logger.error(f"Empty response for email {email_id}")
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying due to empty response...")
-                    time.sleep(self.retry_delay)
-                    continue
-                return None
-
-            # Check if we have the expected tuple structure
-            if not isinstance(data[0], tuple) or len(data[0]) < 2:
-                logger.error(f"Unexpected response structure for email {email_id}: {type(data[0])}")
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying due to unexpected response structure...")
-                    time.sleep(self.retry_delay)
-                    continue
-                return None
-
-            raw_email = data[0][1]
-
-            # Validate that raw_email is bytes
-            if not isinstance(raw_email, bytes):
-                logger.error(f"Expected bytes for raw email data, got {type(raw_email)} for email {email_id}")
-
-                # Try alternative fetch methods on retry
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying with alternative fetch method...")
-                    time.sleep(self.retry_delay)
-
-                    # Try different fetch approaches
-                    try:
-                        # Method 1: Try fetching with BODY[] instead of RFC822
-                        logger.debug("Attempting fetch with BODY[] method")
-                        status, alt_data = self.connection.fetch(email_id, '(BODY[])')
-                        if status == 'OK' and alt_data and len(alt_data) > 0:
-                            if isinstance(alt_data[0], tuple) and len(alt_data[0]) >= 2:
-                                alt_raw_email = alt_data[0][1]
-                                if isinstance(alt_raw_email, bytes):
-                                    raw_email = alt_raw_email
-                                    logger.debug("Successfully fetched with BODY[] method")
-                                    # Continue with processing
-                                else:
-                                    logger.debug("BODY[] method also returned non-bytes data")
-                                    continue
-
-                    except Exception as e:
-                        logger.warning(f"Alternative fetch method failed: {str(e)}")
-                        continue
-                else:
+                # Check connection before fetching
+                if not self._reconnect_if_needed():
+                    logger.error("Cannot establish connection for email fetch")
                     return None
 
-            # Try to parse the email
-            try:
-                msg = email.message_from_bytes(raw_email)
-            except Exception as e:
-                logger.error(f"Failed to parse email message: {str(e)}")
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying email parsing...")
-                    time.sleep(self.retry_delay)
-                    continue
-                return None
+                status, data = self.connection.fetch(email_id, '(RFC822)')
+                logger.debug("Fetch status: %s, data length: %d", status, len(data) if data else 0)
 
-            # Extract email components with error handling
-            try:
-                subject = self._decode_header(msg['Subject'])
-                from_addr = self._decode_header(msg['From'])
-                date = msg['Date']
-            except Exception as e:
-                logger.error(f"Failed to extract email headers: {str(e)}")
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying header extraction...")
-                    time.sleep(self.retry_delay)
-                    continue
-                return None
+                if status != 'OK':
+                    logger.error(f"Failed to fetch email {email_id}")
+                    # Try with different fetch parameters on next attempt
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying with different fetch parameters...")
+                        time.sleep(self.retry_delay)
+                        continue
+                    return None
 
-            # Extract body with error handling
-            body = ""
-            try:
-                if msg.is_multipart():
-                    for part in msg.walk():
-                        content_type = part.get_content_type()
-                        content_disposition = str(part.get("Content-Disposition"))
-                        logger.debug("Email part content_type: %s, content_disposition: %s", content_type, content_disposition)
-                        if "attachment" in content_disposition:
-                            logger.debug("Skipping attachment part")
-                            continue
+                # Validate the response structure
+                if not data or len(data) == 0:
+                    logger.error(f"Empty response for email {email_id}")
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying due to empty response...")
+                        time.sleep(self.retry_delay)
+                        continue
+                    return None
 
-                        # Get text content
-                        if content_type == "text/plain":
-                            try:
-                                body_part = part.get_payload(decode=True)
-                                if body_part:
-                                    if isinstance(body_part, bytes):
-                                        body += body_part.decode('utf-8', errors='ignore')
+                # Check if we have the expected tuple structure
+                if not isinstance(data[0], tuple) or len(data[0]) < 2:
+                    logger.error(f"Unexpected response structure for email {email_id}: {type(data[0])}")
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying due to unexpected response structure...")
+                        time.sleep(self.retry_delay)
+                        continue
+                    return None
+
+                raw_email = data[0][1]
+
+                # Validate that raw_email is bytes
+                if not isinstance(raw_email, bytes):
+                    logger.error(f"Expected bytes for raw email data, got {type(raw_email)} for email {email_id}")
+
+                    # Try alternative fetch methods on retry
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying with alternative fetch method...")
+                        time.sleep(self.retry_delay)
+
+                        # Try different fetch approaches
+                        try:
+                            # Method 1: Try fetching with BODY[] instead of RFC822
+                            logger.debug("Attempting fetch with BODY[] method")
+                            status, alt_data = self.connection.fetch(email_id, '(BODY[])')
+                            if status == 'OK' and alt_data and len(alt_data) > 0:
+                                if isinstance(alt_data[0], tuple) and len(alt_data[0]) >= 2:
+                                    alt_raw_email = alt_data[0][1]
+                                    if isinstance(alt_raw_email, bytes):
+                                        raw_email = alt_raw_email
+                                        logger.debug("Successfully fetched with BODY[] method")
+                                        # Continue with processing
                                     else:
-                                        body += str(body_part)
-                            except Exception as e:
-                                logger.warning(f"Error decoding email part: {str(e)}")
-                                logger.debug("Exception in decoding multipart: ", exc_info=True)
-                else:
-                    # Not multipart - get payload directly
-                    try:
-                        payload = msg.get_payload(decode=True)
-                        if payload:
-                            if isinstance(payload, bytes):
-                                body = payload.decode('utf-8', errors='ignore')
-                            else:
-                                body = str(payload)
-                    except Exception as e:
-                        logger.warning(f"Error decoding email body: {str(e)}")
-                        logger.debug("Exception in non-multipart decoding: ", exc_info=True)
-            except Exception as e:
-                logger.error(f"Failed to extract email body: {str(e)}")
-                if attempt < self.max_retries - 1:
-                    logger.info("Retrying body extraction...")
-                    time.sleep(self.retry_delay)
-                    continue
-                # Return partial data if body extraction fails but headers are available
+                                        logger.debug("BODY[] method also returned non-bytes data")
+                                        continue
+
+                        except Exception as e:
+                            logger.warning(f"Alternative fetch method failed: {str(e)}")
+                            continue
+                    else:
+                        return None
+
+                # Try to parse the email
+                try:
+                    msg = email.message_from_bytes(raw_email)
+                except Exception as e:
+                    logger.error(f"Failed to parse email message: {str(e)}")
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying email parsing...")
+                        time.sleep(self.retry_delay)
+                        continue
+                    return None
+
+                # Extract email components with error handling
+                try:
+                    subject = self._decode_header(msg['Subject'])
+                    from_addr = self._decode_header(msg['From'])
+                    date = msg['Date']
+                except Exception as e:
+                    logger.error(f"Failed to extract email headers: {str(e)}")
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying header extraction...")
+                        time.sleep(self.retry_delay)
+                        continue
+                    return None
+
+                # Extract body with error handling
                 body = ""
+                try:
+                    if msg.is_multipart():
+                        for part in msg.walk():
+                            content_type = part.get_content_type()
+                            content_disposition = str(part.get("Content-Disposition"))
+                            logger.debug("Email part content_type: %s, content_disposition: %s", content_type, content_disposition)
+                            if "attachment" in content_disposition:
+                                logger.debug("Skipping attachment part")
+                                continue
 
-            # Successfully parsed email
-            email_data = {
-                'id': email_id.decode(),
-                'subject': subject,
-                'from': from_addr,
-                'date': date,
-                'body': body,
-                'raw_message': msg
-            }
+                            # Get text content
+                            if content_type == "text/plain":
+                                try:
+                                    body_part = part.get_payload(decode=True)
+                                    if body_part:
+                                        if isinstance(body_part, bytes):
+                                            body += body_part.decode('utf-8', errors='ignore')
+                                        else:
+                                            body += str(body_part)
+                                except Exception as e:
+                                    logger.warning(f"Error decoding email part: {str(e)}")
+                                    logger.debug("Exception in decoding multipart: ", exc_info=True)
+                    else:
+                        # Not multipart - get payload directly
+                        try:
+                            payload = msg.get_payload(decode=True)
+                            if payload:
+                                if isinstance(payload, bytes):
+                                    body = payload.decode('utf-8', errors='ignore')
+                                else:
+                                    body = str(payload)
+                        except Exception as e:
+                            logger.warning(f"Error decoding email body: {str(e)}")
+                            logger.debug("Exception in non-multipart decoding: ", exc_info=True)
+                except Exception as e:
+                    logger.error(f"Failed to extract email body: {str(e)}")
+                    if attempt < self.max_retries - 1:
+                        logger.info("Retrying body extraction...")
+                        time.sleep(self.retry_delay)
+                        continue
+                    # Return partial data if body extraction fails but headers are available
+                    body = ""
 
-            logger.debug("Successfully parsed email %s", email_id)
-            return email_data
+                # Successfully parsed email
+                email_data = {
+                    'id': email_id.decode(),
+                    'subject': subject,
+                    'from': from_addr,
+                    'date': date,
+                    'body': body,
+                    'raw_message': msg
+                }
 
-        except (socket.error, ssl.SSLError, imaplib.IMAP4.abort) as e:
-            logger.warning(f"Network error fetching email {email_id} (attempt {attempt + 1}): {str(e)}")
-            if attempt < self.max_retries - 1:
-                logger.info(f"Retrying email fetch in {self.retry_delay} seconds...")
-                time.sleep(self.retry_delay)
-                # Reset connection on network errors
-                self.connection = None
-            else:
-                logger.error(f"All fetch attempts failed for email {email_id}")
+                logger.debug("Successfully parsed email %s", email_id)
+                return email_data
 
-        except Exception as e:
-            logger.error(f"Unexpected error processing email {email_id}: {str(e)}")
-            logger.debug("Exception in _fetch_email: ", exc_info=True)
-            if attempt < self.max_retries - 1:
-                logger.info(f"Retrying due to unexpected error in {self.retry_delay} seconds...")
-                time.sleep(self.retry_delay)
-            else:
-                logger.error(f"All retry attempts exhausted for email {email_id}")
-                break
+            except (socket.error, ssl.SSLError, imaplib.IMAP4.abort) as e:
+                logger.warning(f"Network error fetching email {email_id} (attempt {attempt + 1}): {str(e)}")
+                if attempt < self.max_retries - 1:
+                    logger.info(f"Retrying email fetch in {self.retry_delay} seconds...")
+                    time.sleep(self.retry_delay)
+                    # Reset connection on network errors
+                    self.connection = None
+                else:
+                    logger.error(f"All fetch attempts failed for email {email_id}")
 
-    return None
+            except Exception as e:
+                logger.error(f"Unexpected error processing email {email_id}: {str(e)}")
+                logger.debug("Exception in _fetch_email: ", exc_info=True)
+                if attempt < self.max_retries - 1:
+                    logger.info(f"Retrying due to unexpected error in {self.retry_delay} seconds...")
+                    time.sleep(self.retry_delay)
+                else:
+                    logger.error(f"All retry attempts exhausted for email {email_id}")
+                    break
+
+        return None
 
     def _is_bank_email(self, email_data: Dict[str, Any]) -> bool:
         """
