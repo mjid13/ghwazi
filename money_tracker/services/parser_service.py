@@ -344,16 +344,9 @@ class TransactionParser:
             if extracted_data.get('branch'):
                 transaction_data['branch'] = extracted_data['branch']
 
-            # Handle sender/receiver based on transaction type
-            if extracted_data.get('from') and extracted_data.get('from') != 'me':
-                transaction_data['transaction_sender'] = extracted_data['from']
-
-            if extracted_data.get('to') and extracted_data.get('to') != 'me':
-                transaction_data['transaction_receiver'] = extracted_data['to']
-
             # Add the new fields
-            transaction_data['from_party'] = extracted_data.get('from')
-            transaction_data['to_party'] = extracted_data.get('to')
+            transaction_data['transaction_sender'] = extracted_data.get('from')
+            transaction_data['transaction_receiver'] = extracted_data.get('to')
             transaction_data['counterparty_name'] = extracted_data.get('counterparty_name')
             transaction_data['transaction_details'] = extracted_data.get('transaction_details')
 

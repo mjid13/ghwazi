@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class CategoryType(enum.Enum):
     """Enum for category types."""
     COUNTERPARTY = 'counterparty'
-    DESCRIPTION = 'description'
+    # DESCRIPTION = 'description'
 
 class TransactionType(enum.Enum):
     """Enum for transaction types."""
@@ -124,6 +124,7 @@ class Account(Base):
     account_number = Column(String(50), nullable=False)
     bank_name = Column(String(100), nullable=False)
     account_holder = Column(String(100))
+    branch = Column(String(200), nullable=True)
     balance = Column(Float, default=0.0)
     currency = Column(String(10), default='OMR')
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -211,13 +212,8 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     currency = Column(String(10), default='OMR')
     value_date = Column(DateTime, nullable=True)
-    description = Column(Text)
     transaction_id = Column(String(100))  # Bank's transaction reference
     category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
-
-    # Bank-specific fields
-    bank_name = Column(String(100))
-    branch = Column(String(200))
 
     # Counterparty information
     transaction_sender = Column(String(200))
@@ -233,7 +229,6 @@ class Transaction(Base):
     country = Column(String(100))
 
     # Email tracking (deprecated, use email_metadata relationship instead)
-    email_id = Column(String(100))
     post_date = Column(String(200))
 
     # Cleaned email content for hover display
@@ -258,6 +253,28 @@ class Transaction(Base):
     def email_date(self):
         """Backward compatibility property for post_date."""
         return self.post_date
+        
+    @property
+    def description(self):
+        """Backward compatibility property for description.
+        Returns transaction_details or counterparty_name as fallback."""
+        return self.transaction_details or self.counterparty_name or None
+        
+    @property
+    def email_id(self):
+        """Backward compatibility property for email_id.
+        Returns email_id from email_metadata if available."""
+        if self.email_metadata:
+            return self.email_metadata.email_id
+        return None
+        
+    @property
+    def bank_name(self):
+        """Backward compatibility property for bank_name.
+        Returns bank_name from account if available."""
+        if self.account:
+            return self.account.bank_name
+        return None
 
 class CategoryRepository:
     """Repository class for category operations."""
@@ -905,6 +922,7 @@ class TransactionRepository:
                 account_number=account_data['account_number'],
                 bank_name=account_data.get('bank_name', 'Unknown'),
                 account_holder=account_data.get('account_holder'),
+                branch=account_data.get('branch'),
                 balance=account_data.get('balance', 0.0),
                 currency=account_data.get('currency', 'OMR'),
                 email_config_id=account_data.get('email_config_id')
@@ -993,6 +1011,11 @@ class TransactionRepository:
                 'balance': transaction_data.get('balance', 0.0)
             }
             account = TransactionRepository.create_account(session, account_data)
+            
+            # Update account branch only if it's null and branch is provided in transaction data
+            if account and account.branch is None and transaction_data.get('branch'):
+                account.branch = transaction_data.get('branch')
+                session.commit()
 
             if not account:
                 return None
@@ -1027,27 +1050,31 @@ class TransactionRepository:
                 if email_metadata:
                     email_metadata_id = email_metadata.id
 
+            # Create a copy of transaction_data without the removed fields
+            fields_to_exclude = ['branch', 'description', 'email_id', 'bank_name']
+            transaction_data_copy = {k: v for k, v in transaction_data.items() if k not in fields_to_exclude}
+            
+            # If description is provided but transaction_details is not, use description for transaction_details
+            if 'description' in transaction_data and 'transaction_details' not in transaction_data_copy:
+                transaction_data_copy['transaction_details'] = transaction_data.get('description')
+            
             transaction = Transaction(
                 account_id=account.id,
                 email_metadata_id=email_metadata_id,
                 transaction_type=transaction_type,
-                amount=transaction_data.get('amount', 0.0),
-                currency=transaction_data.get('currency', 'OMR'),
-                value_date=transaction_data.get('value_date', None),  # Using date_time from input for backward compatibility
-                description=transaction_data.get('description'),
-                transaction_id=transaction_data.get('transaction_id'),
-                bank_name=transaction_data.get('bank_name'),
-                branch=transaction_data.get('branch'),
-                transaction_sender=transaction_data.get('transaction_sender'),
-                transaction_receiver=transaction_data.get('transaction_receiver'),
-                counterparty_name=transaction_data.get('counterparty_name'),
-                from_party=transaction_data.get('from_party'),
-                to_party=transaction_data.get('to_party'),
-                transaction_details=transaction_data.get('transaction_details'),
-                country=transaction_data.get('country'),
-                email_id=transaction_data.get('email_id'),
-                post_date=transaction_data.get('post_date'),  # Using email_date from input for backward compatibility
-                cleaned_email_content=transaction_data.get('cleaned_email_content')
+                amount=transaction_data_copy.get('amount', 0.0),
+                currency=transaction_data_copy.get('currency', 'OMR'),
+                value_date=transaction_data_copy.get('value_date', None),  # Using date_time from input for backward compatibility
+                transaction_id=transaction_data_copy.get('transaction_id'),
+                transaction_sender=transaction_data_copy.get('transaction_sender'),
+                transaction_receiver=transaction_data_copy.get('transaction_receiver'),
+                counterparty_name=transaction_data_copy.get('counterparty_name'),
+                from_party=transaction_data_copy.get('from_party'),
+                to_party=transaction_data_copy.get('to_party'),
+                transaction_details=transaction_data_copy.get('transaction_details'),
+                country=transaction_data_copy.get('country'),
+                post_date=transaction_data_copy.get('post_date'),  # Using email_date from input for backward compatibility
+                cleaned_email_content=transaction_data_copy.get('cleaned_email_content')
             )
 
             session.add(transaction)
@@ -1226,9 +1253,22 @@ class TransactionRepository:
                         value = TransactionType(value.lower())
                     except ValueError:
                         value = TransactionType.UNKNOWN
+                
+                # Skip fields that have been moved or removed
+                if key in ['branch', 'description', 'email_id', 'bank_name']:
+                    continue
+                
+                # If description is provided, use it for transaction_details if not already set
+                if key == 'description' and not transaction.transaction_details:
+                    setattr(transaction, 'transaction_details', value)
+                    continue
 
                 if hasattr(transaction, key):
                     setattr(transaction, key, value)
+                    
+            # Update account branch only if it's null and branch is provided in transaction data
+            if transaction.account and transaction.account.branch is None and transaction_data.get('branch'):
+                transaction.account.branch = transaction_data.get('branch')
 
             # Update the account balance if amount or transaction type changed
             if 'amount' in transaction_data or 'transaction_type' in transaction_data:
