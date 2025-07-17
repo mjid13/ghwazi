@@ -126,8 +126,3 @@ def main():
         # Close the service
         if 'service' in locals():
             service.close()
-
-if __name__ == "__main__":
-    # main()
-
-    pdf

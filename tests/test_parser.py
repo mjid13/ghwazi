@@ -51,12 +51,12 @@ class TestTransactionParser(unittest.TestCase):
         self.assertEqual(transaction_data['country'], 'Oman')
 
         # Check that the date was parsed correctly
-        self.assertIsInstance(transaction_data['date_time'], datetime)
-        self.assertEqual(transaction_data['date_time'].year, 2025)
-        self.assertEqual(transaction_data['date_time'].month, 5)
-        self.assertEqual(transaction_data['date_time'].day, 13)
-        self.assertEqual(transaction_data['date_time'].hour, 17)
-        self.assertEqual(transaction_data['date_time'].minute, 20)
+        self.assertIsInstance(transaction_data['value_date'], datetime)
+        self.assertEqual(transaction_data['value_date'].year, 2025)
+        self.assertEqual(transaction_data['value_date'].month, 5)
+        self.assertEqual(transaction_data['value_date'].day, 13)
+        self.assertEqual(transaction_data['value_date'].hour, 17)
+        self.assertEqual(transaction_data['value_date'].minute, 20)
 
     def test_income_email_parsing(self):
         """Test parsing an income email."""
@@ -117,10 +117,10 @@ class TestTransactionParser(unittest.TestCase):
 
         # Check that the date was parsed correctly - DD/MM/YY format
         # 05/02/25 should be interpreted as 5th February 2025, not 2nd May 2025
-        self.assertIsInstance(transaction_data['date_time'], datetime)
-        self.assertEqual(transaction_data['date_time'].year, 2025)
-        self.assertEqual(transaction_data['date_time'].month, 2)  # February
-        self.assertEqual(transaction_data['date_time'].day, 5)  # 5th day
+        self.assertIsInstance(transaction_data['value_date'], datetime)
+        self.assertEqual(transaction_data['value_date'].year, 2025)
+        self.assertEqual(transaction_data['value_date'].month, 2)  # February
+        self.assertEqual(transaction_data['value_date'].day, 5)  # 5th day
 
 
 if __name__ == '__main__':
