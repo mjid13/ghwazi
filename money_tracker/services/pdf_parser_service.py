@@ -8,6 +8,7 @@ import logging
 from typing import Dict, Any, List, Tuple, Optional
 import pandas as pd
 import fitz  # PyMuPDF
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -397,12 +398,16 @@ class PDFParser:
             # Skip transactions with no amount
             if amount is None:
                 continue
-            
+
+            # Parse dates to datetime objects
+            post_date = self._parse_date_string(row['Post Date']) if not pd.isna(row['Post Date']) else None
+            value_date = self._parse_date_string(row['Value Date']) if not pd.isna(row['Value Date']) else None
+
             # Create transaction data dictionary
             transaction_data = {
                 'account_number': account_info['account_number'],
-                'post_date': row['Post Date'] if not pd.isna(row['Post Date']) else None,
-                'value_date': row['Value Date'] if not pd.isna(row['Value Date']) else None,
+                'post_date': post_date,
+                'value_date': value_date,
                 'narration': row['Narration'],
                 'amount': amount,
                 'transaction_type': transaction_type,
@@ -503,3 +508,40 @@ class PDFParser:
                 pass
         
         return 'unknown', None
+
+    def _parse_date_string(self, date_str: str) -> Optional[datetime]:
+        """
+        Parse date string to datetime object.
+
+        Args:
+            date_str (str): Date string to parse (e.g., '10/07/2025')
+
+        Returns:
+            Optional[datetime]: Parsed datetime or None if parsing fails.
+        """
+        if not date_str or pd.isna(date_str):
+            return None
+
+        try:
+            # Try different date formats that might be in the PDF
+            date_formats = [
+                '%d/%m/%Y',    # DD/MM/YYYY
+                '%d/%m/%y',    # DD/MM/YY
+                '%Y-%m-%d',    # YYYY-MM-DD
+                '%m/%d/%Y',    # MM/DD/YYYY
+                '%m/%d/%y',    # MM/DD/YY
+            ]
+
+            for fmt in date_formats:
+                try:
+                    return datetime.strptime(str(date_str).strip(), fmt)
+                except ValueError:
+                    continue
+
+            # If none of the formats work, try using dateutil parser
+            from dateutil import parser
+            return parser.parse(str(date_str).strip(), dayfirst=True)
+
+        except Exception as e:
+            logger.warning(f"Failed to parse date string '{date_str}': {str(e)}")
+            return None
