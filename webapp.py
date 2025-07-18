@@ -196,7 +196,7 @@ def process_emails_task(task_id, user_id, account_number, bank_name, folder, unr
                     'from': email_data.get('from', ''),
                     'date': email_data.get('date', ''),
                     'body': email_data.get('body', ''),
-                    'cleaned_body': transaction_data.get('cleaned_email_content', ''),
+                    'cleaned_body': transaction_data.get('transaction_content', ''),
                     'processed': True
                 })
 
@@ -907,10 +907,13 @@ def upload_pdf():
                 try:
                     transaction_count = 0
                     for transaction_data in transactions:
+                        if transaction_data["account_number"] != account_number:
+                            logger.error(f"The account number {transaction_data['account_number']} in the PDF does not match the selected account {account_number}")
+                            flash(f'Transaction account number {transaction_data["account_number"]} does not match selected account {account_number}', 'error')
+                            return redirect(url_for('dashboard'))
                         # Add user_id and account_number to transaction data
                         transaction_data['user_id'] = user_id
-                        transaction_data['account_number'] = account_number
-                        
+
                         # Add preserve_balance flag
                         preserve_balance = 'preserve_balance' in request.form
                         transaction_data['preserve_balance'] = preserve_balance

@@ -151,10 +151,10 @@
                                         <div class="mb-2">
                                             <strong>Subject:</strong> {{ transaction.email_metadata.subject }}
                                         </div>
-                                        {% if transaction.cleaned_email_content %}
+                                        {% if transaction.transaction_content %}
                                         <div>
                                             <strong>Content:</strong>
-                                            <pre class="mt-2 mb-0"><code>{{ transaction.cleaned_email_content }}</code></pre>
+                                            <pre class="mt-2 mb-0"><code>{{ transaction.transaction_content }}</code></pre>
                                         </div>
                                         {% endif %}
                                     </div>

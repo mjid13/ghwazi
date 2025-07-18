@@ -229,7 +229,7 @@ class Transaction(Base):
     post_date = Column(String(200))
 
     # Cleaned email content for hover display
-    cleaned_email_content = Column(Text)
+    transaction_content = Column(Text)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -889,7 +889,7 @@ class TransactionRepository:
     @staticmethod
     def create_account(session: Session, account_data: Dict[str, Any]) -> Optional[Account]:
         """
-        Create a new account.
+        Create a new account if not exist.
 
         Args:
             session (Session): Database session.
@@ -1069,7 +1069,7 @@ class TransactionRepository:
                 transaction_details=transaction_data_copy.get('transaction_details'),
                 country=transaction_data_copy.get('country'),
                 post_date=transaction_data_copy.get('post_date'),  # Using email_date from input for backward compatibility
-                cleaned_email_content=transaction_data_copy.get('cleaned_email_content')
+                transaction_content=transaction_data_copy.get('transaction_content')
             )
 
             session.add(transaction)

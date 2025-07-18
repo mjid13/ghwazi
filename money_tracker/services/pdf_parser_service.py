@@ -390,10 +390,13 @@ class PDFParser:
                 continue
             
             # Parse counterparty name and transaction ID from narration
-            counterparty_name, transaction_id = self._parse_narration(row['Narration'])
+            parsed_narration = self._parse_narration(row['Narration'])
             
             # Determine transaction type and amount
             transaction_type, amount = self._determine_transaction_type_and_amount(row)
+
+            transaction_sender = parsed_narration["counterparty_name"] if transaction_type == 'EXPENSE' else "me"
+            transaction_receiver = parsed_narration["counterparty_name"] if transaction_type == 'INCOME' else "me"
             
             # Skip transactions with no amount
             if amount is None:
@@ -408,12 +411,15 @@ class PDFParser:
                 'account_number': account_info['account_number'],
                 'post_date': post_date,
                 'value_date': value_date,
-                'narration': row['Narration'],
+                'transaction_content': row['Narration'],
                 'amount': amount,
                 'transaction_type': transaction_type,
                 'balance': row['Balance'] if not pd.isna(row['Balance']) else None,
-                'counterparty_name': counterparty_name,
-                'transaction_id': transaction_id,
+                'counterparty_name': parsed_narration["counterparty_name"],
+                'transaction_id': parsed_narration["transaction_id"],
+                'transaction_details': parsed_narration["details"],
+                "transaction_sender": transaction_sender,
+                "transaction_receiver": transaction_receiver,
                 'source': 'PDF',
                 'currency': account_info['currency']
             }
@@ -422,7 +428,7 @@ class PDFParser:
         
         return transactions
     
-    def _parse_narration(self, narration: str) -> Tuple[str, Optional[str]]:
+    def _parse_narration(self, narration: str) -> Dict[str, Any]:
         """
         Parse counterparty name and transaction ID from narration.
         
@@ -432,55 +438,47 @@ class PDFParser:
         Returns:
             Tuple[str, Optional[str]]: Counterparty name and transaction ID.
         """
-        # Initialize variables
-        counterparty_name = ""
-        transaction_id = None
-        
-        # Clean up narration
-        narration = narration.strip()
-        
-        # POS transaction pattern
-        pos_pattern = r'POS\s+(\d+-)?([A-Za-z0-9\s]+)(?:\s+(?:POS)?([A-Z0-9]+))?'
-        pos_match = re.search(pos_pattern, narration)
-        if pos_match:
-            counterparty_name = pos_match.group(2).strip()
-            transaction_id = pos_match.group(3) if pos_match.group(3) else pos_match.group(1)
-            return counterparty_name, transaction_id
-        
-        # Wallet transaction pattern
-        wallet_pattern = r'Wallet\s+Trx\s+([A-Z0-9]+)\s+(.+?)(?:\s+FT\d+)?$'
-        wallet_match = re.search(wallet_pattern, narration)
-        if wallet_match:
-            transaction_id = wallet_match.group(1)
-            counterparty_name = wallet_match.group(2).strip()
-            return counterparty_name, transaction_id
-        
-        # Easy Deposit pattern
-        deposit_pattern = r'Easy\s+Deposit\s+(CDM\d+)\s+.+?([A-Za-z0-9\s]+)(?:\s+CDM\d+)?'
-        deposit_match = re.search(deposit_pattern, narration)
-        if deposit_match:
-            transaction_id = deposit_match.group(1)
-            counterparty_name = deposit_match.group(2).strip()
-            return counterparty_name, transaction_id
-        
-        # Salary pattern
-        salary_pattern = r'SALARY\s+(.+?)\s+SALARY'
-        salary_match = re.search(salary_pattern, narration)
-        if salary_match:
-            counterparty_name = salary_match.group(1).strip()
-            return counterparty_name, None
-        
-        # Transfer pattern
-        transfer_pattern = r'Transfer\s+(.+?)\s+([A-Za-z\s]+)(?:\s+[A-Z]{2})?$'
-        transfer_match = re.search(transfer_pattern, narration)
-        if transfer_match:
-            description = transfer_match.group(1).strip()
-            name = transfer_match.group(2).strip()
-            counterparty_name = f"{name} {description}"
-            return counterparty_name, None
-        
-        # If no pattern matches, return the narration as the counterparty name
-        return narration, None
+        text = narration.strip()
+
+        # Special handling for Transfer cases
+        if text.startswith('Transfer'):
+            # Find the first occurrence of consecutive uppercase words (person name)
+            # This regex finds the transition from mixed case to all uppercase
+            match = re.search(r'(Transfer\s+.*?)\s+([A-Z]+(?:\s+[A-Z]+)*(?:\s+[A-Z]+)*)\s*$', text)
+            if match:
+                prefix = match.group(1).strip()
+                description = match.group(2).strip()
+                return {
+                    'details': prefix,
+                    'counterparty_name': description,
+                    'transaction_id': None
+                }
+
+        # Pattern to match other transaction formats
+        patterns = [
+            # POS transactions: POS number-description code
+            r'(POS\s+\d+)-([A-Z\s]+?)\s+([A-Z0-9]+)$',
+            # Generic POS: POS description code
+            r'(POS)\s+([A-Z\s]+?)\s+([A-Z0-9]+)$',
+            # Wallet transactions: Wallet details name FT/LFT code
+            r'(Wallet\s+.*?)\s+([A-Z][A-Z\s]+[A-Z])\s+([FL]T\d+)$',
+            # Easy Deposit: Easy Deposit details name code
+            r'(Easy\s+Deposit\s+[A-Z0-9]+\s+\d{2}:\d{2}:\d{2})\s+([A-Z][A-Z\s]+[A-Z])\s+([A-Z0-9]+)$',
+            # SALARY: SALARY details description code
+            r'(SALARY\s+.*?)\s+(SALARY)\s+([\d.]+)$'
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                groups = match.groups()
+                return {
+                    'details': groups[0].strip(),
+                    'counterparty_name': groups[1].strip(),
+                    'transaction_id': groups[2].strip() if len(groups) > 2 else None
+                }
+
+        return {'details': text, 'counterparty_name': '', 'transaction_id': None}
     
     def _determine_transaction_type_and_amount(self, row: pd.Series) -> Tuple[str, Optional[float]]:
         """
@@ -496,14 +494,14 @@ class PDFParser:
         if not pd.isna(row['Debit']) and row['Debit'] != '':
             try:
                 amount = float(row['Debit'])
-                return 'debit', amount
+                return 'EXPENSE', amount
             except (ValueError, TypeError):
                 pass
         
         if not pd.isna(row['Credit']) and row['Credit'] != '':
             try:
                 amount = float(row['Credit'])
-                return 'credit', amount
+                return 'INCOME', amount
             except (ValueError, TypeError):
                 pass
         

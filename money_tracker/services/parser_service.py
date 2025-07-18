@@ -305,7 +305,7 @@ class TransactionParser:
                 'email_id': email_data.get('id'),
                 'post_date': email_data.get('date'),
                 'currency': extracted_data.get('currency', 'OMR'),
-                'cleaned_email_content': clean_text
+                'transaction_content': clean_text
             }
 
             # Map the extracted data to transaction_data
