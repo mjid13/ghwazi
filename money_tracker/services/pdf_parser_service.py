@@ -443,30 +443,32 @@ class PDFParser:
         Returns:
             Tuple[str, Optional[str]]: Counterparty name and transaction ID.
         """
-        text = narration.strip()
+        text = ' '.join(narration.strip().split())
 
         # Special handling for Transfer cases
         if text.startswith('Transfer'):
             # Find the first occurrence of consecutive uppercase words (person name)
-            # This regex finds the transition from mixed case to all uppercase
-            match = re.search(r'(Transfer\s+.*?)\s+([A-Z]+(?:\s+[A-Z]+)*(?:\s+[A-Z]+)*)\s*$', text)
+            # Match everything after "Transfer" until the last word that looks like a transaction ID
+            match = re.search(r'Transfer\s+(.*?)(?:\s+([A-Z0-9]{10,}))?\s*$', text)
             if match:
-                prefix = match.group(1).strip()
-                description = match.group(2).strip()
+                full_name = match.group(1).strip()
+                transaction_id = match.group(2) if match.group(2) else None
                 return {
-                    'details': prefix,
-                    'counterparty_name': description,
-                    'transaction_id': None
+                    'details': text,
+                    'counterparty_name': full_name,
+                    'transaction_id': transaction_id
                 }
 
         # Pattern to match other transaction formats
         patterns = [
             # POS transactions: POS number-description code
-            r'(POS\s+\d+)-([A-Z\s]+?)\s+([A-Z0-9]+)$',
+            r'(POS\s+\d+)-([A-Z0-9\s\-]+?)\s+(POS\d+[A-Z0-9]+)$',
+            # POS transactions without separate transaction ID: POS number-description
+            r'(POS\s+\d+)-([A-Z0-9\s\-.,@]+)$',
             # Generic POS: POS description code
             r'(POS)\s+([A-Z\s]+?)\s+([A-Z0-9]+)$',
             # Wallet transactions: Wallet details name FT/LFT code
-            r'(Wallet\s+.*?)\s+([A-Z][A-Z\s]+[A-Z])\s+([FL]T\d+)$',
+            r'(Wallet\s+Trx(?:\s+(?:Cr|Dr))?\s+[A-Z0-9]+)\s+([A-Z][A-Z0-9\s\-]*?)\s+([FL]T\d+)',
             # Easy Deposit: Easy Deposit details name code
             r'(Easy\s+Deposit\s+[A-Z0-9]+\s+\d{2}:\d{2}:\d{2})\s+([A-Z][A-Z\s]+[A-Z])\s+([A-Z0-9]+)$',
             # SALARY: SALARY details description code

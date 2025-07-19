@@ -27,6 +27,12 @@
                             <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                         </div>
                         
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Color (Optional)</label>
+                            <input type="color" class="form-control form-control-color" id="color" name="color" value="#CCCCCC" title="Choose a color for the category">
+                            <div class="form-text">If no color is selected, a random color will be assigned.</div>
+                        </div>
+                        
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{{ url_for('categories') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left me-2"></i>Cancel

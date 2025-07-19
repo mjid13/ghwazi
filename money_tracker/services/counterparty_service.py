@@ -77,7 +77,6 @@ class CounterpartyService:
                         transaction = latest_transaction[0]
                         result.append({
                             'counterparty_name': counterparty_name,
-                            'description': transaction.description,
                             'transaction_details': transaction.transaction_details,
                             'category_name': latest_transaction.category_name,
                             'category_id': latest_transaction.category_id,
@@ -163,7 +162,7 @@ class CounterpartyService:
                     filter_conditions.append(
                         or_(
                             Transaction.counterparty_name == counterparty_name,
-                            Transaction.description == description
+                            Transaction.transaction_details == description
                         )
                     )
                 elif counterparty_name:
@@ -171,7 +170,7 @@ class CounterpartyService:
                     filter_conditions.append(Transaction.counterparty_name == counterparty_name)
                 elif description:
                     # Only description provided
-                    filter_conditions.append(Transaction.description == description)
+                    filter_conditions.append(Transaction.transaction_details == description)
 
                 # Count transactions before update
                 transaction_count = session.query(Transaction).join(Account).filter(
@@ -269,7 +268,7 @@ class CounterpartyService:
 
     # Category CRUD operations
 
-    def create_category(self, user_id: int, name: str, description: str = None) -> Optional[Category]:
+    def create_category(self, user_id: int, name: str, description: str = None, color: str = None) -> Optional[Category]:
         """
         Create a new category.
 
@@ -277,11 +276,12 @@ class CounterpartyService:
             user_id (int): User ID.
             name (str): Category name.
             description (str, optional): Category description.
+            color (str, optional): Category color as hex code (e.g., #FF5733). If not provided, a unique random color will be generated.
 
         Returns:
             Optional[Category]: Created category or None if creation fails.
         """
-        return self.category_service.create_category(user_id, name, description)
+        return self.category_service.create_category(user_id, name, description, color)
 
     def get_categories(self, user_id: int) -> List[Category]:
         """
@@ -308,7 +308,7 @@ class CounterpartyService:
         """
         return self.category_service.get_category(category_id, user_id)
 
-    def update_category(self, category_id: int, user_id: int, name: str = None, description: str = None) -> bool:
+    def update_category(self, category_id: int, user_id: int, name: str = None, description: str = None, color: str = None) -> bool:
         """
         Update a category.
 
@@ -317,11 +317,12 @@ class CounterpartyService:
             user_id (int): User ID (for permission check).
             name (str, optional): New category name.
             description (str, optional): New category description.
+            color (str, optional): New category color as hex code (e.g., #FF5733).
 
         Returns:
             bool: True if update was successful, False otherwise.
         """
-        return self.category_service.update_category(category_id, user_id, name, description)
+        return self.category_service.update_category(category_id, user_id, name, description, color)
 
     def delete_category(self, category_id: int, user_id: int) -> bool:
         """

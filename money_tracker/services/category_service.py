@@ -19,7 +19,7 @@ class CategoryService:
         self.db.connect()
         self.db.create_tables()
     
-    def create_category(self, user_id: int, name: str, description: str = None) -> Optional[Category]:
+    def create_category(self, user_id: int, name: str, description: str = None, color: str = None) -> Optional[Category]:
         """
         Create a new category.
         
@@ -27,6 +27,7 @@ class CategoryService:
             user_id (int): User ID.
             name (str): Category name.
             description (str, optional): Category description.
+            color (str, optional): Category color as hex code (e.g., #FF5733). If not provided, a unique random color will be generated.
             
         Returns:
             Optional[Category]: Created category or None if creation fails.
@@ -35,7 +36,7 @@ class CategoryService:
             session = self.db.get_session()
             
             try:
-                category = CategoryRepository.create_category(session, user_id, name, description)
+                category = CategoryRepository.create_category(session, user_id, name, description, color)
                 return category
             finally:
                 self.db.close_session(session)
@@ -88,7 +89,7 @@ class CategoryService:
             logger.error(f"Error getting category: {str(e)}")
             return None
     
-    def update_category(self, category_id: int, user_id: int, name: str = None, description: str = None) -> Optional[Category]:
+    def update_category(self, category_id: int, user_id: int, name: str = None, description: str = None, color: str = None) -> Optional[Category]:
         """
         Update a category.
         
@@ -97,6 +98,7 @@ class CategoryService:
             user_id (int): User ID (for permission check).
             name (str, optional): New category name.
             description (str, optional): New category description.
+            color (str, optional): New category color as hex code (e.g., #FF5733).
             
         Returns:
             Optional[Category]: Updated category or None if update fails.
@@ -105,7 +107,7 @@ class CategoryService:
             session = self.db.get_session()
             
             try:
-                category = CategoryRepository.update_category(session, category_id, user_id, name, description)
+                category = CategoryRepository.update_category(session, category_id, user_id, name, description, color)
                 return category
             finally:
                 self.db.close_session(session)

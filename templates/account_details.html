@@ -188,11 +188,11 @@
                                             {% endif %}
                                         </td>
                                         {% if transaction.transaction_type == 'INCOME' %}
-                                            <td class="text-success">{{ transaction.counterparty_name or transaction.description or 'N/A' }}</td>
+                                            <td class="text-success">{{ transaction.counterparty_name or 'N/A' }}</td>
                                         {% elif transaction.transaction_type == 'EXPENSE' %}
-                                            <td class="text-danger">{{ transaction.counterparty_name or transaction.description or 'N/A' }}</td>
+                                            <td class="text-danger">{{ transaction.counterparty_name or 'N/A' }}</td>
                                         {% else %}
-                                            <td class="text-danger">{{ transaction.counterparty_name or transaction.description or 'N/A' }}</td>
+                                            <td class="text-danger">{{ transaction.counterparty_name or 'N/A' }}</td>
                                         {% endif %}
                                         <td class="text-end px-4">
                                             <button class="btn btn-link btn-sm p-0" data-bs-toggle="dropdown">
