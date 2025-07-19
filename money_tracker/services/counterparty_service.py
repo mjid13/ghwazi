@@ -77,7 +77,6 @@ class CounterpartyService:
                         transaction = latest_transaction[0]
                         result.append({
                             'counterparty_name': counterparty_name,
-                            'description': transaction.description,
                             'transaction_details': transaction.transaction_details,
                             'category_name': latest_transaction.category_name,
                             'category_id': latest_transaction.category_id,
@@ -163,7 +162,7 @@ class CounterpartyService:
                     filter_conditions.append(
                         or_(
                             Transaction.counterparty_name == counterparty_name,
-                            Transaction.description == description
+                            Transaction.transaction_details == description
                         )
                     )
                 elif counterparty_name:
@@ -171,7 +170,7 @@ class CounterpartyService:
                     filter_conditions.append(Transaction.counterparty_name == counterparty_name)
                 elif description:
                     # Only description provided
-                    filter_conditions.append(Transaction.description == description)
+                    filter_conditions.append(Transaction.transaction_details == description)
 
                 # Count transactions before update
                 transaction_count = session.query(Transaction).join(Account).filter(
