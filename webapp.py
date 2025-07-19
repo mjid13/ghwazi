@@ -414,6 +414,7 @@ def dashboard():
             # Get expense transactions with categories
             category_data = db_session.query(
                 Category.name,
+                Category.color,
                 func.sum(Transaction.amount).label('total_amount')
             ).join(
                 Transaction, Transaction.category_id == Category.id
@@ -423,7 +424,8 @@ def dashboard():
                 Account.user_id == user_id,
                 Transaction.transaction_type == TransactionType.EXPENSE
             ).group_by(
-                Category.name
+                Category.name,
+                Category.color
             ).order_by(
                 func.sum(Transaction.amount).desc()
             ).limit(10).all()
@@ -432,11 +434,18 @@ def dashboard():
             category_labels = [cat.name for cat in category_data]
             category_values = [float(cat.total_amount) for cat in category_data]
             
-            # Generate colors for categories
-            category_colors = [
+            # Use category colors from database, or fallback to defaults
+            default_colors = [
                 '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                 '#FF9F40', '#8AC249', '#EA5545', '#F46A9B', '#EF9B20'
             ]
+            category_colors = []
+            for i, cat in enumerate(category_data):
+                if cat.color:
+                    category_colors.append(cat.color)
+                else:
+                    # Use default color if category doesn't have one
+                    category_colors.append(default_colors[i % len(default_colors)])
             
             chart_data['category_distribution'] = {
                 'labels': category_labels,
@@ -1554,12 +1563,13 @@ def add_category():
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
+        color = request.form.get('color')
 
         if not name:
             flash('Category name is required', 'error')
             return render_template('add_category.html')
 
-        category = counterparty_service.create_category(user_id, name, description)
+        category = counterparty_service.create_category(user_id, name, description, color)
         if category:
             flash('Category added successfully', 'success')
             return redirect(url_for('categories'))
@@ -1584,12 +1594,13 @@ def edit_category(category_id):
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
+        color = request.form.get('color')
 
         if not name:
             flash('Category name is required', 'error')
             return render_template('edit_category.html', category=category)
 
-        result = counterparty_service.update_category(category_id, user_id, name, description)
+        result = counterparty_service.update_category(category_id, user_id, name, description, color)
         if result:
             flash('Category updated successfully', 'success')
             return redirect(url_for('categories'))

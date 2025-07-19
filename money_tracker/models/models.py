@@ -4,6 +4,7 @@ Database models for the Bank Email Parser & Account Tracker.
 
 import enum
 import logging
+import random
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float, Text, Boolean, UniqueConstraint
@@ -170,6 +171,7 @@ class Category(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(Text)
+    color = Column(String(7), nullable=True)  # Store color as hex code (e.g., #FF5733)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -275,9 +277,53 @@ class Transaction(Base):
 
 class CategoryRepository:
     """Repository class for category operations."""
+    
+    @staticmethod
+    def generate_unique_color(session: Session, user_id: int) -> str:
+        """
+        Generate a unique random color that is not used by any other category for this user.
+        
+        Args:
+            session (Session): Database session.
+            user_id (int): User ID.
+            
+        Returns:
+            str: A unique hex color code (e.g., #FF5733).
+        """
+        # Get all existing colors for this user's categories
+        existing_colors = [
+            category.color for category in 
+            session.query(Category).filter(Category.user_id == user_id).all()
+            if category.color is not None
+        ]
+        
+        # Generate a random color that's not in existing_colors
+        while True:
+            # Generate a random hex color
+            r = random.randint(0, 255)
+            g = random.randint(0, 255)
+            b = random.randint(0, 255)
+            color = f"#{r:02x}{g:02x}{b:02x}"
+            
+            # Make sure it's not too light (close to white) or too dark
+            # Convert to RGB values for calculation
+            r_val = int(color[1:3], 16)
+            g_val = int(color[3:5], 16)
+            b_val = int(color[5:7], 16)
+            
+            # Calculate luminance (simplified formula)
+            luminance = (0.299 * r_val + 0.587 * g_val + 0.114 * b_val) / 255
+            
+            # Skip colors that are too light or too dark
+            if luminance < 0.2 or luminance > 0.8:
+                continue
+                
+            # If color is unique, return it
+            if color.upper() not in [c.upper() for c in existing_colors]:
+                return color.upper()
 
     @staticmethod
-    def create_category(session: Session, user_id: int, name: str, description: str = None) -> Optional[Category]:
+    def create_category(session: Session, user_id: int, name: str, description: str = None, color: str = None) -> Optional[Category]:
         """
         Create a new category.
 
@@ -286,6 +332,7 @@ class CategoryRepository:
             user_id (int): User ID.
             name (str): Category name.
             description (str, optional): Category description.
+            color (str, optional): Category color as hex code (e.g., #FF5733). If not provided, a unique random color will be generated.
 
         Returns:
             Optional[Category]: Created category or None if creation fails.
@@ -301,10 +348,15 @@ class CategoryRepository:
                 logger.info(f"Category {name} already exists for user {user_id}")
                 return existing_category
 
+            # Generate a unique random color if none is provided
+            if not color:
+                color = CategoryRepository.generate_unique_color(session, user_id)
+
             category = Category(
                 user_id=user_id,
                 name=name,
-                description=description
+                description=description,
+                color=color
             )
 
             session.add(category)
@@ -367,7 +419,7 @@ class CategoryRepository:
 
     @staticmethod
     def update_category(session: Session, category_id: int, user_id: int, 
-                        name: str = None, description: str = None) -> Optional[Category]:
+                        name: str = None, description: str = None, color: str = None) -> Optional[Category]:
         """
         Update a category.
 
@@ -377,6 +429,7 @@ class CategoryRepository:
             user_id (int): User ID (for permission check).
             name (str, optional): New category name.
             description (str, optional): New category description.
+            color (str, optional): New category color as hex code (e.g., #FF5733).
 
         Returns:
             Optional[Category]: Updated category or None if update fails.
@@ -396,6 +449,12 @@ class CategoryRepository:
 
             if description is not None:
                 category.description = description
+                
+            if color is not None:
+                category.color = color
+            # If color is None but the category doesn't have a color yet, generate one
+            elif category.color is None:
+                category.color = CategoryRepository.generate_unique_color(session, user_id)
 
             session.commit()
             logger.info(f"Updated category: {category.id}")

@@ -19,6 +19,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Color</th>
                             <th>Description</th>
                             <th>Actions</th>
                         </tr>
@@ -27,6 +28,13 @@
                         {% for category in categories %}
                         <tr>
                             <td>{{ category.name }}</td>
+                            <td>
+                                {% if category.color %}
+                                <span class="badge bg-secondary">{{ category.color }}</span>
+                                {% else %}
+                                <span class="text-muted">No color set</span>
+                                {% endif %}
+                            </td>
                             <td>{{ category.description or '-' }}</td>
                             <td>
                                 <div class="btn-group">
