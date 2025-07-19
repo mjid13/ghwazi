@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class CategoryType(enum.Enum):
     """Enum for category types."""
     COUNTERPARTY = 'counterparty'
-    # DESCRIPTION = 'description'
+    DESCRIPTION = 'transaction_details'
 
 class TransactionType(enum.Enum):
     """Enum for transaction types."""
@@ -528,7 +528,7 @@ class CategoryRepository:
                 # Get transaction IDs that need to be updated
                 transaction_ids = [t.id for t in session.query(Transaction.id).join(Account).filter(
                     Account.user_id == user_id,
-                    Transaction.description == pattern
+                    Transaction.transaction_details == pattern
                 ).all()]
 
                 # Update transactions without using join
@@ -641,10 +641,10 @@ class CategoryRepository:
                     return transaction
 
             # Try to categorize by exact description match
-            if transaction.description:
+            if transaction.transaction_details:
                 mapping = session.query(CategoryMapping).join(Category).filter(
                     CategoryMapping.mapping_type == CategoryType.DESCRIPTION,
-                    CategoryMapping.pattern == transaction.description,
+                    CategoryMapping.pattern == transaction.transaction_details,
                     Category.user_id == user_id
                 ).first()
 
@@ -683,7 +683,7 @@ class CategoryRepository:
                         return transaction
 
             # Try pattern matching for description
-            if transaction.description:
+            if transaction.transaction_details:
                 # Get all description mappings for this user
                 description_mappings = session.query(CategoryMapping).join(Category).filter(
                     CategoryMapping.mapping_type == CategoryType.DESCRIPTION,
@@ -698,7 +698,7 @@ class CategoryRepository:
 
                     # Check if pattern is a whole word or part of a word
                     pattern = mapping.pattern.lower()
-                    description = transaction.description.lower()
+                    description = transaction.transaction_details.lower()
 
                     # Check for word boundaries or exact match
                     if (f" {pattern} " in f" {description} " or 
@@ -761,9 +761,9 @@ class CategoryRepository:
                     session, category_id, user_id, CategoryType.COUNTERPARTY, transaction.counterparty_name
                 )
 
-            if transaction.description:
+            if transaction.transaction_details:
                 CategoryRepository.create_category_mapping(
-                    session, category_id, user_id, CategoryType.DESCRIPTION, transaction.description
+                    session, category_id, user_id, CategoryType.DESCRIPTION, transaction.transaction_details
                 )
 
             return transaction
