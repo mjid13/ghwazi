@@ -1,0 +1,28 @@
+/* Account details specific styles */
+.account-overview {
+    background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, var(--bs-secondary-bg-subtle) 100%);
+}
+
+.transaction-row {
+    transition: background-color 0.2s ease;
+}
+
+.transaction-row:hover {
+    background-color: var(--bs-secondary-bg-subtle);
+}
+
+.transaction-date {
+    line-height: 1.2;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+}
+
+.table > :not(caption) > * > * {
+    padding: 1rem 0.75rem;
+}

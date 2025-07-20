@@ -144,8 +144,8 @@
                                     <label class="form-check-label" for="save_to_db">Save transactions to database</label>
                                 </div>
                                 <div class="form-check form-switch mt-2">
-                                    <input type="checkbox" class="form-check-input" id="preserve_balance" name="preserve_balance" checked>
-                                    <label class="form-check-label" for="preserve_balance">Preserve initial account balance during first scrape</label>
+                                    <input type="checkbox" class="form-check-input" id="email_preserve_balance" name="preserve_balance" checked>
+                                    <label class="form-check-label" for="email_preserve_balance">Preserve initial account balance during first scrape</label>
                                 </div>
                             </div>
 
@@ -180,8 +180,8 @@
                                     <i class="bi bi-plus-circle me-2"></i>Add Your First Configuration
                                 </a>
                                 </div>
-                            </div>
-                        {% endif %}
+                        </div>
+                    {% endif %}
                     {% endif %}
 
                     {% if request.args.get('mode') == 'upload' %}
@@ -208,8 +208,8 @@
                             </div>
 
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="preserve_balance" name="preserve_balance">
-                                <label class="form-check-label" for="preserve_balance">Preserve account balance</label>
+                                <input type="checkbox" class="form-check-input" id="upload_preserve_balance" name="preserve_balance">
+                                <label class="form-check-label" for="upload_preserve_balance">Preserve account balance</label>
                                 <div class="form-text">Check this if you want to preserve the current account balance instead of updating it from the statement.</div>
                             </div>
 
@@ -304,191 +304,24 @@
     {% endif %}
 
 </div>
+{% endblock %}
 
 {% block extra_css %}
-<style>
-    .welcome-section {
-        background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, var(--bs-secondary-bg-subtle) 100%);
-    }
-
-    .account-item {
-        background: var(--bs-body-bg);
-    }
-
-    .account-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    [data-bs-theme="dark"] .account-item {
-        background: var(--bs-dark);
-    }
-
-    .form-check-input:checked {
-        background-color: var(--bs-primary);
-        border-color: var(--bs-primary);
-    }
-
-    /* Spinning animation for the scraping icon */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .spin {
-        animation: spin 2s linear infinite;
-        display: inline-block;
-    }
-
-    /* Chart styles */
-    .chart-container {
-        position: relative;
-        height: 300px;
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-
-    .chart-card {
-        transition: all 0.3s ease;
-    }
-
-    .chart-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-
-    .chart-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .chart-description {
-        font-size: 0.85rem;
-        color: var(--bs-secondary-color);
-        margin-bottom: 1rem;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 {% endblock %}
 
 {% block extra_js %}
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
+<!-- Include custom JavaScript files -->
+<script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+<!-- Pass chart data to JavaScript -->
 <script>
-// Form validation
-(function () {
-    'use strict'
-    const forms = document.querySelectorAll('.needs-validation')
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            } else {
-                const submitBtn = form.querySelector('button[type="submit"]')
-                const spinner = submitBtn.querySelector('.spinner-border')
-                if (spinner) {
-                    spinner.classList.remove('d-none')
-                    submitBtn.disabled = true
-                }
-            }
-            form.classList.add('was-validated')
-        }, false)
-    })
-})()
+    // Store chart data in a global variable that can be accessed by charts.js
+    window.chartData = JSON.parse('{{ chart_data|default("{}")|safe }}');
 </script>
-
-<!-- Initialize charts -->
-<script>
-// Initialize charts when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Get chart data from the server-side variable
-    var chartDataStr = '{{ chart_data|default("{}")|safe }}';
-    var chartData = JSON.parse(chartDataStr);
-
-    // Only proceed if we have chart data
-    if (chartData && Object.keys(chartData).length > 0) {
-        // 1. Income vs Expense Chart
-        if (chartData.income_expense && document.getElementById('incomeExpenseChart')) {
-            new Chart(document.getElementById('incomeExpenseChart'), {
-                type: 'doughnut',
-                data: chartData.income_expense,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-
-        // 2. Category Distribution Chart
-        if (chartData.category_distribution && document.getElementById('categoryChart')) {
-            new Chart(document.getElementById('categoryChart'), {
-                type: 'pie',
-                data: chartData.category_distribution,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        // 3. Monthly Trend Chart
-        if (chartData.monthly_trend && document.getElementById('trendChart')) {
-            new Chart(document.getElementById('trendChart'), {
-                type: 'line',
-                data: chartData.monthly_trend,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-
-        // 4. Account Balance Chart
-        if (chartData.account_balance && document.getElementById('balanceChart')) {
-            new Chart(document.getElementById('balanceChart'), {
-                type: 'bar',
-                data: chartData.account_balance,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-    }
-});
-</script>
-{% endblock %}
 {% endblock %}
