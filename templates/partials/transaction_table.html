@@ -1,0 +1,220 @@
+{% if transactions %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="px-4">Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Sender/Receiver</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                    <tr class="transaction-row" {% if transaction.transaction_content %}data-bs-toggle="tooltip" data-bs-placement="top" title="{{ transaction.transaction_content|truncate(500) }}"{% endif %}>
+                        <td class="px-4">
+                            {% if transaction.date_time %}
+                                <div class="d-flex align-items-center">
+                                    <div class="transaction-date">
+                                        <strong class="d-block">{{ transaction.date_time.strftime('%y/%b/%d') }}</strong>
+                                        <small class="text-body-secondary">{{ transaction.date_time.strftime('%H:%M') }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if transaction.transaction_type == 'INCOME' %}
+                                <span class="badge bg-success-subtle text-success px-3 py-2">
+                                    <i class="bi bi-arrow-up-circle me-1"></i>Income
+                                </span>
+                            {% elif transaction.transaction_type == 'EXPENSE' %}
+                                <span class="badge bg-danger-subtle text-danger px-3 py-2">
+                                    <i class="bi bi-arrow-down-circle me-1"></i>Expense
+                                </span>
+                            {% else %}
+                                <span class="badge bg-info-subtle text-info px-3 py-2">
+                                    <i class="bi bi-arrow-left-right me-1"></i>Transfer
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="{{ 'text-success' if transaction.transaction_type == 'INCOME' else 'text-danger' if transaction.transaction_type == 'EXPENSE' else '' }}">
+                                {% if transaction.transaction_type == 'INCOME' %}
+                                    +{{ "{:,.3f}".format(transaction.amount) }} {{ transaction.currency }}
+                                {% elif transaction.transaction_type == 'EXPENSE' %}
+                                -{{ "{:,.3f}".format(transaction.amount) }} {{ transaction.currency }}
+                                {% else %}
+                                    {{ "{:,.3f}".format(transaction.amount) }} {{ transaction.currency }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;">
+                                {{ transaction.transaction_details or 'No description' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="category-display" data-transaction-id="{{ transaction.id }}">
+                                {% if transaction.category %}
+                                    <span class="badge category-badge" style="background-color:{{ transaction.category.color if transaction.category.color else '#6c757d' }}; color: white;">{{ transaction.category.name }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary category-badge">Uncategorized</span>
+                                {% endif %}
+                                <button class="btn btn-sm btn-link edit-category-btn p-0 ms-1" title="Edit Category">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>
+                            <div class="category-edit d-none" data-transaction-id="{{ transaction.id }}">
+                                <form class="category-form" action="{{ url_for('update_transaction_category', transaction_id=transaction.id) }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="input-group input-group-sm">
+                                        <select name="category_id" class="form-select form-select-sm category-select">
+                                            <option value="">Uncategorized</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category.id }}" {% if transaction.category and transaction.category.id == category.id %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary save-category-btn">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary cancel-category-btn">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </td>
+                        {% if transaction.transaction_type == 'INCOME' %}
+                            <td class="text-success">{{ transaction.counterparty_name or 'N/A' }}</td>
+                        {% elif transaction.transaction_type == 'EXPENSE' %}
+                            <td class="text-danger">{{ transaction.counterparty_name or 'N/A' }}</td>
+                        {% else %}
+                            <td class="text-danger">{{ transaction.counterparty_name or 'N/A' }}</td>
+                        {% endif %}
+                        <td class="text-end px-4">
+                            <button class="btn btn-link btn-sm p-0" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('edit_transaction', transaction_id=transaction.id) }}">
+                                        <i class="bi bi-pencil me-2"></i>Edit
+                                    </a>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('delete_transaction', transaction_id=transaction.id) }}" method="post" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="mt-4">
+    <nav aria-label="Transaction pagination">
+        <ul class="pagination justify-content-center">
+            <!-- Previous button -->
+            <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('account_details', account_number=account.account_number, page=pagination.current_page-1) }}"
+                   aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+
+            <!-- Page numbers -->
+            {% set start_page = [1, pagination.current_page - 2]|max %}
+            {% set end_page = [pagination.pages, start_page + 4]|min %}
+            {% set start_page = [1, end_page - 4]|max %}
+
+            {% if start_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for('account_details', account_number=account.account_number, page=1) }}">
+                        1
+                    </a>
+                </li>
+                {% if start_page > 2 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endif %}
+            {% for page_num in range(start_page, end_page + 1) %}
+                {% if page_num == pagination.current_page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for('account_details', account_number=account.account_number, page=page_num) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < pagination.pages %}
+                {% if end_page < pagination.pages - 1 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for('account_details', account_number=account.account_number, page=pagination.pages) }}">
+                        {{ pagination.pages }}
+                    </a>
+                </li>
+            {% endif %}
+
+
+            <!-- Next button -->
+            <li class="page-item {% if pagination.current_page == pagination.pages %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('account_details', account_number=account.account_number, page=pagination.current_page+1) }}"
+                   aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <p class="text-center text-muted">
+        Showing page {{ pagination.current_page }} of {{ pagination.pages }}
+        ({{ pagination.total }} total transactions)
+    </p>
+</div>
+{% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-receipt display-1 text-muted"></i>
+        </div>
+        <h4>No Transactions Yet</h4>
+        <p class="text-body-secondary mb-4">Start by processing your bank emails or adding transactions manually.</p>
+        <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Transaction
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                <i class="bi bi-envelope me-2"></i>Process Emails
+            </a>
+        </div>
+    </div>
+{% endif %}

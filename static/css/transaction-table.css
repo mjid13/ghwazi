@@ -1,0 +1,175 @@
+/**
+ * Transaction Table CSS
+ * Styles for responsive transaction table
+ */
+
+/* Make the transaction table more responsive */
+#transaction-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* Style for responsive details */
+.responsive-details {
+    width: 100%;
+    margin-bottom: 0;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 0.25rem;
+}
+
+.responsive-details tr {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.responsive-details tr:last-child {
+    border-bottom: none;
+}
+
+.responsive-label {
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    width: 40%;
+    color: #6c757d; /* Bootstrap secondary color */
+}
+
+.responsive-data {
+    padding: 0.5rem 0.75rem;
+    width: 60%;
+}
+
+/* Improve display of transaction details on mobile */
+.transaction-details {
+    max-width: 100%;
+    word-break: break-word;
+}
+
+/* Ensure badges are properly displayed on mobile */
+.badge {
+    white-space: normal;
+    text-align: left;
+}
+
+/* Improve display of transaction date on mobile */
+.transaction-date {
+    min-width: 80px;
+}
+
+/* Ensure dropdown menus are properly displayed on mobile */
+.dropdown-menu {
+    min-width: 10rem;
+}
+
+/* Improve display of category editing on mobile */
+.category-edit .input-group {
+    flex-wrap: nowrap;
+}
+
+.category-edit .form-select {
+    min-width: 120px;
+}
+
+/* DataTables responsive styles */
+table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control {
+    position: relative;
+    padding-left: 30px;
+    cursor: pointer;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    top: 50%;
+    left: 5px;
+    height: 16px;
+    width: 16px;
+    margin-top: -8px;
+    display: block;
+    position: absolute;
+    color: white;
+    border: 2px solid white;
+    border-radius: 16px;
+    box-shadow: 0 0 3px #444;
+    box-sizing: content-box;
+    text-align: center;
+    text-indent: 0 !important;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 16px;
+    content: '+';
+    background-color: #0d6efd; /* Bootstrap primary color */
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+    content: '-';
+    background-color: #dc3545; /* Bootstrap danger color */
+}
+
+/* Custom styles for child rows */
+.child {
+    padding: 0.5rem 1rem;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Media queries for responsive design */
+@media (max-width: 767.98px) {
+    /* Adjust padding for mobile */
+    #transaction-table td,
+    #transaction-table th {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    /* Make sure the date column is not too wide on mobile */
+    #transaction-table td:first-child,
+    #transaction-table th:first-child {
+        padding-left: 0.75rem;
+        padding-right: 0.5rem;
+    }
+    
+    /* Ensure the action column is not too wide on mobile */
+    #transaction-table td:last-child,
+    #transaction-table th:last-child {
+        padding-left: 0.5rem;
+        padding-right: 0.75rem;
+    }
+    
+    /* Adjust font sizes for mobile */
+    #transaction-table {
+        font-size: 0.875rem;
+    }
+    
+    /* Make badges more compact on mobile */
+    .badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Adjust transaction date display on mobile */
+    .transaction-date strong {
+        font-size: 0.875rem;
+    }
+    
+    .transaction-date small {
+        font-size: 0.75rem;
+    }
+}
+
+/* Ensure proper display on very small screens */
+@media (max-width: 575.98px) {
+    /* Further reduce padding */
+    #transaction-table td,
+    #transaction-table th {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    /* Make the table take full width */
+    .table-responsive {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        width: calc(100% + 2rem);
+    }
+    
+    /* Adjust transaction date display on very small screens */
+    .transaction-date {
+        min-width: 70px;
+    }
+}
