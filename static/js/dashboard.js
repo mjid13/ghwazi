@@ -145,49 +145,30 @@ function initPdfUploadForm() {
  * Initialize mode switching with AJAX content loading
  */
 function initModeSwitching() {
-    const emailModeLink = document.querySelector('a[href*="dashboard?mode=email"]');
-    const uploadModeLink = document.querySelector('a[href*="dashboard?mode=upload"]');
+    // Use more specific selectors that will match the actual links
+    const emailModeLink = document.querySelector('a[href*="?mode=email"]');
+    const uploadModeLink = document.querySelector('a[href*="?mode=upload"]');
     
-    if (!emailModeLink || !uploadModeLink) return;
+    if (!emailModeLink || !uploadModeLink) {
+        console.error('Mode switching links not found');
+        return;
+    }
+    
+    console.log('Mode switching links found:', emailModeLink, uploadModeLink);
     
     // Handle email mode link click
     emailModeLink.addEventListener('click', function(event) {
-        event.preventDefault();
+        // Don't prevent default - let the browser navigate normally
+        // This ensures the server renders the correct template based on the mode
         
-        // Update button styles
-        emailModeLink.classList.add('btn-primary');
-        emailModeLink.classList.remove('btn-outline-primary');
-        uploadModeLink.classList.add('btn-outline-primary');
-        uploadModeLink.classList.remove('btn-primary');
-        
-        // Load content via AJAX
-        Ajax.loadContent(emailModeLink.href, '.manual-entry-form', function() {
-            // Re-initialize email fetching form
-            initEmailFetchForm();
-            
-            // Update URL without reloading
-            history.pushState({}, '', emailModeLink.href);
-        });
+        // We could update button styles here, but it's better to let the page reload
+        // and have the server handle it based on the current mode
     });
     
     // Handle upload mode link click
     uploadModeLink.addEventListener('click', function(event) {
-        event.preventDefault();
-        
-        // Update button styles
-        uploadModeLink.classList.add('btn-primary');
-        uploadModeLink.classList.remove('btn-outline-primary');
-        emailModeLink.classList.add('btn-outline-primary');
-        emailModeLink.classList.remove('btn-primary');
-        
-        // Load content via AJAX
-        Ajax.loadContent(uploadModeLink.href, '.manual-entry-form', function() {
-            // Re-initialize PDF upload form
-            initPdfUploadForm();
-            
-            // Update URL without reloading
-            history.pushState({}, '', uploadModeLink.href);
-        });
+        // Don't prevent default - let the browser navigate normally
+        // This ensures the server renders the correct template based on the mode
     });
 }
 

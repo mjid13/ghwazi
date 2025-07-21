@@ -34,6 +34,29 @@ body {
     transform: translateY(-1px);
 }
 
+/* Dropdown menu styling */
+.dropdown-menu {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.dropdown-item i {
+    width: 1.2rem;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
 .card {
     border: none;
     border-radius: 12px;

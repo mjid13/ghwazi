@@ -20,7 +20,7 @@
                 </div>
             </div>
             <h1 class="display-5 fw-bold mb-3">Welcome back, {{ session.username }}! 👋</h1>
-            <p class="lead mb-4">Track your finances and manage your transactions all in one place.</p>
+            <p class="lead mb-4">Track your finances and your transactions all in one place.</p>
             <div class="d-flex flex-wrap gap-2">
                 <a href="{{ url_for('add_account') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-2"></i>Add Bank Account
@@ -98,7 +98,7 @@
             <div class="card-body">
                 {% if accounts %}
                     <div class="d-flex gap-2 mb-4">
-                        <a href="{{ url_for('dashboard') }}?mode=email" class="btn btn-outline-primary w-50" method="get" >
+                        <a href="{{ url_for('dashboard') }}?mode=email" class="btn btn-outline-primary w-50" >
                             <i class="bi bi-clipboard me-2"></i>Email Transactions
                         </a>
                         <a href="{{ url_for('dashboard') }}?mode=upload" class="btn btn-outline-primary w-50">
@@ -111,7 +111,7 @@
                         {% if email_configs %}
                             <h5 class="mb-3">Process Email Transactions</h5>
 
-                            <form action="{{ url_for('fetch_emails') }}" method="post" class="needs-validation" novalidate>
+                            <form id="email-form" action="{{ url_for('fetch_emails') }}" method="post" class="needs-validation" novalidate>
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-4">
                                 <label for="email_account_number" class="form-label">Select Account</label>
@@ -187,7 +187,7 @@
                     {% if request.args.get('mode') == 'upload' %}
                     <div class="manual-entry-form">
                         <h5 class="mb-3">Upload Statement File</h5>
-                        <form action="{{ url_for('upload_pdf') }}" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+                        <form id="pdf-form" action="{{ url_for('upload_pdf') }}" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                             <div class="mb-3">
@@ -218,7 +218,6 @@
                                 <p>The PDF parser will extract transactions from your bank statement and add them to your account. Please ensure:</p>
                                 <ul>
                                     <li>The PDF is a bank statement with transaction tables</li>
-                                    <li>The statement format matches the supported format</li>
                                     <li>You've selected the correct account</li>
                                 </ul>
                             </div>
@@ -319,10 +318,50 @@
 <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ajax.js') }}"></script>
 
 <!-- Pass chart data to JavaScript -->
 <script>
     // Store chart data in a global variable that can be accessed by charts.js
     window.chartData = JSON.parse('{{ chart_data|default("{}")|safe }}');
+    
+    // Initialize AJAX for transaction upload forms
+    document.addEventListener('DOMContentLoaded', function() {
+        // Email form AJAX handling
+        const emailForm = document.getElementById('email-form');
+        if (emailForm) {
+            Ajax.submitForm(emailForm, function(response) {
+                if (response.success) {
+                    Ajax.showNotification(response.message, 'success');
+                    // If there's a redirect URL, redirect after a short delay
+                    if (response.redirect) {
+                        setTimeout(function() {
+                            window.location.href = response.redirect;
+                        }, 2000);
+                    }
+                } else {
+                    Ajax.showNotification(response.message, 'error');
+                }
+            });
+        }
+        
+        // PDF upload form AJAX handling
+        const pdfForm = document.getElementById('pdf-form');
+        if (pdfForm) {
+            Ajax.submitForm(pdfForm, function(response) {
+                if (response.success) {
+                    Ajax.showNotification(response.message, 'success');
+                    // If there's a redirect URL, redirect after a short delay
+                    if (response.redirect) {
+                        setTimeout(function() {
+                            window.location.href = response.redirect;
+                        }, 2000);
+                    }
+                } else {
+                    Ajax.showNotification(response.message, 'error');
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

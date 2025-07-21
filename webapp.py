@@ -1121,10 +1121,15 @@ def upload_pdf():
                         transaction = TransactionRepository.create_transaction(db_session, transaction_data)
                         if transaction:
                             transaction_count += 1
-                    
-                    # Clean up the uploaded file
-                    os.remove(filepath)
-                    
+
+                    # Commit all transactions before cleanup
+                    db_session.commit()
+
+                    # Now safe to clean up the uploaded file
+                    if filepath and os.path.exists(filepath):
+                        os.remove(filepath)
+                        logger.info(f"Successfully removed uploaded file: {filepath}")
+
                     if transaction_count > 0:
                         success_message = f'Successfully imported {transaction_count} transactions from PDF'
                         if is_ajax:
@@ -1155,15 +1160,27 @@ def upload_pdf():
                     return redirect(url_for('dashboard'))
                 finally:
                     db.close_session(db_session)
+                    if filepath and os.path.exists(filepath):
+                        try:
+                            os.remove(filepath)
+                            logger.info(f"Cleaned up file in finally block: {filepath}")
+                        except OSError as e:
+                            logger.warning(f"Could not remove file {filepath}: {str(e)}")
+
             except Exception as e:
                 logger.error(f"Error parsing PDF file: {str(e)}")
                 if is_ajax:
                     return jsonify({'success': False, 'message': f'Error parsing PDF file: {str(e)}'})
                 flash(f'Error parsing PDF file: {str(e)}', 'error')
                 # Clean up the uploaded file if it exists
-                if os.path.exists(filepath):
-                    os.remove(filepath)
+                if filepath and os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                        logger.info(f"Cleaned up file after parsing error: {filepath}")
+                    except OSError as e:
+                        logger.warning(f"Could not remove file {filepath}: {str(e)}")
                 return redirect(url_for('dashboard'))
+
         else:
             if is_ajax:
                 return jsonify({'success': False, 'message': 'File type not allowed. Please upload a PDF file.'})
