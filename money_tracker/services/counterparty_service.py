@@ -86,6 +86,7 @@ class CounterpartyService:
                         CounterpartyCategory.counterparty_id == counterparty.id,
                         CounterpartyCategory.user_id == user_id
                     ).first()
+
                     
                     category_id = None
                     category_name = None
@@ -124,6 +125,7 @@ class CounterpartyService:
                         'category_id': category_id,
                         'last_transaction_date': last_transaction_date
                     })
+
 
                 # Sort by counterparty name
                 result.sort(key=lambda x: x['counterparty_name'].lower() if x['counterparty_name'] else '')
@@ -233,7 +235,9 @@ class CounterpartyService:
                     # If both are provided, find transactions with either match
                     filter_conditions.append(
                         or_(
+
                             Transaction.counterparty_id == counterparty_id,
+
                             Transaction.transaction_details == description
                         )
                     )
