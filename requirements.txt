@@ -52,6 +52,10 @@ passlib==1.7.4
 # Cryptography (for security features)
 cryptography==45.0.5
 
+# HTML parsing (for email content parsing)
+beautifulsoup4==4.13.4
+soupsieve==2.7
+
 # Testing (development only - can be moved to dev requirements)
 pytest==8.4.1
 pytest-cov==6.2.1
