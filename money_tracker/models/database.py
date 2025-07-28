@@ -190,11 +190,11 @@ class Database:
                         # This might fail if counterparties table doesn't exist yet, which is fine
             
             # Migrate existing counterparty data
-            try:
-                self.migrate_counterparty_data()
-            except Exception as e:
-                logger.error(f"Error migrating counterparty data: {str(e)}")
-                # Continue even if migration fails
+            # try:
+            #     self.migrate_counterparty_data()
+            # except Exception as e:
+            #     logger.error(f"Error migrating counterparty data: {str(e)}")
+            #     # Continue even if migration fails
             
             logger.info("Database tables created")
             return True

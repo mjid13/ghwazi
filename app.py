@@ -2104,7 +2104,8 @@ def categorize_counterparty():
 
         if success:
             # Get category name for response
-            category = db.session.query(Category).filter_by(id=category_id, user_id=user_id).first()
+            db_session = db.get_session()
+            category = db_session.query(Category).filter_by(id=category_id, user_id=user_id).first()
             category_name = category.name if category else 'Unknown'
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
