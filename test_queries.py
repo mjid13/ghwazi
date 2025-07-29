@@ -43,15 +43,15 @@ def test_account_query():
             Account.user_id == test_user.id
         ).all()
         
-        # Clean up the test user
-        session.delete(test_user)
-        session.commit()
-        
         logger.info(f"Successfully queried accounts table. Found {len(accounts)} accounts.")
         
         # Print some details about the accounts to verify the data
         for account in accounts:
             logger.info(f"Account ID: {account.id}, Bank ID: {account.bank_id}, Bank Name: {account.bank_name}")
+        
+        # Clean up the test user
+        session.delete(test_user)
+        session.commit()
         
         return True
     except Exception as e:
