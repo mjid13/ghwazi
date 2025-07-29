@@ -33,9 +33,19 @@ def test_account_query():
     
     try:
         # This is the query that was failing according to the error message
+        # Create a test user
+        test_user = Account(bank_id="test_bank", bank_name="Test Bank")
+        session.add(test_user)
+        session.commit()
+        
+        # Use the test user's ID in the query
         accounts = session.query(Account).filter(
-            Account.user_id == 1
+            Account.user_id == test_user.id
         ).all()
+        
+        # Clean up the test user
+        session.delete(test_user)
+        session.commit()
         
         logger.info(f"Successfully queried accounts table. Found {len(accounts)} accounts.")
         
