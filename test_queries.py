@@ -75,8 +75,14 @@ def test_email_config_query():
     
     try:
         # This is the query that was failing according to the error message
+        # Create a test user
+        test_user = User(name="Test User")
+        session.add(test_user)
+        session.commit()
+        
+        # Use the dynamically created user's ID
         email_configs = session.query(EmailConfiguration).filter(
-            EmailConfiguration.user_id == 1
+            EmailConfiguration.user_id == test_user.id
         ).all()
         
         logger.info(f"Successfully queried email_configurations table. Found {len(email_configs)} configurations.")
