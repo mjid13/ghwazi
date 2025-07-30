@@ -146,31 +146,24 @@
                             <!-- Email Filtering Section -->
                             <div class="col-12">
                                 <hr class="my-4">
-                                <h3 class="h5 mb-3">Bank Selection</h3>
+                                <h3 class="h5 mb-3">This email receives emails from this Bank/s:</h3>
                             </div>
 
                             <!-- Bank Selection -->
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="bank_ids" class="form-label">Select Banks</label>
-                                    <select class="form-select"
-                                            id="bank_ids"
-                                            name="bank_ids[]"
-                                            multiple
-                                            size="5">
-                                        {% for bank in banks %}
-                                            <option value="{{ bank.id }}"
-                                                    data-email="{{ bank.email_address }}"
-                                                    data-subjects="{{ bank.email_subjects }}"
-                                                    {% if email_config.bank_id == bank.id or bank.id in associated_bank_ids %}selected{% endif %}>
-                                                {{ bank.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="form-text">Select one or more banks to configure email filtering. Hold Ctrl (or Cmd on Mac) to select multiple banks.</div>
-                                </div>
-                            </div>
-
+                           <div class="col-12">
+                               <div class="form-group">
+                                   <label class="form-label">Select Banks</label>
+                                   <div>
+                                       {% for bank in banks %}
+                                       <div class="form-check">
+                                           <input class="form-check-input" type="checkbox" id="bank_{{ bank.id }}" name="bank_ids[]" value="{{ bank.id }}" data-email="{{ bank.email_address }}" data-subjects="{{ bank.email_subjects }}">
+                                           <label class="form-check-label" for="bank_{{ bank.id }}">{{ bank.name }}</label>
+                                       </div>
+                                       {% endfor %}
+                                   </div>
+                                   <div class="form-text">Select one or more banks to configure email filtering.</div>
+                               </div>
+                           </div>
                             <!-- Bank Email Addresses (hidden but kept for backward compatibility) -->
                             <div class="col-12" id="bank_email_addresses_container" style="display: none;">
                                 <div class="form-group">
@@ -376,19 +369,19 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     
     // Bank selection handling
-    const bankSelect = document.getElementById('bank_ids')
+    const bankCheckboxes = document.querySelectorAll('input[name="bank_ids[]"]')
     const bankEmailAddresses = document.getElementById('bank_email_addresses')
     const bankEmailSubjects = document.getElementById('bank_email_subjects')
     const bankEmailAddressesContainer = document.getElementById('bank_email_addresses_container')
     const bankEmailSubjectsContainer = document.getElementById('bank_email_subjects_container')
     const toggleManualBankConfig = document.getElementById('toggle-manual-bank-config')
     const toggleBankText = document.getElementById('toggle-bank-text')
-    
+
     // Initialize bank fields based on current selection
     function initializeBankFields() {
-        const selectedOptions = Array.from(bankSelect.selectedOptions)
-        
-        if (selectedOptions.length > 0) {
+        const selectedCheckboxes = Array.from(bankCheckboxes).filter(cb => cb.checked)
+
+        if (selectedCheckboxes.length > 0) {
             // Hide manual fields by default if banks are selected
             bankEmailAddressesContainer.style.display = 'none'
             bankEmailSubjectsContainer.style.display = 'none'
@@ -399,27 +392,27 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleBankText.textContent = 'Hide Manual Bank Configuration'
         }
     }
-    
+
     // Initialize on page load
     initializeBankFields();
     
     // Update hidden fields when banks are selected
-    bankSelect.addEventListener('change', function() {
-        const selectedOptions = Array.from(this.selectedOptions)
-        
-        if (selectedOptions.length > 0) {
+    function updateBankFields() {
+        const selectedCheckboxes = Array.from(bankCheckboxes).filter(cb => cb.checked)
+
+        if (selectedCheckboxes.length > 0) {
             // Collect all email addresses and subjects from selected banks
             const emails = []
             const subjects = []
-            
-            selectedOptions.forEach(option => {
-                const email = option.getAttribute('data-email')
-                const subject = option.getAttribute('data-subjects')
-                
+
+            selectedCheckboxes.forEach(checkbox => {
+                const email = checkbox.getAttribute('data-email')
+                const subject = checkbox.getAttribute('data-subjects')
+
                 if (email && !emails.includes(email)) {
                     emails.push(email)
                 }
-                
+
                 if (subject) {
                     // Split subjects by comma and add each one if not already included
                     const subjectList = subject.split(',')
@@ -431,11 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                 }
             })
-            
+
             // Update hidden fields
             bankEmailAddresses.value = emails.join(',')
             bankEmailSubjects.value = subjects.join(',')
-            
+
             // Hide manual fields
             bankEmailAddressesContainer.style.display = 'none'
             bankEmailSubjectsContainer.style.display = 'none'
@@ -445,8 +438,13 @@ document.addEventListener('DOMContentLoaded', function() {
             bankEmailAddresses.value = ''
             bankEmailSubjects.value = ''
         }
+    }
+
+    // Add event listeners to all checkboxes
+    bankCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBankFields)
     })
-    
+
     // Toggle manual bank configuration
     toggleManualBankConfig.addEventListener('click', function() {
         if (bankEmailAddressesContainer.style.display === 'none') {
