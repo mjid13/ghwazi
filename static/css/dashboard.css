@@ -82,3 +82,25 @@
 [data-bs-theme="dark"] .chart-loading {
     background-color: rgba(0, 0, 0, 0.5);
 }
+
+.category-chart-filter {
+    margin-bottom: 15px;
+}
+
+.category-chart-filter .btn-group .btn {
+    min-width: 80px;
+    font-size: 0.875rem;
+}
+
+.chart-container.loading {
+    position: relative;
+    opacity: 0.7;
+}
+
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}

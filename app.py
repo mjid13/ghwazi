@@ -2216,6 +2216,103 @@ def category_mappings(category_id):
 
     return render_template('category_mappings.html', category=category, mappings=mappings)
 
+@app.route('/get_category_chart_data')
+@login_required
+def get_category_chart_data():
+    """Get category chart data filtered by account, date range, and category type."""
+    user_id = session.get('user_id')
+    account_number = request.args.get('account_number', 'all')
+    date_range = request.args.get('date_range', 'overall')
+    category_type = request.args.get('category_type', 'expense')
+
+    db_session = db.get_session()
+
+    try:
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        from money_tracker.models.models import Transaction, Category, TransactionType
+
+        # Calculate date range based on selection
+        end_date = datetime.now()
+        start_date = None
+
+        if date_range == '2w':
+            start_date = end_date - timedelta(days=14)
+        elif date_range == '1m':
+            start_date = end_date - timedelta(days=30)
+        elif date_range == '3m':
+            start_date = end_date - timedelta(days=90)
+        elif date_range == '6m':
+            start_date = end_date - timedelta(days=180)
+        elif date_range == '12m':
+            start_date = end_date - timedelta(days=365)
+        elif date_range == '24m':
+            start_date = end_date - timedelta(days=730)
+
+        # Determine transaction type based on category_type filter
+        transaction_type = TransactionType.EXPENSE if category_type == 'expense' else TransactionType.INCOME
+
+        # Get category distribution
+        category_query = db_session.query(
+            Category.name,
+            Category.color,
+            func.sum(Transaction.amount).label('total_amount')
+        ).join(
+            Transaction, Transaction.category_id == Category.id
+        ).join(
+            Account, Transaction.account_id == Account.id
+        ).filter(
+            Account.user_id == user_id,
+            Transaction.transaction_type == transaction_type
+        )
+
+        # Apply date filter if specified
+        if start_date:
+            category_query = category_query.filter(Transaction.value_date >= start_date)
+
+        # Filter by account_number if specified
+        if account_number != 'all':
+            category_query = category_query.filter(Account.account_number == account_number)
+
+        category_data = category_query.group_by(
+            Category.name,
+            Category.color
+        ).order_by(
+            func.sum(Transaction.amount).desc()
+        ).limit(10).all()
+
+        # Format data for pie chart
+        category_labels = [cat.name for cat in category_data]
+        category_values = [float(cat.total_amount) for cat in category_data]
+
+        # Use category colors from database, or fallback to defaults
+        default_colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#8AC249', '#EA5545', '#F46A9B', '#EF9B20'
+        ]
+        category_colors = []
+        for i, cat in enumerate(category_data):
+            if cat.color:
+                category_colors.append(cat.color)
+            else:
+                category_colors.append(default_colors[i % len(default_colors)])
+
+        chart_data = {
+            'labels': category_labels,
+            'datasets': [{
+                'data': category_values,
+                'backgroundColor': category_colors[:len(category_labels)]
+            }]
+        }
+
+        return jsonify(chart_data)
+
+    except Exception as e:
+        logger.error(f"Error getting category chart data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close_session(db_session)
+
 @app.route('/categories/<int:category_id>/mappings/add', methods=['GET', 'POST'])
 @login_required
 def add_category_mapping(category_id):
@@ -2421,7 +2518,11 @@ def get_chart_data():
         # Filter by account_number if specified
         if account_number != 'all':
             income_expense_query = income_expense_query.filter(Account.account_number == account_number)
-        
+
+        # Apply date range filter
+        if start_date:
+            income_expense_query = income_expense_query.filter(Transaction.value_date >= start_date)
+
         income_expense_data = income_expense_query.first()
         
         chart_data['income_expense'] = {
@@ -2453,6 +2554,9 @@ def get_chart_data():
         # Filter by account_number if specified
         if account_number != 'all':
             category_query = category_query.filter(Account.account_number == account_number)
+        # Apply date range filter
+        if start_date:
+            category_query = category_query.filter(Transaction.value_date >= start_date)
 
         category_data = category_query.group_by(
             Category.name,
@@ -2487,9 +2591,6 @@ def get_chart_data():
         }
         
         # 3. Monthly Transaction Trend Line Chart
-        # Get data for the last 6 months
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=180)  # Approximately 6 months
 
         # Query monthly aggregates
         monthly_query = db_session.query(
@@ -2507,7 +2608,12 @@ def get_chart_data():
         # Filter by account_number if specified
         if account_number != 'all':
             monthly_query = monthly_query.filter(Account.account_number == account_number)
-        
+
+
+        # Apply date range filter
+        if start_date:
+            monthly_query = monthly_query.filter(Transaction.value_date >= start_date)
+
         monthly_data = monthly_query.group_by(
             extract('year', Transaction.value_date),
             extract('month', Transaction.value_date)
