@@ -311,7 +311,7 @@ class CategoryService:
                 # Get all uncategorized transactions for this user
                 from sqlalchemy import and_
 
-                from app.models.models import Account
+                from ..models.models import Account
 
                 transactions = (
                     session.query(Transaction)

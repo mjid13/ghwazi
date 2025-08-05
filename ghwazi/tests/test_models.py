@@ -5,8 +5,8 @@ Tests for the models module.
 import pytest
 
 from app import create_app
-from app.config.testing import TestingConfig
-from app.models import Account, Category, Database, Transaction, User
+from .app.config.testing import TestingConfig
+from .app.models import Account, Category, Database, Transaction, User
 
 
 @pytest.fixture

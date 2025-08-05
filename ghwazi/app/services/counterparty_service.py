@@ -46,7 +46,7 @@ class CounterpartyService:
                 # Get all counterparties that have transactions for this user
                 from sqlalchemy import case, distinct, func, outerjoin
 
-                from app.models.models import Account
+                from ..models.models import Account
 
                 # Query all counterparties with transactions for this user
                 counterparties_query = (
@@ -261,7 +261,7 @@ class CounterpartyService:
                 # Update all matching transactions with this category
                 from sqlalchemy import and_, or_
 
-                from app.models.models import Account
+                from ..models.models import Account
 
                 # Build the filter conditions based on what was provided
                 filter_conditions = [Account.user_id == user_id]
@@ -378,7 +378,7 @@ class CounterpartyService:
                 # Get all uncategorized transactions for this user
                 from sqlalchemy import and_
 
-                from app.models.models import Account
+                from ..models.models import Account
 
                 transactions = (
                     session.query(Transaction)

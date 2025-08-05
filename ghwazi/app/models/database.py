@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from app.config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ class Database:
                                 connection.commit()
 
                             # Create the new table with Base.metadata.create_all
-                            from app.models.models import Transaction
+                            from ..models.models import Transaction
 
                             Base.metadata.create_all(
                                 self.engine, tables=[Transaction.__table__]
@@ -394,7 +394,7 @@ class Database:
             if "email_config_banks" not in inspector.get_table_names():
                 try:
                     # Create the email_config_banks table
-                    from money_tracker.models.models import EmailConfigBank
+                    from ..models.models import EmailConfigBank
 
                     Base.metadata.create_all(
                         self.engine, tables=[EmailConfigBank.__table__]
@@ -545,7 +545,7 @@ class Database:
         This method is called when the application starts to ensure the table has the necessary data.
         """
         try:
-            from app.models.models import EmailServiceProvider
+            from ..models.models import EmailServiceProvider
 
             # Create a session
             session = self.get_session()
@@ -637,7 +637,7 @@ class Database:
         This method is called when the application starts to ensure the table has the necessary data.
         """
         try:
-            from app.models.models import Bank
+            from ..models.models import Bank
 
             # Create a session
             session = self.get_session()

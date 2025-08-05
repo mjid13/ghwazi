@@ -17,10 +17,10 @@ sys.path.insert(0, current_dir)
 
 # Import from the local app package (ghwawzi/app/)
 from app import create_app
-from app.config.development import DevelopmentConfig
-from app.config.production import ProductionConfig
-from app.config.testing import TestingConfig
-from app.models.database import Database
+from .app.config.development import DevelopmentConfig
+from .app.config.production import ProductionConfig
+from .app.config.testing import TestingConfig
+from .app.models.database import Database
 
 
 def get_config_class():
@@ -66,7 +66,7 @@ cli = FlaskGroup(app)
 @cli.command()
 def init_db():
     """Initialize the database with tables."""
-    from app.extensions import db
+    from .app.extensions import db
 
     with app.app_context():
         db.create_all()
@@ -76,7 +76,7 @@ def init_db():
 @cli.command()
 def drop_db():
     """Drop all database tables."""
-    from app.extensions import db
+    from .app.extensions import db
 
     with app.app_context():
         if input("Are you sure you want to drop all tables? (y/N): ").lower() == 'y':
@@ -89,7 +89,7 @@ def drop_db():
 @cli.command()
 def create_admin():
     """Create an admin user."""
-    from app.models import Database, TransactionRepository
+    from .app.models import Database, TransactionRepository
 
     username = input("Enter admin username: ")
     email = input("Enter admin email: ")
@@ -176,7 +176,7 @@ def format_code():
 @cli.command()
 def fetch_emails():
     """Manually fetch emails from configured accounts."""
-    from app.services.email_service import EmailService
+    from .app.services.email_service import EmailService
 
     print("Starting email fetch process...")
     try:
