@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from flask import Flask, session
 
-from app.views.email import email_tasks, email_tasks_lock, scraping_accounts
+from .views.email import email_tasks, email_tasks_lock, scraping_accounts
 
 from .config.base import Config
 from .extensions import db, migrate
@@ -25,14 +25,14 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
 
     # Register blueprints
-    from app.views.account import account_bp
-    from app.views.admin import admin_bp
-    from app.views.api import api_bp
-    from app.views.auth import auth_bp
-    from app.views.category import category_bp
-    from app.views.email import email_bp
-    from app.views.main import main_bp
-    from app.views.transaction import transaction_bp
+    from .views.account import account_bp
+    from .views.admin import admin_bp
+    from .views.api import api_bp
+    from .views.auth import auth_bp
+    from .views.category import category_bp
+    from .views.email import email_bp
+    from .views.main import main_bp
+    from .views.transaction import transaction_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
