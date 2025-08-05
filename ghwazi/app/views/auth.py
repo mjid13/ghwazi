@@ -4,7 +4,10 @@ Authentication views for the Flask application.
 
 import logging
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
+
 from app.models.database import Database
 from app.models.transaction import TransactionRepository
 from app.models.user import User

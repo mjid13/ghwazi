@@ -3,9 +3,10 @@ Database connection and session management for the Bank Email Parser & Account T
 """
 
 import logging
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from app.config import settings
 
@@ -61,7 +62,7 @@ class Database:
         """
         try:
             # Check if tables exist and have user_id column
-            from sqlalchemy import inspect, Column, Integer, ForeignKey
+            from sqlalchemy import Column, ForeignKey, Integer, inspect
 
             inspector = inspect(self.engine)
 
@@ -451,8 +452,8 @@ class Database:
         """
         try:
             logger.info("Starting migration of counterparty data")
-            from sqlalchemy.sql import text
             from sqlalchemy.orm import Session
+            from sqlalchemy.sql import text
 
             # Get a session
             session = self.get_session()

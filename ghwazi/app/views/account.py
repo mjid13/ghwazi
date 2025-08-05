@@ -1,18 +1,14 @@
 import logging
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from datetime import datetime
+
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, session, url_for)
+
+from app.models import (Account, Bank, Category, CategoryMapping,
+                        EmailConfiguration, Transaction)
 from app.models.database import Database
 from app.models.transaction import TransactionRepository
 from app.models.user import User
-from app.models import (
-    Category,
-    CategoryMapping,
-    EmailConfiguration,
-    Bank,
-    Account,
-    Transaction,
-)
-from datetime import datetime
-from flask import jsonify
 from app.utils.decorators import login_required
 
 # Create blueprint

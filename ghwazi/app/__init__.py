@@ -2,16 +2,17 @@
 Application factory for the Flask app.
 """
 
-import os
 import logging
-from datetime import timedelta
+import os
 import time
+from datetime import timedelta
 
 from flask import Flask, session
-from .extensions import db, migrate
-from .config.base import Config
 
-from app.views.email import email_tasks_lock, email_tasks, scraping_accounts
+from app.views.email import email_tasks, email_tasks_lock, scraping_accounts
+
+from .config.base import Config
+from .extensions import db, migrate
 
 
 def create_app(config_class=Config):
@@ -24,13 +25,13 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
 
     # Register blueprints
-    from app.views.main import main_bp
-    from app.views.auth import auth_bp
-    from app.views.api import api_bp
-    from app.views.admin import admin_bp
     from app.views.account import account_bp
+    from app.views.admin import admin_bp
+    from app.views.api import api_bp
+    from app.views.auth import auth_bp
     from app.views.category import category_bp
     from app.views.email import email_bp
+    from app.views.main import main_bp
     from app.views.transaction import transaction_bp
 
     app.register_blueprint(main_bp)

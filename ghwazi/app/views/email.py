@@ -2,35 +2,21 @@ import logging
 import os
 import threading
 import uuid
+from datetime import datetime, time
 from threading import Lock
 
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    session,
-    current_app,
-)
+from flask import (Blueprint, current_app, flash, jsonify, redirect,
+                   render_template, request, session, url_for)
+from werkzeug.utils import secure_filename
+
+from app.models import (Account, Bank, Category, CategoryMapping,
+                        EmailConfiguration, Transaction)
 from app.models.database import Database
 from app.models.transaction import TransactionRepository
 from app.models.user import User
-from app.models import (
-    Category,
-    CategoryMapping,
-    EmailConfiguration,
-    Bank,
-    Account,
-    Transaction,
-)
-from datetime import datetime, time
-from flask import jsonify
-from app.utils.decorators import login_required
 from app.services.email_service import EmailService
 from app.services.parser_service import TransactionParser
-from werkzeug.utils import secure_filename
+from app.utils.decorators import login_required
 
 # Create blueprint
 email_bp = Blueprint("email", __name__)

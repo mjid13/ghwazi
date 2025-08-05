@@ -6,14 +6,17 @@ import json
 import logging
 from datetime import datetime
 from threading import Lock
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request
+
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
+
 from app.models.database import Database
+from app.models.models import Account, EmailConfiguration
 from app.models.transaction import TransactionRepository
 from app.models.user import User
-from app.models.models import Account, EmailConfiguration
-from app.utils.decorators import login_required
 from app.services.counterparty_service import CounterpartyService
-from app.views.email import scraping_accounts, email_tasks_lock
+from app.utils.decorators import login_required
+from app.views.email import email_tasks_lock, scraping_accounts
 
 # Create blueprint
 main_bp = Blueprint("main", __name__)
@@ -58,9 +61,12 @@ def dashboard():
         category_labels = []
         if accounts:
             # Import necessary modules for data aggregation
-            from sqlalchemy import func, case, extract
             from datetime import datetime, timedelta
-            from app.models.models import Transaction, Category, TransactionType
+
+            from sqlalchemy import case, extract, func
+
+            from app.models.models import (Category, Transaction,
+                                           TransactionType)
 
             # 1. Income vs. Expense Comparison Chart
             income_expense_data = (

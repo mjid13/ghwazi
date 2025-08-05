@@ -5,19 +5,11 @@ Database models for the Bank Email Parser & Account Tracker.
 import enum
 import logging
 from datetime import datetime
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DateTime,
-    ForeignKey,
-    Enum,
-    Float,
-    Text,
-    Boolean,
-    UniqueConstraint,
-)
+
+from sqlalchemy import (Boolean, Column, DateTime, Enum, Float, ForeignKey,
+                        Integer, String, Text, UniqueConstraint)
 from sqlalchemy.orm import relationship
+
 from .database import Base
 
 logger = logging.getLogger(__name__)

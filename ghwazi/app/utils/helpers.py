@@ -5,6 +5,7 @@ Helper functions for the application.
 import os
 import random
 import string
+
 from werkzeug.utils import secure_filename
 
 

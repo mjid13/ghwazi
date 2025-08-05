@@ -1,17 +1,13 @@
-from .user import User
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import String
 from sqlalchemy.orm import Session
-from .models import (
-    Account,
-    Transaction,
-    TransactionType,
-    Counterparty,
-    EmailConfiguration,
-    EmailMetadata,
-)
+
+from .models import (Account, Counterparty, EmailConfiguration, EmailMetadata,
+                     Transaction, TransactionType)
+from .user import User
 
 logger = logging.getLogger(__name__)
 
@@ -461,7 +457,7 @@ class TransactionRepository:
                 return None
 
             # Use more efficient SQL aggregation instead of loading all transactions
-            from sqlalchemy import func, case
+            from sqlalchemy import case, func
 
             # Get transaction counts and sums by type
             transaction_stats = (

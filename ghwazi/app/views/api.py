@@ -2,29 +2,20 @@
 API views for the Flask application.
 """
 
-import logging
 import json
+import logging
 import os
-from datetime import time, datetime
+from datetime import datetime, time
 from threading import Lock
 
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    session,
-    jsonify,
-    current_app,
-    Blueprint,
-)
-from app.models import Database, TransactionRepository, Transaction, Account, Category
-from app.utils.decorators import login_required
+from flask import (Blueprint, Flask, current_app, flash, jsonify, redirect,
+                   render_template, request, session, url_for)
 from werkzeug.utils import secure_filename
 
+from app.models import (Account, Category, Database, Transaction,
+                        TransactionRepository)
 from app.services.pdf_parser_service import PDFParser
+from app.utils.decorators import login_required
 from app.utils.helpers import allowed_file
 
 # Create blueprint
@@ -50,9 +41,11 @@ def get_chart_data():
         chart_data = {}
 
         # Import necessary modules for data aggregation
-        from sqlalchemy import func, case, extract
         from datetime import datetime, timedelta
-        from money_tracker.models.models import Transaction, Category, TransactionType
+
+        from money_tracker.models.models import (Category, Transaction,
+                                                 TransactionType)
+        from sqlalchemy import case, extract, func
 
         # Calculate date range based on selection
         end_date = datetime.now()
@@ -354,9 +347,11 @@ def get_category_chart_data():
     db_session = db.get_session()
 
     try:
-        from sqlalchemy import func
         from datetime import datetime, timedelta
-        from money_tracker.models.models import Transaction, Category, TransactionType
+
+        from money_tracker.models.models import (Category, Transaction,
+                                                 TransactionType)
+        from sqlalchemy import func
 
         # Calculate date range based on selection
         end_date = datetime.now()

@@ -3,6 +3,7 @@ Tests for the views module.
 """
 
 import pytest
+
 from app import create_app
 from app.config.testing import TestingConfig
 

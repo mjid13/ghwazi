@@ -2,11 +2,12 @@
 Parser service for extracting transaction data from bank emails.
 """
 
-import re
-import logging
 import html
-from typing import Dict, Any, Optional, List
+import logging
+import re
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import dateutil.parser
 from bs4 import BeautifulSoup
 

@@ -3,9 +3,10 @@ Tests for the models module.
 """
 
 import pytest
+
 from app import create_app
-from app.models import Database, User, Account, Transaction, Category
 from app.config.testing import TestingConfig
+from app.models import Account, Category, Database, Transaction, User
 
 
 @pytest.fixture

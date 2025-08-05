@@ -1,15 +1,11 @@
 import logging
 import random
-from typing import Optional, List
+from typing import List, Optional
+
 from sqlalchemy.orm import Session
-from .models import (
-    Account,
-    Transaction,
-    CategoryType,
-    Category,
-    CategoryMapping,
-    CounterpartyCategory,
-)
+
+from .models import (Account, Category, CategoryMapping, CategoryType,
+                     CounterpartyCategory, Transaction)
 
 logger = logging.getLogger(__name__)
 

@@ -2,14 +2,14 @@
 PDF parser service for extracting transaction data from PDF bank statements.
 """
 
+import logging
 import os
 import re
-import logging
-from typing import Dict, Any, List, Tuple, Optional
-import pandas as pd
-import fitz  # PyMuPDF
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
+import fitz  # PyMuPDF
+import pandas as pd
 from pdfminer.pdfparser import PDFParser
 
 logger = logging.getLogger(__name__)

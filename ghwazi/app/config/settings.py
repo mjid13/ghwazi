@@ -5,6 +5,7 @@ This module loads configuration from environment variables or a .env file.
 """
 
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file

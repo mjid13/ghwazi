@@ -2,15 +2,15 @@
 Email service for connecting to email accounts and retrieving bank emails.
 """
 
-import imaplib
 import email
-from email.header import decode_header
+import imaplib
 import logging
-from typing import List, Dict, Any, Optional
 import re
 import socket
 import ssl
 import time
+from email.header import decode_header
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -628,7 +628,7 @@ class EmailService:
             Optional[EmailService]: EmailService instance or None if configuration not found.
         """
         try:
-            from app.models.models import EmailConfiguration, Account
+            from app.models.models import Account, EmailConfiguration
             from app.models.transaction import TransactionRepository
 
             # Get user's email configuration

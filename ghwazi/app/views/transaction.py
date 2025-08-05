@@ -4,27 +4,18 @@ transaction views for the Flask application.
 
 import csv
 import io
-import logging
 import json
-from datetime import time, datetime, timedelta
+import logging
+from datetime import datetime, time, timedelta
 from threading import Lock
 
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    session,
-    jsonify,
-    Response,
-    Blueprint,
-)
-from app.models import Database, TransactionRepository, Transaction, Account, Category
-from app.utils.decorators import login_required
+from flask import (Blueprint, Flask, Response, flash, jsonify, redirect,
+                   render_template, request, session, url_for)
 
+from app.models import (Account, Category, Database, Transaction,
+                        TransactionRepository)
 from app.services import counterparty_service
+from app.utils.decorators import login_required
 
 # Create blueprint
 transaction_bp = Blueprint("transaction", __name__)

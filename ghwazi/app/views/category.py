@@ -3,25 +3,18 @@ category views for the Flask application.
 """
 
 import logging
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    session,
-    jsonify,
-)
+
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, session, url_for)
+
+from app.models import (Category, CategoryMapping, CategoryType,
+                        EmailConfiguration)
 from app.models.database import Database
 from app.models.transaction import TransactionRepository
 from app.models.user import User
-from app.models import Category, CategoryMapping, EmailConfiguration
-from app.utils.decorators import login_required
-from app.services.counterparty_service import CounterpartyService
 from app.services.category_service import CategoryService
-
-from app.models import CategoryType
+from app.services.counterparty_service import CounterpartyService
+from app.utils.decorators import login_required
 
 # Create blueprint
 category_bp = Blueprint("category", __name__)

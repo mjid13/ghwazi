@@ -5,9 +5,10 @@ Category service for managing transaction categories.
 import logging
 from typing import List, Optional
 
-from app.models.database import Database
-from app.models.models import Category, CategoryMapping, CategoryType, Transaction
 from app.models.category import CategoryRepository
+from app.models.database import Database
+from app.models.models import (Category, CategoryMapping, CategoryType,
+                               Transaction)
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +310,7 @@ class CategoryService:
             try:
                 # Get all uncategorized transactions for this user
                 from sqlalchemy import and_
+
                 from app.models.models import Account
 
                 transactions = (

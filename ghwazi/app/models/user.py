@@ -2,22 +2,14 @@ import enum
 import logging
 import random
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DateTime,
-    ForeignKey,
-    Enum,
-    Float,
-    Text,
-    Boolean,
-    UniqueConstraint,
-)
-from sqlalchemy.orm import relationship, Session
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import (Boolean, Column, DateTime, Enum, Float, ForeignKey,
+                        Integer, String, Text, UniqueConstraint)
+from sqlalchemy.orm import Session, relationship
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from .database import Base
-from werkzeug.security import generate_password_hash, check_password_hash
 
 logger = logging.getLogger(__name__)
 

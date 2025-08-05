@@ -3,18 +3,12 @@ Counterparty service for managing unique counterparty transactions.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.database import Database
-from app.models.models import (
-    Category,
-    CategoryMapping,
-    CategoryType,
-    Transaction,
-    Counterparty,
-    CounterpartyCategory,
-)
 from app.models.category import CategoryRepository
+from app.models.database import Database
+from app.models.models import (Category, CategoryMapping, CategoryType,
+                               Counterparty, CounterpartyCategory, Transaction)
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +44,8 @@ class CounterpartyService:
 
             try:
                 # Get all counterparties that have transactions for this user
-                from sqlalchemy import distinct, func, case, outerjoin
+                from sqlalchemy import case, distinct, func, outerjoin
+
                 from app.models.models import Account
 
                 # Query all counterparties with transactions for this user
@@ -265,6 +260,7 @@ class CounterpartyService:
 
                 # Update all matching transactions with this category
                 from sqlalchemy import and_, or_
+
                 from app.models.models import Account
 
                 # Build the filter conditions based on what was provided
@@ -381,6 +377,7 @@ class CounterpartyService:
             try:
                 # Get all uncategorized transactions for this user
                 from sqlalchemy import and_
+
                 from app.models.models import Account
 
                 transactions = (

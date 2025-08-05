@@ -2,13 +2,15 @@
 Tests for the services module.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from app import create_app
 from app.config.testing import TestingConfig
-from app.services.user_service import UserService
-from app.services.transaction_service import TransactionService
 from app.services.email_service import EmailService
+from app.services.transaction_service import TransactionService
+from app.services.user_service import UserService
 
 
 @pytest.fixture
