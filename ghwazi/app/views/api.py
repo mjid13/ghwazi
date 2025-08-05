@@ -12,11 +12,11 @@ from flask import (Blueprint, Flask, current_app, flash, jsonify, redirect,
                    render_template, request, session, url_for)
 from werkzeug.utils import secure_filename
 
-from .models import (Account, Category, Database, Transaction,
+from ..models import (Account, Category, Database, Transaction,
                      TransactionRepository)
-from .services.pdf_parser_service import PDFParser
-from .utils.decorators import login_required
-from .utils.helpers import allowed_file
+from ..services.pdf_parser_service import PDFParser
+from ..utils.helpers import allowed_file
+from ..utils.decorators import login_required
 
 # Create blueprint
 api_bp = Blueprint("api", __name__)
@@ -349,7 +349,7 @@ def get_category_chart_data():
     try:
         from datetime import datetime, timedelta
 
-        from money_tracker.models.models import (Category, Transaction,
+        from ..models.models import (Category, Transaction,
                                                  TransactionType)
         from sqlalchemy import func
 

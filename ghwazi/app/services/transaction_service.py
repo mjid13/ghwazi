@@ -5,10 +5,10 @@ Transaction service for processing emails and storing transaction data.
 import logging
 from typing import Any, Dict, List, Optional
 
-from .models.database import Database
-from .models.transaction import TransactionRepository
-from .services.email_service import EmailService
-from .services.parser_service import TransactionParser
+from ..models.database import Database
+from ..models.transaction import TransactionRepository
+from .email_service import EmailService
+from .parser_service import TransactionParser
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class TransactionService:
             session = self.db.get_session()
 
             try:
-                from app.models.models import Account
+                from ..models.models import Account
 
                 # Get all accounts
                 accounts = session.query(Account).all()

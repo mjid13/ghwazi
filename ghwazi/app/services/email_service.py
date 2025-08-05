@@ -593,7 +593,7 @@ class EmailService:
             Optional[Dict[str, Any]]: Provider configuration or None if not found.
         """
         try:
-            from app.models.models import EmailServiceProvider
+            from ..models.models import EmailServiceProvider
 
             provider = (
                 session.query(EmailServiceProvider)
@@ -628,8 +628,8 @@ class EmailService:
             Optional[EmailService]: EmailService instance or None if configuration not found.
         """
         try:
-            from app.models.models import Account, EmailConfiguration
-            from app.models.transaction import TransactionRepository
+            from ..models.models import Account, EmailConfiguration
+            from ..models.transaction import TransactionRepository
 
             # Get user's email configuration
             email_config = (

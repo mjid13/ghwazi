@@ -12,10 +12,10 @@ from threading import Lock
 from flask import (Blueprint, Flask, Response, flash, jsonify, redirect,
                    render_template, request, session, url_for)
 
-from .models import (Account, Category, Database, Transaction,
+from ..models import (Account, Category, Database, Transaction,
                 TransactionRepository)
-from .services import counterparty_service
-from .utils.decorators import login_required
+from ..services import counterparty_service
+from ..utils.decorators import login_required
 
 # Create blueprint
 transaction_bp = Blueprint("transaction", __name__)

@@ -6,7 +6,7 @@ import html
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import dateutil.parser
 from bs4 import BeautifulSoup
