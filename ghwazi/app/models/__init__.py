@@ -2,9 +2,9 @@
 Models package for the Bank Email Parser & Account Tracker.
 """
 
-from app.models.database import Database
-from app.models.transaction import TransactionRepository
-from app.models.user import User
+from .database import Database
+from .transaction import TransactionRepository
+from .user import User
 
 from .database import Database
 from .models import (Account, Bank, Category, CategoryMapping, CategoryType,
