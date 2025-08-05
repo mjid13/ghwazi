@@ -103,7 +103,7 @@ class Bank(Base):
 
     # Relationships
     accounts = relationship("Account", back_populates="bank")
-    email_configs = relationship("EmailConfiguration", foreign_keys="EmailConfiguration.bank_id")  # Kept for backward compatibility
+    email_configs = relationship("EmailConfiguration", foreign_keys="EmailConfiguration.bank_id", overlaps="bank")
     email_config_banks = relationship("EmailConfigBank", back_populates="bank", cascade="all, delete-orphan")
     email_configurations = relationship("EmailConfiguration", secondary="email_config_banks", viewonly=True)
 

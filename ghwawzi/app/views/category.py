@@ -11,7 +11,7 @@ from app.utils.decorators import login_required
 from app.services.counterparty_service import CounterpartyService
 from app.services.category_service import CategoryService
 
-from ghwawzi.app.models import CategoryType
+from app.models import CategoryType
 
 # Create blueprint
 category_bp = Blueprint('category', __name__)
@@ -154,12 +154,12 @@ def category_mappings(category_id):
     category = counterparty_service.get_category(category_id, user_id)
     if not category:
         flash('Category not found', 'error')
-        return redirect(url_for('categories'))
+        return redirect(url_for('category.categories'))
 
     # Get the mappings
     mappings = counterparty_service.get_category_mappings(category_id, user_id)
 
-    return render_template('category_mappings.html', category=category, mappings=mappings)
+    return render_template('category/category_mappings.html', category=category, mappings=mappings)
 
 @category_bp.route('/categories/<int:category_id>/mappings/add', methods=['GET', 'POST'])
 @login_required
@@ -171,7 +171,7 @@ def add_category_mapping(category_id):
     category = counterparty_service.get_category(category_id, user_id)
     if not category:
         flash('Category not found', 'error')
-        return redirect(url_for('categories'))
+        return redirect(url_for('category.categories'))
 
     if request.method == 'POST':
         mapping_type = request.form.get('mapping_type')
@@ -179,24 +179,24 @@ def add_category_mapping(category_id):
 
         if not mapping_type or not pattern:
             flash('Mapping type and pattern are required', 'error')
-            return render_template('add_category_mapping.html', category=category)
+            return render_template('category/add_category_mapping.html', category=category)
 
         # Convert mapping_type string to enum
         try:
             mapping_type_enum = CategoryType[mapping_type]
         except KeyError:
             flash('Invalid mapping type', 'error')
-            return render_template('add_category_mapping.html', category=category)
+            return render_template('category/add_category_mapping.html', category=category)
 
         mapping = counterparty_service.create_category_mapping(category_id, user_id, mapping_type_enum, pattern)
         if mapping:
             flash('Category mapping added successfully', 'success')
-            return redirect(url_for('category_mappings', category_id=category_id))
+            return redirect(url_for('category.category_mappings', category_id=category_id))
         else:
             flash('Error adding category mapping', 'error')
-            return render_template('add_category_mapping.html', category=category)
+            return render_template('category/add_category_mapping.html', category=category)
 
-    return render_template('add_category_mapping.html', category=category)
+    return render_template('category/add_category_mapping.html', category=category)
 
 @category_bp.route('/categories/mappings/<int:mapping_id>/delete', methods=['POST'])
 @login_required
@@ -208,7 +208,7 @@ def delete_category_mapping(mapping_id):
     category_id = request.form.get('category_id')
     if not category_id:
         flash('Category ID is required', 'error')
-        return redirect(url_for('categories'))
+        return redirect(url_for('category.categories'))
 
     result = counterparty_service.delete_category_mapping(mapping_id, user_id)
     if result:
@@ -216,7 +216,7 @@ def delete_category_mapping(mapping_id):
     else:
         flash('Error deleting category mapping', 'error')
 
-    return redirect(url_for('category_mappings', category_id=category_id))
+    return redirect(url_for('category.category_mappings', category_id=category_id))
 
 @category_bp.route('/categorize_counterparty', methods=['POST'])
 @login_required
@@ -231,7 +231,7 @@ def categorize_counterparty():
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': False, 'message': 'Missing required fields'})
         flash('Missing required fields', 'error')
-        return redirect(url_for('counterparties'))
+        return redirect(url_for('main.counterparties'))
 
     try:
         success = counterparty_service.categorize_counterparty(
@@ -264,7 +264,7 @@ def categorize_counterparty():
             return jsonify({'success': False, 'message': 'An error occurred'})
         flash('An error occurred', 'error')
 
-    return redirect(url_for('counterparties'))
+    return redirect(url_for('main.counterparties'))
 
 @category_bp.route('/auto-categorize')
 @login_required
@@ -275,4 +275,4 @@ def auto_categorize():
     count = counterparty_service.auto_categorize_all_transactions(user_id)
     flash(f'Auto-categorized {count} transactions', 'success')
 
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('main.dashboard'))

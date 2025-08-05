@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Add Email Configuration - Money Tracker{% endblock %}
 
@@ -8,7 +8,7 @@
         <div class="col-lg-8">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('email_configs') }}" class="text-decoration-none">Email Configurations</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('email.email_configs') }}" class="text-decoration-none">Email Configurations</a></li>
                     <li class="breadcrumb-item active">Add Configuration</li>
                 </ol>
             </nav>
@@ -194,7 +194,7 @@
 
                         <!-- Form Buttons -->
                         <div class="mt-4 d-flex justify-content-between align-items-center">
-                            <a href="{{ url_for('email_configs') }}" class="btn btn-outline-primary">
+                            <a href="{{ url_for('email.email_configs') }}" class="btn btn-outline-primary">
                                 <i class="bi bi-arrow-left me-2"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">

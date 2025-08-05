@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Edit Email Configuration - Bank Email Parser{% endblock %}
 
@@ -8,8 +8,8 @@
         <div class="col-lg-8">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('email_configs') }}" class="text-decoration-none">Email Configurations</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('email.email_configs') }}" class="text-decoration-none">Email Configurations</a></li>
                     <li class="breadcrumb-item active">Edit Configuration</li>
                 </ol>
             </nav>
@@ -214,7 +214,7 @@
 
                         <!-- Form Buttons -->
                         <div class="mt-4 d-flex justify-content-between align-items-center">
-                            <a href="{{ url_for('email_configs') }}" class="btn btn-outline-primary">
+                            <a href="{{ url_for('email.email_configs') }}" class="btn btn-outline-primary">
                                 <i class="bi bi-arrow-left me-2"></i>Back
                             </a>
                             <div>
@@ -247,7 +247,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{{ url_for('delete_email_config', config_id=email_config.id) }}" method="post">
+                <form action="{{ url_for('email.delete_email_config', config_id=email_config.id) }}" method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">Delete Configuration</button>
                 </form>

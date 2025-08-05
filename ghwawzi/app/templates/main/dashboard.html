@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Dashboard - Money Tracker{% endblock %}
 
@@ -12,29 +12,29 @@
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('email_configs') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('email.email_configs') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
             <h1 class="display-5 fw-bold mb-3">Welcome back, {{ session.username }}! 👋</h1>
             <p class="lead mb-4">Track your finances and your transactions all in one place.</p>
             <div class="d-flex flex-wrap gap-2">
-                <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+                <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-2"></i>Add Bank Account
                 </a>
-                <a href="{{ url_for('accounts') }}" class="btn btn-outline-primary">
+                <a href="{{ url_for('account.accounts') }}" class="btn btn-outline-primary">
                     <i class="bi bi-bank me-2"></i>View All Accounts
                 </a>
-                <a href="{{ url_for('categories') }}" class="btn btn-outline-primary">
+                <a href="{{ url_for('category.categories') }}" class="btn btn-outline-primary">
                     <i class="bi bi-tags me-2"></i>Categories
                 </a>
-                <a href="{{ url_for('counterparties') }}" class="btn btn-outline-primary">
+                <a href="{{ url_for('main.counterparties') }}" class="btn btn-outline-primary">
                     <i class="bi bi-people me-2"></i>Counterparties
                 </a>
-                <a href="{{ url_for('auto_categorize') }}" class="btn btn-outline-warning">
+                <a href="{{ url_for('category.auto_categorize') }}" class="btn btn-outline-warning">
                     <i class="bi bi-magic me-2"></i>Auto-Categorize
                 </a>
             </div>
@@ -45,7 +45,7 @@
         <div class="card h-100">
             <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center">
                 <h3 class="h4 mb-0">Your Bank Accounts</h3>
-                <a href="{{ url_for('add_account') }}" class="btn btn-sm btn-primary">
+                <a href="{{ url_for('account.add_account') }}" class="btn btn-sm btn-primary">
                     <i class="bi bi-plus"></i> Add
                 </a>
             </div>
@@ -53,7 +53,7 @@
                 {% if accounts %}
                 <div class="account-list">
                     {% for account in accounts %}
-                    <a href="{{ url_for('account_details', account_number=account.account_number) }}"
+                    <a href="{{ url_for('account.account_details', account_number=account.account_number) }}"
                        class="account-item d-block text-decoration-none mb-3 p-3 rounded-3 border {% if loop.last %}mb-0{% endif %}"
                        style="transition: all 0.2s ease;">
                         <div class="d-flex justify-content-between align-items-start">
@@ -81,7 +81,7 @@
                 <div class="text-center py-4">
                     <i class="bi bi-bank2 display-4 text-muted"></i>
                     <p class="mt-3 mb-4">You don't have any bank accounts yet.</p>
-                    <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+                    <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-2"></i>Add Your First Account
                     </a>
                 </div>
@@ -98,10 +98,10 @@
             <div class="card-body">
                 {% if accounts %}
                 <div class="d-flex gap-2 mb-4">
-                    <a href="{{ url_for('dashboard') }}?mode=email" class="btn btn-outline-primary w-50" >
+                    <a href="{{ url_for('main.dashboard') }}?mode=email" class="btn btn-outline-primary w-50" >
                         <i class="bi bi-clipboard me-2"></i>Email Transactions
                     </a>
-                    <a href="{{ url_for('dashboard') }}?mode=upload" class="btn btn-outline-primary w-50">
+                    <a href="{{ url_for('main.dashboard') }}?mode=upload" class="btn btn-outline-primary w-50">
                         <i class="bi bi-upload me-2"></i>Statement File
                     </a>
                 </div>
@@ -111,7 +111,7 @@
                     {% if email_configs %}
                     <h5 class="mb-3">Process Email Transactions</h5>
 
-                    <form id="email-form" action="{{ url_for('fetch_emails') }}" method="post" class="needs-validation" novalidate>
+                    <form id="email-form" action="{{ url_for('email.fetch_emails') }}" method="post" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-4">
                             <label for="email_account_number" class="form-label">Select Account</label>
@@ -161,7 +161,7 @@
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </button>
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                     {% else %}
@@ -171,7 +171,7 @@
                         </div>
                         <h2 class="h4 mb-3">No Email Configurations</h2>
                         <p class="text-body-secondary mb-4">Add an email configuration to start parsing bank emails.</p>
-                        <a href="{{ url_for('add_email_config') }}" class="btn btn-primary">
+                        <a href="{{ url_for('email.add_email_config') }}" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-2"></i>Add Your First Configuration
                         </a>
                     </div>
@@ -182,7 +182,7 @@
                 {% if request.args.get('mode') == 'upload' %}
                 <div class="manual-entry-form">
                     <h5 class="mb-3">Upload Statement File</h5>
-                    <form id="pdf-form" action="{{ url_for('upload_pdf') }}" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+                    <form id="pdf-form" action="{{ url_for('api.upload_pdf') }}" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                         <div class="mb-3">
@@ -219,7 +219,7 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">Upload and Process</button>
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -229,7 +229,7 @@
                 <div class="text-center py-4">
                     <i class="bi bi-envelope-exclamation display-4 text-muted"></i>
                     <p class="mt-3">You need to add a bank account before processing emails.</p>
-                    <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+                    <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-2"></i>Add Bank Account
                     </a>
                 </div>
@@ -302,7 +302,7 @@
                               <div class="text-center py-5">
                                 <i class="bi bi-tags display-4 text-muted"></i>
                                 <p class="mt-3 mb-4">You don't have any categories yet.</p>
-                                <a href="{{ url_for('add_category') }}" class="btn btn-primary">
+                                <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">
                                     <i class="bi bi-plus-circle me-2"></i>Add Your First Category
                                 </a>
                             </div>

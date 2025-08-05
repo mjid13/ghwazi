@@ -12,8 +12,8 @@ from app.models import Database, TransactionRepository, Transaction, Account, Ca
 from app.utils.decorators import login_required
 from werkzeug.utils import secure_filename
 
-from ghwawzi.app.services.pdf_parser_service import PDFParser
-from ghwawzi.app.utils.helpers import allowed_file
+from app.services.pdf_parser_service import PDFParser
+from app.utils.helpers import allowed_file
 
 # Create blueprint
 api_bp = Blueprint('api', __name__)
@@ -460,7 +460,7 @@ def upload_pdf():
                                 'success': True,
                                 'message': success_message,
                                 'transaction_count': transaction_count,
-                                'redirect': url_for('account_details', account_number=account_number)
+                                'redirect': url_for('account.account_details', account_number=account_number)
                             })
                         flash(success_message, 'success')
                     else:
@@ -470,11 +470,11 @@ def upload_pdf():
                                 'success': True,
                                 'message': warning_message,
                                 'transaction_count': 0,
-                                'redirect': url_for('account_details', account_number=account_number)
+                                'redirect': url_for('account.account_details', account_number=account_number)
                             })
                         flash(warning_message, 'warning')
 
-                    return redirect(url_for('account_details', account_number=account_number))
+                    return redirect(url_for('account.account_details', account_number=account_number))
                 except Exception as e:
                     logger.error(f"Error saving transactions to database: {str(e)}")
                     if is_ajax:
@@ -509,16 +509,3 @@ def upload_pdf():
                 return jsonify({'success': False, 'message': 'File type not allowed. Please upload a PDF file.'})
             flash('File type not allowed. Please upload a PDF file.', 'error')
             return redirect(url_for('dashboard'))
-
-    # GET request - render the upload form
-    db_session = db.get_session()
-    try:
-        # Get user accounts for the dropdown
-        accounts = TransactionRepository.get_user_accounts(db_session, session.get('user_id'))
-        return render_template('dashboard.html', accounts=accounts)
-    except Exception as e:
-        logger.error(f"Error getting user accounts: {str(e)}")
-        flash(f'Error: {str(e)}', 'error')
-        return redirect(url_for('dashboard'))
-    finally:
-        db.close_session(db_session)

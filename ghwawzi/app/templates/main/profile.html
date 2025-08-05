@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Profile - Bank Email Parser{% endblock %}
 
@@ -7,7 +7,7 @@
     <div class="col-md-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Profile</li>
             </ol>
         </nav>
@@ -34,8 +34,8 @@
                     <input type="text" class="form-control" value="{% if user.created_at %}{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}{% else %}N/A{% endif %}" readonly>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-                    <a href="{{ url_for('email_configs') }}" class="btn btn-primary">Email Settings</a>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+                    <a href="{{ url_for('email.email_configs') }}" class="btn btn-primary">Email Settings</a>
                 </div>
             </div>
         </div>

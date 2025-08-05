@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Counterparties - Money Tracker{% endblock %}
 
@@ -9,7 +9,7 @@
             <h1 class="h2 mb-0">Counterparties</h1>
             <p class="text-muted mb-0">Manage and categorize unique transaction counterparties</p>
         </div>
-        <a href="{{ url_for('auto_categorize') }}" class="btn btn-primary">
+        <a href="{{ url_for('category.auto_categorize') }}" class="btn btn-primary">
             <i class="bi bi-magic me-2"></i>Auto-Categorize All
         </a>
     </div>
@@ -92,7 +92,7 @@
             <div class="text-center py-5">
                 <i class="bi bi-people display-4 text-muted"></i>
                 <p class="mt-3 mb-4">No counterparties found. Process some transactions first.</p>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
                     <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
                 </a>
             </div>
@@ -101,7 +101,7 @@
     </div>
 
     <div class="mt-4">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
         </a>
     </div>
@@ -111,7 +111,7 @@
 <div class="modal fade" id="categorizeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ url_for('categorize_counterparty') }}" method="post">
+            <form action="{{ url_for('category.categorize_counterparty') }}" method="post">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" id="modal-counterparty_name" name="counterparty_name">
                 <input type="hidden" id="modal-description" name="description">
@@ -225,7 +225,7 @@
         var accountFilter = document.getElementById('account_filter');
         if (accountFilter) {
             accountFilter.addEventListener('change', function() {
-                window.location.href = "{{ url_for('counterparties') }}?account_number=" + this.value;
+                window.location.href = "{{ url_for('main.counterparties') }}?account_number=" + this.value;
             });
         }
     });

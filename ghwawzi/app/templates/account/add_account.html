@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Add Bank Account - Bank Email Parser{% endblock %}
 
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="col-md-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Add Bank Account</li>
             </ol>
         </nav>
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">Add Account</button>
                     </div>
                 </form>

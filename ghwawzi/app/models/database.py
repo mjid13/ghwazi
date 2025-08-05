@@ -133,7 +133,7 @@ class Database:
                                 connection.commit()
 
                             # Create the new table with Base.metadata.create_all
-                            from money_tracker.models.models import Transaction
+                            from app.models.models import Transaction
                             Base.metadata.create_all(self.engine, tables=[Transaction.__table__])
 
                             # Copy data from old table to new table
@@ -396,7 +396,7 @@ class Database:
         This method is called when the application starts to ensure the table has the necessary data.
         """
         try:
-            from money_tracker.models.models import EmailServiceProvider
+            from app.models.models import EmailServiceProvider
             
             # Create a session
             session = self.get_session()
@@ -482,7 +482,7 @@ class Database:
         This method is called when the application starts to ensure the table has the necessary data.
         """
         try:
-            from money_tracker.models.models import Bank
+            from app.models.models import Bank
             
             # Create a session
             session = self.get_session()

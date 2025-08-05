@@ -27,11 +27,11 @@ def register():
 
         if not username or not email or not password:
             flash('All fields are required', 'error')
-            return render_template('register.html')
+            return render_template('auth/register.html')
 
         if password != confirm_password:
             flash('Passwords do not match', 'error')
-            return render_template('register.html')
+            return render_template('auth/register.html')
 
         db_session = db.get_session()
         try:
@@ -42,7 +42,7 @@ def register():
 
             if existing_user:
                 flash('Username or email already exists', 'error')
-                return render_template('register.html')
+                return render_template('auth/register.html')
 
             # Create new user
             user_data = {
@@ -62,12 +62,12 @@ def register():
             else:
                 logger.error("TransactionRepository.create_user returned None")
                 flash('Error creating user', 'error')
-                return render_template('register.html')
+                return render_template('auth/register.html')
 
         except Exception as e:
             logger.error(f"Error registering user: {str(e)}")
             flash(f'Error registering user: {str(e)}', 'error')
-            return render_template('register.html')
+            return render_template('auth/register.html')
         finally:
             db.close_session(db_session)
 

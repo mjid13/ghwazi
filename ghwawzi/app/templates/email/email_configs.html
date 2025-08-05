@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Email Configurations - Money Tracker{% endblock %}
 
@@ -8,7 +8,7 @@
         <div class="col-lg-10">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h2 mb-0">Email Configurations</h1>
-                <a href="{{ url_for('add_email_config') }}" class="btn btn-primary">
+                <a href="{{ url_for('email.add_email_config') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-2"></i>Add Configuration
                 </a>
             </div>
@@ -34,7 +34,7 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li>
-                                                    <a class="dropdown-item" href="{{ url_for('edit_email_config', config_id=config.id) }}">
+                                                    <a class="dropdown-item" href="{{ url_for('email.edit_email_config', config_id=config.id) }}">
                                                         <i class="bi bi-pencil me-2"></i>Edit
                                                     </a>
                                                 </li>
@@ -118,7 +118,7 @@
                                         </div>
                                         <div class="modal-footer border-0">
                                             <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
-                                            <form action="{{ url_for('delete_email_config', config_id=config.id) }}" method="post" class="d-inline">
+                                            <form action="{{ url_for('email.delete_email_config', config_id=config.id) }}" method="post" class="d-inline">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-danger">Delete Configuration</button>
                                             </form>
@@ -136,7 +136,7 @@
                     </div>
                     <h2 class="h4 mb-3">No Email Configurations</h2>
                     <p class="text-body-secondary mb-4">Add an email configuration to start parsing bank emails.</p>
-                    <a href="{{ url_for('add_email_config') }}" class="btn btn-primary">
+                    <a href="{{ url_for('email.add_email_config') }}" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-2"></i>Add Your First Configuration
                     </a>
                 </div>
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Testing...';
 
             try {
-                const response = await fetch(`/api/test_email_connection/${configId}`);
+                const response = await fetch(`/email/test_email_connection/${configId}`);
                 const data = await response.json();
 
                 // Update toast

@@ -3,14 +3,14 @@ Application factory for the Flask app.
 """
 import os
 import logging
-from datetime import timedelta, time
+from datetime import timedelta
+import time
 
 from flask import Flask, session
-from app.extensions import db, migrate
-from app.config.base import Config
+from .extensions import db, migrate
+from .config.base import Config
 
-from app import scraping_accounts
-from ghwawzi.app.views.email import email_tasks_lock, email_tasks
+from app.views.email import email_tasks_lock, email_tasks, scraping_accounts
 
 
 def create_app(config_class=Config):
@@ -38,8 +38,8 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(account_bp, url_prefix='/account')
     app.register_blueprint(category_bp, url_prefix='/category')
-    app.register_blueprint(category_bp, url_prefix='/email')
-    app.register_blueprint(category_bp, url_prefix='/transaction')
+    app.register_blueprint(email_bp, url_prefix='/email')
+    app.register_blueprint(transaction_bp, url_prefix='/transaction')
 
     # Configure logging
     if not app.debug and not app.testing:

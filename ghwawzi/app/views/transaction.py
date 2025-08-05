@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from app.models import Database, TransactionRepository, Transaction, Account, Category
 from app.utils.decorators import login_required
 
-from ghwawzi.app.services import counterparty_service
+from app.services import counterparty_service
 
 # Create blueprint
 transaction_bp = Blueprint('transaction', __name__)
@@ -39,7 +39,7 @@ def export_transactions(account_number):
 
         if not account:
             flash(f'Account {account_number} not found or you do not have permission to view it', 'error')
-            return redirect(url_for('accounts'))
+            return redirect(url_for('account.accounts'))
 
         # Apply filters if specified
         filter_params = {}
@@ -117,7 +117,7 @@ def export_transactions(account_number):
     except Exception as e:
         logger.error(f"Error exporting transactions: {str(e)}")
         flash(f'Error exporting transactions: {str(e)}', 'error')
-        return redirect(url_for('account_details', account_number=account_number))
+        return redirect(url_for('account.account_details', account_number=account_number))
     finally:
         db.close_session(db_session)
 
@@ -138,7 +138,7 @@ def edit_transaction(transaction_id):
 
         if not transaction:
             flash('Transaction not found or you do not have permission to edit it', 'error')
-            return redirect(url_for('accounts'))
+            return redirect(url_for('account.accounts'))
 
         # Get all categories for the current user
         categories = db_session.query(Category.id, Category.name).all()
@@ -194,16 +194,16 @@ def edit_transaction(transaction_id):
                             'warning')
                 else:
                     flash('Transaction updated successfully', 'success')
-                    return redirect(url_for('account_details', account_number=transaction.account.account_number))
+                    return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
 
             else:
                 flash('Error updating transaction', 'error')
 
-        return render_template('edit_transaction.html', transaction=transaction, categories=categories)
+        return render_template('transaction.edit_transaction.html', transaction=transaction, categories=categories)
     except Exception as e:
         logger.error(f"Error editing transaction: {str(e)}")
         flash(f'Error editing transaction: {str(e)}', 'error')
-        return redirect(url_for('accounts'))
+        return redirect(url_for('account.accounts'))
     finally:
         db.close_session(db_session)
 
@@ -227,7 +227,7 @@ def delete_transaction(transaction_id):
             if is_ajax:
                 return jsonify({'success': False, 'message': 'Transaction not found or you do not have permission to delete it'})
             flash('Transaction not found or you do not have permission to delete it', 'error')
-            return redirect(url_for('accounts'))
+            return redirect(url_for('account.accounts'))
 
         account_number = transaction.account.account_number
 
@@ -251,7 +251,7 @@ def delete_transaction(transaction_id):
         if is_ajax:
             return jsonify({'success': False, 'message': f'Error deleting transaction: {str(e)}'})
         flash(f'Error deleting transaction: {str(e)}', 'error')
-        return redirect(url_for('accounts'))
+        return redirect(url_for('account.accounts'))
     finally:
         db.close_session(db_session)
 
@@ -276,7 +276,7 @@ def update_transaction_category(transaction_id):
                 return jsonify(
                     {'success': False, 'message': 'Transaction not found or you do not have permission to edit it'})
             flash('Transaction not found or you do not have permission to edit it', 'error')
-            return redirect(url_for('accounts'))
+            return redirect(url_for('account.accounts'))
 
         # Get the category ID from the request
         category_id = request.form.get('category_id')
@@ -284,7 +284,7 @@ def update_transaction_category(transaction_id):
             if is_ajax:
                 return jsonify({'success': False, 'message': 'Category ID is required'})
             flash('Category ID is required', 'error')
-            return redirect(url_for('account_details', account_number=transaction.account.account_number))
+            return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
 
         # Update the transaction category
         transaction_data = {
@@ -306,17 +306,17 @@ def update_transaction_category(transaction_id):
                     'category_name': category_name
                 })
             flash('Category updated successfully', 'success')
-            return redirect(url_for('account_details', account_number=transaction.account.account_number))
+            return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
         else:
             if is_ajax:
                 return jsonify({'success': False, 'message': 'Error updating category'})
             flash('Error updating category', 'error')
-            return redirect(url_for('account_details', account_number=transaction.account.account_number))
+            return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
     except Exception as e:
         logger.error(f"Error updating transaction category: {str(e)}")
         if is_ajax:
             return jsonify({'success': False, 'message': f'Error updating transaction category: {str(e)}'})
         flash(f'Error updating transaction category: {str(e)}', 'error')
-        return redirect(url_for('accounts'))
+        return redirect(url_for('account.accounts'))
     finally:
         db.close_session(db_session)

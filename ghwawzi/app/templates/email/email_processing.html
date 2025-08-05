@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "main/base.html" %}
 
 {% block title %}Processing Emails - Money Tracker{% endblock %}
 
@@ -58,7 +58,7 @@
             </div>
 
             <div class="text-center mt-4">
-                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
                     <i class="bi bi-arrow-left me-2"></i>Return to Dashboard
                 </a>
             </div>
