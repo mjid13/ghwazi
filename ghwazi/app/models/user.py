@@ -2,17 +2,22 @@ import enum
 import logging
 import random
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Float, Text, Boolean, UniqueConstraint
-from sqlalchemy.orm import relationship, Session
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import (Boolean, Column, DateTime, Enum, Float, ForeignKey,
+                        Integer, String, Text, UniqueConstraint)
+from sqlalchemy.orm import Session, relationship
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from .database import Base
-from werkzeug.security import generate_password_hash, check_password_hash
 
 logger = logging.getLogger(__name__)
 
+
 class User(Base):
     """User model representing a user profile."""
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
@@ -34,13 +39,15 @@ class User(Base):
                 raise ValueError("Password cannot be empty")
 
             # Check if werkzeug.security is properly imported
-            if not hasattr(generate_password_hash, '__call__'):
+            if not hasattr(generate_password_hash, "__call__"):
                 logger.error("generate_password_hash is not callable")
                 raise ImportError("generate_password_hash is not properly imported")
 
             # Generate password hash
             password_hash = generate_password_hash(password)
-            logger.info(f"Password hash generated successfully: {password_hash[:10]}...")
+            logger.info(
+                f"Password hash generated successfully: {password_hash[:10]}..."
+            )
 
             # Set password hash
             self.password_hash = password_hash
@@ -48,6 +55,7 @@ class User(Base):
         except Exception as e:
             logger.error(f"Error in set_password: {str(e)}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             raise
 
@@ -64,7 +72,7 @@ class User(Base):
                 return False
 
             # Check if werkzeug.security is properly imported
-            if not hasattr(check_password_hash, '__call__'):
+            if not hasattr(check_password_hash, "__call__"):
                 logger.error("check_password_hash is not callable")
                 raise ImportError("check_password_hash is not properly imported")
 
@@ -75,5 +83,6 @@ class User(Base):
         except Exception as e:
             logger.error(f"Error in check_password: {str(e)}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             return False

@@ -1,26 +1,89 @@
-# Bank Email Parser & Account Tracker
+<div align="center">
 
-A comprehensive Flask web application for parsing bank transaction emails and tracking financial accounts. This application automatically processes bank notification emails to extract transaction data and provides a user-friendly interface for managing personal finances.
+# 🏦 Bank Email Parser & Account Tracker
 
-## Features
+*Transform your financial emails into actionable insights*
 
-### Core Functionality
-- **Email Processing**: Automatically fetch and parse bank transaction emails
-- **Transaction Management**: View, categorize, and manage financial transactions
-- **Account Tracking**: Monitor multiple bank accounts and their balances
-- **Category Management**: Organize transactions with custom categories
-- **User Authentication**: Secure user registration and login system
-- **Dashboard Analytics**: Visual charts and reports for financial insights
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/yourusername/ghwazi/graphs/commit-activity)
 
-### Technical Features
-- **Modular Architecture**: Clean separation of concerns with blueprints
-- **Database Management**: SQLAlchemy ORM with migration support
-- **Email Integration**: IMAP email fetching with configurable providers
-- **PDF Processing**: Extract transaction data from PDF statements
-- **RESTful API**: JSON API endpoints for frontend integration
-- **Responsive Design**: Mobile-friendly web interface
+</div>
 
-## Project Structure
+---
+
+## 📋 Table of Contents
+
+- [🎯 Overview](#-overview)
+- [✨ Features](#-features)
+- [🏗️ Architecture](#️-architecture)
+- [🚀 Quick Start](#-quick-start)
+- [📁 Project Structure](#-project-structure)
+- [⚙️ Configuration](#️-configuration)
+- [🎮 Usage Guide](#-usage-guide)
+- [📊 Screenshots](#-screenshots)
+- [🔧 API Reference](#-api-reference)
+- [🧪 Development](#-development)
+- [🚀 Deployment](#-deployment)
+- [🔒 Security](#-security)
+- [📈 Performance](#-performance)
+- [❓ FAQ](#-faq)
+- [🤝 Contributing](#-contributing)
+- [🐛 Troubleshooting](#-troubleshooting)
+- [📞 Support](#-support)
+
+---
+
+## 🎯 Overview
+
+A comprehensive Flask web application that revolutionizes personal finance management by automatically parsing bank transaction emails and providing intelligent insights. Built with modern web technologies and designed for scalability, security, and ease of use.
+
+### 🌟 Why Choose This Application?
+
+- **🤖 Automated Processing**: No more manual transaction entry
+- **📧 Multi-Bank Support**: Works with various bank email formats
+- **📊 Rich Analytics**: Beautiful charts and financial insights
+- **🔐 Secure**: Industry-standard security practices
+- **📱 Responsive**: Works perfectly on all devices
+- **🎯 Open Source**: Completely free and customizable
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 💰 Financial Management
+- 📧 **Smart Email Processing** - Automatically fetch and parse bank emails
+- 💳 **Multi-Account Tracking** - Monitor all your bank accounts in one place
+- 📊 **Transaction Categorization** - Organize expenses with smart categories
+- 📈 **Visual Analytics** - Beautiful charts and spending insights
+- 🎯 **Budget Tracking** - Set and monitor spending limits
+- 📱 **Mobile Responsive** - Access your data anywhere, anytime
+
+</td>
+<td width="50%">
+
+### 🔧 Technical Excellence
+- 🏗️ **Modular Architecture** - Clean, maintainable codebase
+- 🗄️ **Advanced Database** - PostgreSQL/MySQL with migrations
+- 🔐 **Secure Authentication** - JWT tokens and password hashing
+- 📄 **PDF Processing** - Extract data from bank statements
+- 🚀 **RESTful API** - Full API for integrations
+- ⚡ **High Performance** - Optimized queries and caching
+
+</td>
+</tr>
+</table>
+
+### 🌐 Supported Banks & Email Providers
+- Gmail, Outlook, Yahoo Mail
+- Chase, Bank of America, Wells Fargo
+- And many more through configurable parsers!
+
+## 🏗️ Architecture
 
 ```
 ghwawzi/
@@ -93,45 +156,55 @@ ghwawzi/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd ghwawzi
+   cd ghwazi
    ```
 
 2. **Create and activate virtual environment**
    ```bash
    python -m venv venv
-   
+
    # On Windows
    venv\Scripts\activate
-   
+
    # On macOS/Linux
    source venv/bin/activate
    ```
 
 3. **Install dependencies**
    ```bash
+   # Navigate to the ghwazi directory
+   cd ghwazi
+
    # For development
    pip install -r requirements/development.txt
-   
+
    # For production
    pip install -r requirements/production.txt
+
+   # Or install base requirements
+   pip install -r requirements.txt
    ```
 
 4. **Configure environment variables**
    ```bash
-   cp .env.example .env
+   # Copy example file from ghwazi directory
+   cp ghwazi/.env.example .env
    # Edit .env file with your configuration
    ```
 
 5. **Initialize the database**
    ```bash
-   flask db init
-   flask db migrate -m "Initial migration"
-   flask db upgrade
+   # Navigate to ghwazi directory if not already there
+   cd ghwazi
+
+   # Initialize database using the CLI commands
+   python app.py init-db
    ```
 
 6. **Run the application**
    ```bash
-   python run.py
+   # From the ghwazi directory
+   python app.py
    ```
 
 The application will be available at `http://localhost:5000`

@@ -14,14 +14,16 @@ blinker==1.6.3
 # Database drivers
 psycopg2-binary==2.9.7  # PostgreSQL
 PyMySQL==1.1.0          # MySQL
+psycopg2
 
 # Email processing
 imaplib2==3.6
 email-validator==2.0.0
 
-# PDF processing
-PyPDF2==3.0.1
-pdfplumber==0.9.0
+# PDF processing (for your PDF upload feature)
+PyMuPDF==1.26.3
+pdfplumber==0.11.7
+pypdf==5.8.0
 
 # Data processing
 pandas==2.1.1
@@ -30,3 +32,15 @@ numpy==1.25.2
 # Utilities
 requests==2.31.0
 python-dateutil==2.8.2
+
+# HTML parsing (for email content parsing)
+beautifulsoup4==4.13.4
+soupsieve==2.7
+
+# Cryptography (for security features)
+cryptography==45.0.5
+
+# HTTP requests (if you're making API calls)
+requests==2.32.4
+urllib3==2.5.0
+certifi==2025.7.9

@@ -2,23 +2,34 @@
 Email service for connecting to email accounts and retrieving bank emails.
 """
 
-import imaplib
 import email
-from email.header import decode_header
+import imaplib
 import logging
-from typing import List, Dict, Any, Optional
 import re
 import socket
 import ssl
 import time
+from email.header import decode_header
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class EmailService:
     """Service for connecting to email accounts and retrieving bank emails."""
 
-    def __init__(self, host=None, port=None, username=None, password=None, use_ssl=None,
-                 bank_email_addresses=None, bank_email_subjects=None, user_id=None, user_accounts=None):
+    def __init__(
+        self,
+        host=None,
+        port=None,
+        username=None,
+        password=None,
+        use_ssl=None,
+        bank_email_addresses=None,
+        bank_email_subjects=None,
+        user_id=None,
+        user_accounts=None,
+    ):
         self.host = host
         self.port = port
         self.username = username
@@ -31,8 +42,13 @@ class EmailService:
         self.connection = None
         self.max_retries = 3
         self.retry_delay = 2  # seconds
-        logger.debug("Initialized EmailService with host=%s, port=%s, username=%s, use_ssl=%s",
-                     self.host, self.port, self.username, self.use_ssl)
+        logger.debug(
+            "Initialized EmailService with host=%s, port=%s, username=%s, use_ssl=%s",
+            self.host,
+            self.port,
+            self.username,
+            self.use_ssl,
+        )
 
     def connect(self) -> bool:
         """
@@ -43,8 +59,14 @@ class EmailService:
         """
         for attempt in range(self.max_retries):
             try:
-                logger.debug("Attempting to connect to server %s:%s with SSL=%s (attempt %d/%d)",
-                             self.host, self.port, self.use_ssl, attempt + 1, self.max_retries)
+                logger.debug(
+                    "Attempting to connect to server %s:%s with SSL=%s (attempt %d/%d)",
+                    self.host,
+                    self.port,
+                    self.use_ssl,
+                    attempt + 1,
+                    self.max_retries,
+                )
 
                 if self.use_ssl:
                     # Create SSL context with more flexible settings
@@ -52,7 +74,9 @@ class EmailService:
                     # Allow older TLS versions if needed
                     context.minimum_version = ssl.TLSVersion.TLSv1_2
                     # Set timeout for socket operations
-                    self.connection = imaplib.IMAP4_SSL(self.host, self.port, ssl_context=context)
+                    self.connection = imaplib.IMAP4_SSL(
+                        self.host, self.port, ssl_context=context
+                    )
                     # Set socket timeout
                     self.connection.sock.settimeout(60)
                 else:
@@ -113,7 +137,9 @@ class EmailService:
             self.connection = None
             return self.connect()
 
-    def get_bank_emails(self, folder: str = "INBOX", time_period: str = "only_unread") -> List[Dict[str, Any]]:
+    def get_bank_emails(
+        self, folder: str = "INBOX", time_period: str = "only_unread"
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve bank emails from the specified folder based on time period.
 
@@ -139,20 +165,20 @@ class EmailService:
             logger.debug("Selecting folder '%s'", folder)
             status, messages = self.connection.select(folder)
             logger.debug("Select status: %s, messages: %s", status, messages)
-            if status != 'OK':
+            if status != "OK":
                 logger.error(f"Failed to select folder {folder}")
                 return []
 
             # Create search criteria
             search_criteria = []
-            
+
             # Handle time period filtering
             if time_period == "only_unread":
-                search_criteria.append('UNSEEN')
+                search_criteria.append("UNSEEN")
             else:
                 # Import datetime for date calculations
                 from datetime import datetime, timedelta
-                
+
                 # Calculate date based on selected time period
                 current_date = datetime.now()
                 if time_period == "last_week":
@@ -167,7 +193,7 @@ class EmailService:
                     since_date = current_date - timedelta(days=180)
                 elif time_period == "last_year":
                     since_date = current_date - timedelta(days=365)
-                
+
                 # Format date for IMAP search (DD-MMM-YYYY)
                 date_str = since_date.strftime("%d-%b-%Y")
                 search_criteria.append(f'SINCE "{date_str}"')
@@ -183,11 +209,11 @@ class EmailService:
                 search_criteria.append(f"({' OR '.join(from_criteria)})")
 
             # Execute search
-            search_query = ' '.join(search_criteria)
+            search_query = " ".join(search_criteria)
             logger.debug("Executing search with query: %s", search_query)
             status, data = self.connection.search(None, search_query)
             logger.debug("Search status: %s, data: %s", status, data)
-            if status != 'OK':
+            if status != "OK":
                 logger.error(f"Failed to search emails with criteria: {search_query}")
                 return []
 
@@ -221,18 +247,26 @@ class EmailService:
         """
         for attempt in range(self.max_retries):
             try:
-                logger.debug("Fetching email using ID: %s (attempt %d/%d)",
-                             email_id, attempt + 1, self.max_retries)
+                logger.debug(
+                    "Fetching email using ID: %s (attempt %d/%d)",
+                    email_id,
+                    attempt + 1,
+                    self.max_retries,
+                )
 
                 # Check connection before fetching
                 if not self._reconnect_if_needed():
                     logger.error("Cannot establish connection for email fetch")
                     return None
 
-                status, data = self.connection.fetch(email_id, '(RFC822)')
-                logger.debug("Fetch status: %s, data length: %d", status, len(data) if data else 0)
+                status, data = self.connection.fetch(email_id, "(RFC822)")
+                logger.debug(
+                    "Fetch status: %s, data length: %d",
+                    status,
+                    len(data) if data else 0,
+                )
 
-                if status != 'OK':
+                if status != "OK":
                     logger.error(f"Failed to fetch email {email_id}")
                     # Try with different fetch parameters on next attempt
                     if attempt < self.max_retries - 1:
@@ -252,7 +286,9 @@ class EmailService:
 
                 # Check if we have the expected tuple structure
                 if not isinstance(data[0], tuple) or len(data[0]) < 2:
-                    logger.error(f"Unexpected response structure for email {email_id}: {type(data[0])}")
+                    logger.error(
+                        f"Unexpected response structure for email {email_id}: {type(data[0])}"
+                    )
                     if attempt < self.max_retries - 1:
                         logger.info("Retrying due to unexpected response structure...")
                         time.sleep(self.retry_delay)
@@ -263,7 +299,9 @@ class EmailService:
 
                 # Validate that raw_email is bytes
                 if not isinstance(raw_email, bytes):
-                    logger.error(f"Expected bytes for raw email data, got {type(raw_email)} for email {email_id}")
+                    logger.error(
+                        f"Expected bytes for raw email data, got {type(raw_email)} for email {email_id}"
+                    )
 
                     # Try alternative fetch methods on retry
                     if attempt < self.max_retries - 1:
@@ -274,16 +312,25 @@ class EmailService:
                         try:
                             # Method 1: Try fetching with BODY[] instead of RFC822
                             logger.debug("Attempting fetch with BODY[] method")
-                            status, alt_data = self.connection.fetch(email_id, '(BODY[])')
-                            if status == 'OK' and alt_data and len(alt_data) > 0:
-                                if isinstance(alt_data[0], tuple) and len(alt_data[0]) >= 2:
+                            status, alt_data = self.connection.fetch(
+                                email_id, "(BODY[])"
+                            )
+                            if status == "OK" and alt_data and len(alt_data) > 0:
+                                if (
+                                    isinstance(alt_data[0], tuple)
+                                    and len(alt_data[0]) >= 2
+                                ):
                                     alt_raw_email = alt_data[0][1]
                                     if isinstance(alt_raw_email, bytes):
                                         raw_email = alt_raw_email
-                                        logger.debug("Successfully fetched with BODY[] method")
+                                        logger.debug(
+                                            "Successfully fetched with BODY[] method"
+                                        )
                                         # Continue with processing
                                     else:
-                                        logger.debug("BODY[] method also returned non-bytes data")
+                                        logger.debug(
+                                            "BODY[] method also returned non-bytes data"
+                                        )
                                         continue
 
                         except Exception as e:
@@ -305,9 +352,9 @@ class EmailService:
 
                 # Extract email components with error handling
                 try:
-                    subject = self._decode_header(msg['Subject'])
-                    from_addr = self._decode_header(msg['From'])
-                    date = msg['Date']
+                    subject = self._decode_header(msg["Subject"])
+                    from_addr = self._decode_header(msg["From"])
+                    date = msg["Date"]
                 except Exception as e:
                     logger.error(f"Failed to extract email headers: {str(e)}")
                     if attempt < self.max_retries - 1:
@@ -323,7 +370,11 @@ class EmailService:
                         for part in msg.walk():
                             content_type = part.get_content_type()
                             content_disposition = str(part.get("Content-Disposition"))
-                            logger.debug("Email part content_type: %s, content_disposition: %s", content_type, content_disposition)
+                            logger.debug(
+                                "Email part content_type: %s, content_disposition: %s",
+                                content_type,
+                                content_disposition,
+                            )
                             if "attachment" in content_disposition:
                                 logger.debug("Skipping attachment part")
                                 continue
@@ -334,24 +385,33 @@ class EmailService:
                                     body_part = part.get_payload(decode=True)
                                     if body_part:
                                         if isinstance(body_part, bytes):
-                                            body += body_part.decode('utf-8', errors='ignore')
+                                            body += body_part.decode(
+                                                "utf-8", errors="ignore"
+                                            )
                                         else:
                                             body += str(body_part)
                                 except Exception as e:
-                                    logger.warning(f"Error decoding email part: {str(e)}")
-                                    logger.debug("Exception in decoding multipart: ", exc_info=True)
+                                    logger.warning(
+                                        f"Error decoding email part: {str(e)}"
+                                    )
+                                    logger.debug(
+                                        "Exception in decoding multipart: ",
+                                        exc_info=True,
+                                    )
                     else:
                         # Not multipart - get payload directly
                         try:
                             payload = msg.get_payload(decode=True)
                             if payload:
                                 if isinstance(payload, bytes):
-                                    body = payload.decode('utf-8', errors='ignore')
+                                    body = payload.decode("utf-8", errors="ignore")
                                 else:
                                     body = str(payload)
                         except Exception as e:
                             logger.warning(f"Error decoding email body: {str(e)}")
-                            logger.debug("Exception in non-multipart decoding: ", exc_info=True)
+                            logger.debug(
+                                "Exception in non-multipart decoding: ", exc_info=True
+                            )
                 except Exception as e:
                     logger.error(f"Failed to extract email body: {str(e)}")
                     if attempt < self.max_retries - 1:
@@ -363,21 +423,25 @@ class EmailService:
 
                 # Successfully parsed email
                 email_data = {
-                    'id': email_id.decode(),
-                    'subject': subject,
-                    'from': from_addr,
-                    'date': date,
-                    'body': body,
-                    'raw_message': msg
+                    "id": email_id.decode(),
+                    "subject": subject,
+                    "from": from_addr,
+                    "date": date,
+                    "body": body,
+                    "raw_message": msg,
                 }
 
                 logger.debug("Successfully parsed email %s", email_id)
                 return email_data
 
             except (socket.error, ssl.SSLError, imaplib.IMAP4.abort) as e:
-                logger.warning(f"Network error fetching email {email_id} (attempt {attempt + 1}): {str(e)}")
+                logger.warning(
+                    f"Network error fetching email {email_id} (attempt {attempt + 1}): {str(e)}"
+                )
                 if attempt < self.max_retries - 1:
-                    logger.info(f"Retrying email fetch in {self.retry_delay} seconds...")
+                    logger.info(
+                        f"Retrying email fetch in {self.retry_delay} seconds..."
+                    )
                     time.sleep(self.retry_delay)
                     # Reset connection on network errors
                     self.connection = None
@@ -388,7 +452,9 @@ class EmailService:
                 logger.error(f"Unexpected error processing email {email_id}: {str(e)}")
                 logger.debug("Exception in _fetch_email: ", exc_info=True)
                 if attempt < self.max_retries - 1:
-                    logger.info(f"Retrying due to unexpected error in {self.retry_delay} seconds...")
+                    logger.info(
+                        f"Retrying due to unexpected error in {self.retry_delay} seconds..."
+                    )
                     time.sleep(self.retry_delay)
                 else:
                     logger.error(f"All retry attempts exhausted for email {email_id}")
@@ -421,7 +487,7 @@ class EmailService:
 
         if not is_from_bank:
             # Check subject for keywords
-            subject = email_data.get('subject', '').lower()
+            subject = email_data.get("subject", "").lower()
             logger.debug("Checking for keywords in subject: %s", subject)
             for keyword in self.bank_email_subjects:
                 if keyword.lower() in subject:
@@ -431,16 +497,16 @@ class EmailService:
 
         if not is_from_bank:
             # Check body for bank-specific patterns
-            body = email_data.get('body', '').lower()
+            body = email_data.get("body", "").lower()
             bank_patterns = [
-                r'bank\s*muscat',
-                r'transaction',
-                r'account\s*number',
-                r'amount\s*:',
-                r'omr\s*\d+',
-                r'debit\s*card',
-                r'credit\s*card',
-                r'balance'
+                r"bank\s*muscat",
+                r"transaction",
+                r"account\s*number",
+                r"amount\s*:",
+                r"omr\s*\d+",
+                r"debit\s*card",
+                r"credit\s*card",
+                r"balance",
             ]
 
             for pattern in bank_patterns:
@@ -456,7 +522,7 @@ class EmailService:
             return is_from_bank
 
         # If we have user accounts, check if the email is related to one of them
-        body = email_data.get('body', '').lower()
+        body = email_data.get("body", "").lower()
         for account in self.user_accounts:
             # Check for account number in the email body
             account_number = account.account_number.lower()
@@ -477,78 +543,80 @@ class EmailService:
     def extract_provider_from_email(email: str) -> Optional[str]:
         """
         Extract the email service provider from an email address.
-        
+
         Args:
             email (str): Email address to extract provider from.
-            
+
         Returns:
             Optional[str]: Provider name or None if not recognized.
         """
-        if not email or '@' not in email:
+        if not email or "@" not in email:
             return None
-            
+
         # Extract domain from email
-        domain = email.split('@')[-1].lower()
-        
+        domain = email.split("@")[-1].lower()
+
         # Map domains to providers
         domain_to_provider = {
-            'gmail.com': 'gmail',
-            'googlemail.com': 'gmail',
-            'outlook.com': 'outlook',
-            'hotmail.com': 'outlook',
-            'live.com': 'outlook',
-            'msn.com': 'outlook',
-            'yahoo.com': 'yahoo',
-            'yahoo.co.uk': 'yahoo',
-            'yahoo.fr': 'yahoo',
-            'aol.com': 'aol',
-            'zoho.com': 'zoho',
-            'icloud.com': 'icloud',
-            'me.com': 'icloud',
-            'mac.com': 'icloud',
-            'protonmail.com': 'protonmail',
-            'protonmail.ch': 'protonmail',
-            'pm.me': 'protonmail'
+            "gmail.com": "gmail",
+            "googlemail.com": "gmail",
+            "outlook.com": "outlook",
+            "hotmail.com": "outlook",
+            "live.com": "outlook",
+            "msn.com": "outlook",
+            "yahoo.com": "yahoo",
+            "yahoo.co.uk": "yahoo",
+            "yahoo.fr": "yahoo",
+            "aol.com": "aol",
+            "zoho.com": "zoho",
+            "icloud.com": "icloud",
+            "me.com": "icloud",
+            "mac.com": "icloud",
+            "protonmail.com": "protonmail",
+            "protonmail.ch": "protonmail",
+            "pm.me": "protonmail",
         }
-        
+
         # Return provider if domain is recognized
         return domain_to_provider.get(domain)
-    
+
     @staticmethod
     def get_provider_config(session, provider_name: str) -> Optional[Dict[str, Any]]:
         """
         Get the configuration for an email service provider.
-        
+
         Args:
             session: Database session.
             provider_name (str): Name of the email service provider.
-            
+
         Returns:
             Optional[Dict[str, Any]]: Provider configuration or None if not found.
         """
         try:
             from app.models.models import EmailServiceProvider
-            
-            provider = session.query(EmailServiceProvider).filter_by(
-                provider_name=provider_name
-            ).first()
-            
+
+            provider = (
+                session.query(EmailServiceProvider)
+                .filter_by(provider_name=provider_name)
+                .first()
+            )
+
             if not provider:
                 logger.warning(f"No configuration found for provider: {provider_name}")
                 return None
-                
+
             return {
-                'host': provider.host,
-                'port': provider.port,
-                'use_ssl': provider.use_ssl
+                "host": provider.host,
+                "port": provider.port,
+                "use_ssl": provider.use_ssl,
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting provider configuration: {str(e)}")
             return None
 
     @classmethod
-    def from_user_config(cls, session, user_id: int) -> Optional['EmailService']:
+    def from_user_config(cls, session, user_id: int) -> Optional["EmailService"]:
         """
         Create an EmailService instance from a user's email configuration.
 
@@ -560,13 +628,15 @@ class EmailService:
             Optional[EmailService]: EmailService instance or None if configuration not found.
         """
         try:
-            from app.models.models import EmailConfiguration, Account
+            from app.models.models import Account, EmailConfiguration
             from app.models.transaction import TransactionRepository
 
             # Get user's email configuration
-            email_config = session.query(EmailConfiguration).filter(
-                EmailConfiguration.user_id == user_id
-            ).first()
+            email_config = (
+                session.query(EmailConfiguration)
+                .filter(EmailConfiguration.user_id == user_id)
+                .first()
+            )
 
             if not email_config:
                 logger.error(f"No email configuration found for user {user_id}")
@@ -578,11 +648,16 @@ class EmailService:
             # Create bank email addresses and subjects lists from comma-separated strings
             bank_email_addresses = []
             if email_config.bank_email_addresses:
-                bank_email_addresses = [addr.strip() for addr in email_config.bank_email_addresses.split(',')]
+                bank_email_addresses = [
+                    addr.strip()
+                    for addr in email_config.bank_email_addresses.split(",")
+                ]
 
             bank_email_subjects = []
             if email_config.bank_email_subjects:
-                bank_email_subjects = [subj.strip() for subj in email_config.bank_email_subjects.split(',')]
+                bank_email_subjects = [
+                    subj.strip() for subj in email_config.bank_email_subjects.split(",")
+                ]
 
             # Create EmailService instance
             email_service = cls(
@@ -594,7 +669,7 @@ class EmailService:
                 bank_email_addresses=bank_email_addresses,
                 bank_email_subjects=bank_email_subjects,
                 user_id=user_id,
-                user_accounts=user_accounts
+                user_accounts=user_accounts,
             )
 
             return email_service
