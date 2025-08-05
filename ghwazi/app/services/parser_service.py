@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
+
 class TransactionParser:
     """Parser for extracting transaction data from bank emails."""
 
@@ -26,21 +27,21 @@ class TransactionParser:
         """
         # Step 1: Handle quoted-printable encoding
         # Remove soft line breaks (= at end of line followed by newline)
-        text = re.sub(r'=\r?\n', '', raw_html)
+        text = re.sub(r"=\r?\n", "", raw_html)
 
         # Decode quoted-printable sequences
         # =3D -> =, =20 -> space, =0D -> \r, =0A -> \n, etc.
         quoted_printable_patterns = {
-            '=3D': '=',
-            '=20': ' ',
-            '=0D': '\r',
-            '=0A': '\n',
-            '=09': '\t',
-            '=22': '"',
-            '=27': "'",
-            '=3C': '<',
-            '=3E': '>',
-            '=26': '&',
+            "=3D": "=",
+            "=20": " ",
+            "=0D": "\r",
+            "=0A": "\n",
+            "=09": "\t",
+            "=22": '"',
+            "=27": "'",
+            "=3C": "<",
+            "=3E": ">",
+            "=26": "&",
         }
 
         for encoded, decoded in quoted_printable_patterns.items():
@@ -54,31 +55,31 @@ class TransactionParser:
             except (ValueError, OverflowError):
                 return match.group(0)  # Return original if can't decode
 
-        text = re.sub(r'=([0-9A-F]{2})', decode_hex, text)
+        text = re.sub(r"=([0-9A-F]{2})", decode_hex, text)
 
         # Step 2: Decode HTML entities
         text = html.unescape(text)
 
         # Step 3: Parse HTML with BeautifulSoup
-        soup = BeautifulSoup(text, 'html.parser')
+        soup = BeautifulSoup(text, "html.parser")
 
         # Remove images and non-essential elements for cleaner text
-        for tag in soup.find_all(['img', 'style', 'script']):
+        for tag in soup.find_all(["img", "style", "script"]):
             tag.decompose()
 
         # Step 4: Extract text with proper formatting
         # Handle BR tags as line breaks
-        for br in soup.find_all('br'):
-            br.replace_with('\n')
+        for br in soup.find_all("br"):
+            br.replace_with("\n")
 
         # Extract text with newlines as separators for block elements
-        text = soup.get_text(separator='\n')
+        text = soup.get_text(separator="\n")
 
         # Step 5: Clean up whitespace and empty lines
         lines = []
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             # Normalize whitespace within each line - this fixes "Dear cus    tomer" issue
-            line = re.sub(r'\s+', ' ', line.strip())
+            line = re.sub(r"\s+", " ", line.strip())
             if line:  # Only keep non-empty lines
                 lines.append(line)
 
@@ -86,38 +87,46 @@ class TransactionParser:
             lines = lines[:-2]  # Remove last 2 lines
 
         # Join lines with single newlines
-        clean_text = '\n'.join(lines)
+        clean_text = "\n".join(lines)
 
         # Remove multiple consecutive newlines
-        clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+        clean_text = re.sub(r"\n{3,}", "\n\n", clean_text)
 
         return clean_text.strip()
 
     def _get_name(self, email_text: str) -> Optional[str]:
         """Extract counterparty name from email text."""
         counterparty_re1 = re.compile(
-            r'(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))', re.IGNORECASE
+            r"(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))", re.IGNORECASE
         )
         counterparty_match = counterparty_re1.search(email_text)
         if counterparty_match:
             # Clean up spaces, remove extra whitespace
-            name = ' '.join(counterparty_match.group(1).split())
-            if name.upper().startswith('TRANSFER'):
-                name = name[8:].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
-            if name.endswith('from your a') or name.endswith('in your a'):
-                name = ' '.join(name.split()[:-3]).strip()  # Remove 'from your account' or 'in your account'
+            name = " ".join(counterparty_match.group(1).split())
+            if name.upper().startswith("TRANSFER"):
+                name = name[
+                    8:
+                ].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
+            if name.endswith("from your a") or name.endswith("in your a"):
+                name = " ".join(
+                    name.split()[:-3]
+                ).strip()  # Remove 'from your account' or 'in your account'
             return name
         else:
             # fallback: try to find uppercase name lines near transaction details (like Email #1)
             # This will match 2+ uppercase words together
-            counterparty_re2 = re.compile(r'\n([A-Z][A-Z\s]{4,})\n', re.MULTILINE)
+            counterparty_re2 = re.compile(r"\n([A-Z][A-Z\s]{4,})\n", re.MULTILINE)
             names = counterparty_re2.findall(email_text)
             if names:  # Check if names list is not empty
-                name = ' '.join(names[0].split())
-                if name.upper().startswith('TRANSFER'):
-                    name = name[8:].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
-                if name.endswith('from your a') or name.endswith('in your a'):
-                    name = ' '.join(name.split()[:-3]).strip()  # Remove 'from your account' or 'in your account'
+                name = " ".join(names[0].split())
+                if name.upper().startswith("TRANSFER"):
+                    name = name[
+                        8:
+                    ].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
+                if name.endswith("from your a") or name.endswith("in your a"):
+                    name = " ".join(
+                        name.split()[:-3]
+                    ).strip()  # Remove 'from your account' or 'in your account'
                 return name
             else:
                 return None
@@ -131,30 +140,30 @@ class TransactionParser:
 
         # Typical wording for type detection (customize these as needed)
         income_patterns = [
-            r'credited',
-            r'received',
-            r'deposited',
+            r"credited",
+            r"received",
+            r"deposited",
         ]
 
         expense_patterns = [
-            r'debit',
-            r'utilised',
-            r'sent',
-            r'payment',
-            r'purchase',
-            r'withdrawal',
-            r'spent',
+            r"debit",
+            r"utilised",
+            r"sent",
+            r"payment",
+            r"purchase",
+            r"withdrawal",
+            r"spent",
         ]
 
         for pattern in income_patterns:
             if re.search(pattern, text):
-                return 'income'
+                return "income"
 
         for pattern in expense_patterns:
             if re.search(pattern, text):
-                return 'expense'
+                return "expense"
 
-        return 'unknown'
+        return "unknown"
 
     def extract_bank_email_data(self, email_text: str) -> Dict[str, Optional[str]]:
         """Extract structured data from bank email text."""
@@ -176,107 +185,131 @@ class TransactionParser:
 
         # Account number (xxxx + digits)
         account_re = re.compile(
-            r'account\s+(xxxx\d{4})|Account number\s*:\s*(xxxx\d{4})|a/c\s+(xxxx\d{4})',
-            re.IGNORECASE
+            r"account\s+(xxxx\d{4})|Account number\s*:\s*(xxxx\d{4})|a/c\s+(xxxx\d{4})",
+            re.IGNORECASE,
         )
         acc_match = account_re.search(email_text)
         if acc_match:
-            data['account_number'] = acc_match.group(1) or acc_match.group(2) or acc_match.group(3)
+            data["account_number"] = (
+                acc_match.group(1) or acc_match.group(2) or acc_match.group(3)
+            )
 
         # Branch/location (digits + 'Br' + text)
-        branch_re = re.compile(r'with\s+([\d\- ]*Br [A-Za-z ]+)', re.IGNORECASE)
+        branch_re = re.compile(r"with\s+([\d\- ]*Br [A-Za-z ]+)", re.IGNORECASE)
         branch_match = branch_re.search(email_text)
         if branch_match:
-            data['branch'] = branch_match.group(1).strip()
+            data["branch"] = branch_match.group(1).strip()
 
         # Transaction type: debited, credited, received, sent
-        type_re = re.compile(r'\b(debited|credited|received|sent)\b', re.IGNORECASE)
+        type_re = re.compile(r"\b(debited|credited|received|sent)\b", re.IGNORECASE)
         type_match = type_re.search(email_text)
         if type_match:
-            data['transaction_type'] = type_match.group(1).lower()
-
+            data["transaction_type"] = type_match.group(1).lower()
 
         # Amount and currency: Currency code with decimal or integer (with optional commas)
         # Valid currency codes (ISO 4217)
         # TODO: This list shuld be dynamic or configurable by the user or admin
         valid_currencies = [
-            'OMR', 'USD', 'EUR', 'GBP', 'AED', 'SAR', 'QAR', 'KWD', 'BHD', 'JPY',
+            "OMR",
+            "USD",
+            "EUR",
+            "GBP",
+            "AED",
+            "SAR",
+            "QAR",
+            "KWD",
+            "BHD",
+            "JPY",
         ]
 
         # Create pattern that matches valid currency codes
-        currency_pattern = r'\s(' + '|'.join(valid_currencies) + r')\s*([\d,]+\.\d+|[\d,]+)'
+        currency_pattern = (
+            r"\s(" + "|".join(valid_currencies) + r")\s*([\d,]+\.\d+|[\d,]+)"
+        )
         currency_re = re.compile(currency_pattern, re.IGNORECASE)
         currency_match = currency_re.search(email_text)
         if currency_match:
-            data['currency'] = currency_match.group(1).upper()
+            data["currency"] = currency_match.group(1).upper()
 
-        amount_re = re.compile(rf'{currency_match.group(1).upper()}\s*([\d,]+\.\d+|[\d,]+)', re.IGNORECASE)
+        amount_re = re.compile(
+            rf"{currency_match.group(1).upper()}\s*([\d,]+\.\d+|[\d,]+)", re.IGNORECASE
+        )
 
         amount_match = amount_re.search(email_text)
         if amount_match:
-            data['amount'] = amount_match.group(1).replace(',', '')
+            data["amount"] = amount_match.group(1).replace(",", "")
 
         # Date (two formats): "value date dd/mm/yy" or "Date/Time : 22 JUN 25 20:29"
-        date_re1 = re.compile(r'value date\s+(\d{2}/\d{2}/\d{2})', re.IGNORECASE)
-        date_re2 = re.compile(r'Date/Time\s*:\s*([\d]{1,2}\s+[A-Z]{3}\s+\d{2}\s+[\d:]+)', re.IGNORECASE)
+        date_re1 = re.compile(r"value date\s+(\d{2}/\d{2}/\d{2})", re.IGNORECASE)
+        date_re2 = re.compile(
+            r"Date/Time\s*:\s*([\d]{1,2}\s+[A-Z]{3}\s+\d{2}\s+[\d:]+)", re.IGNORECASE
+        )
         date_match = date_re1.search(email_text) or date_re2.search(email_text)
         if date_match:
-            data['date'] = date_match.group(1).strip()
+            data["date"] = date_match.group(1).strip()
 
         # Transaction details keywords: e.g., TRANSFER, Cash Dep, SALARY, Mobile Payment
         # We'll pick the first occurrence from a known list, case-insensitive
-        txn_details_list = ['TRANSFER', 'Cash Dep', 'SALARY', 'Mobile Payment', 'Salary']
+        txn_details_list = [
+            "TRANSFER",
+            "Cash Dep",
+            "SALARY",
+            "Mobile Payment",
+            "Salary",
+        ]
         for detail in txn_details_list:
-            if re.search(r'\b' + re.escape(detail) + r'\b', email_text, re.IGNORECASE):
-                data['transaction_details'] = detail
+            if re.search(r"\b" + re.escape(detail) + r"\b", email_text, re.IGNORECASE):
+                data["transaction_details"] = detail
                 break
 
         # Country: "Transaction Country : <text>"
-        country_re = re.compile(r'Transaction Country\s*:\s*(.+)', re.IGNORECASE)
+        country_re = re.compile(r"Transaction Country\s*:\s*(.+)", re.IGNORECASE)
         country_match = country_re.search(email_text)
         if country_match:
-            data['country'] = country_match.group(1).strip()
+            data["country"] = country_match.group(1).strip()
 
         # Description: "Description : <text>"
-        desc_re = re.compile(r'Description\s*:\s*(.+)', re.IGNORECASE)
+        desc_re = re.compile(r"Description\s*:\s*(.+)", re.IGNORECASE)
         desc_match = desc_re.search(email_text)
         description = None
         if desc_match:
             description = desc_match.group(1).strip()
-            data['description'] = description
+            data["description"] = description
 
         # Counterparty (Sender/Receiver) name
         counterparty_name = self._get_name(email_text)
         if counterparty_name:
-            data['counterparty_name'] = counterparty_name
+            data["counterparty_name"] = counterparty_name
         elif description:
-            data['counterparty_name'] = '-'.join(description.split('-')[1:]).strip()
+            data["counterparty_name"] = "-".join(description.split("-")[1:]).strip()
 
-        txn_id_re = re.compile(r'Txn Id\s+(\w+)', re.IGNORECASE)
+        txn_id_re = re.compile(r"Txn Id\s+(\w+)", re.IGNORECASE)
         txn_id_match = txn_id_re.search(email_text)
         if txn_id_match:
-            data['transaction_id'] = txn_id_match.group(1)
+            data["transaction_id"] = txn_id_match.group(1)
 
         # Determine transaction type using the helper function
         txn_type = self.determine_transaction_type(email_text)
-        data['type'] = txn_type
+        data["type"] = txn_type
 
         # Determine "from" and "to" according to type
-        if txn_type == 'expense':
+        if txn_type == "expense":
             # "Me" is sender, Recipient is 'to'
-            data['from'] = 'me'
-            data['to'] = data['counterparty_name']
-        elif txn_type == 'income':
+            data["from"] = "me"
+            data["to"] = data["counterparty_name"]
+        elif txn_type == "income":
             # Extract sender as 'from', "Me" is receiving
-            data['from'] = data['counterparty_name']
-            data['to'] = 'me'
+            data["from"] = data["counterparty_name"]
+            data["to"] = "me"
         else:
-            data['from'] = None
-            data['to'] = None
+            data["from"] = None
+            data["to"] = None
 
         return data
 
-    def parse_email(self, email_data: Dict[str, Any], bank_name: str = 'Bank Muscat') -> Optional[Dict[str, Any]]:
+    def parse_email(
+        self, email_data: Dict[str, Any], bank_name: str = "Bank Muscat"
+    ) -> Optional[Dict[str, Any]]:
         """
         Parse an email and extract transaction data using the new approach.
 
@@ -288,7 +321,7 @@ class TransactionParser:
             Optional[Dict[str, Any]]: Extracted transaction data or None if parsing fails.
         """
         try:
-            body = email_data.get('body', '')
+            body = email_data.get("body", "")
             if not body:
                 logger.warning("Email body is empty, cannot parse transaction")
                 return None
@@ -301,52 +334,61 @@ class TransactionParser:
 
             # Convert to the format expected by the rest of the system
             transaction_data = {
-                'bank_name': bank_name,
-                'email_id': email_data.get('id'),
-                'post_date': email_data.get('date'),
-                'currency': extracted_data.get('currency', 'OMR'),
-                'transaction_content': clean_text
+                "bank_name": bank_name,
+                "email_id": email_data.get("id"),
+                "post_date": email_data.get("date"),
+                "currency": extracted_data.get("currency", "OMR"),
+                "transaction_content": clean_text,
             }
 
             # Map the extracted data to transaction_data
-            if extracted_data.get('account_number'):
-                transaction_data['account_number'] = extracted_data['account_number']
+            if extracted_data.get("account_number"):
+                transaction_data["account_number"] = extracted_data["account_number"]
 
-            if extracted_data.get('amount'):
+            if extracted_data.get("amount"):
                 try:
-                    transaction_data['amount'] = float(extracted_data['amount'])
+                    transaction_data["amount"] = float(extracted_data["amount"])
                 except (ValueError, TypeError):
-                    logger.warning(f"Could not convert amount to float: {extracted_data['amount']}")
+                    logger.warning(
+                        f"Could not convert amount to float: {extracted_data['amount']}"
+                    )
 
-            if extracted_data.get('type'):
-                transaction_data['transaction_type'] = extracted_data['type']
-            elif extracted_data.get('transaction_type'):
-                transaction_data['transaction_type'] = extracted_data['transaction_type']
+            if extracted_data.get("type"):
+                transaction_data["transaction_type"] = extracted_data["type"]
+            elif extracted_data.get("transaction_type"):
+                transaction_data["transaction_type"] = extracted_data[
+                    "transaction_type"
+                ]
             else:
-                transaction_data['transaction_type'] = 'unknown'
+                transaction_data["transaction_type"] = "unknown"
 
-            if extracted_data.get('country'):
-                transaction_data['country'] = extracted_data['country']
+            if extracted_data.get("country"):
+                transaction_data["country"] = extracted_data["country"]
 
-            if extracted_data.get('date'):
+            if extracted_data.get("date"):
                 try:
-                    transaction_date = self._parse_date(extracted_data['date'])
+                    transaction_date = self._parse_date(extracted_data["date"])
                     if transaction_date:
-                        transaction_data['value_date'] = transaction_date
+                        transaction_data["value_date"] = transaction_date
                 except Exception as e:
-                    logger.warning(f"Failed to parse date '{extracted_data['date']}': {str(e)}")
+                    logger.warning(
+                        f"Failed to parse date '{extracted_data['date']}': {str(e)}"
+                    )
 
-            if extracted_data.get('transaction_id'):
-                transaction_data['transaction_id'] = extracted_data['transaction_id']
+            if extracted_data.get("transaction_id"):
+                transaction_data["transaction_id"] = extracted_data["transaction_id"]
 
+            if extracted_data.get("branch"):
+                transaction_data["branch"] = extracted_data["branch"]
 
-            if extracted_data.get('branch'):
-                transaction_data['branch'] = extracted_data['branch']
-
-            transaction_data['transaction_sender'] = extracted_data.get('from')
-            transaction_data['transaction_receiver'] = extracted_data.get('to')
-            transaction_data['counterparty_name'] = extracted_data.get('counterparty_name')
-            transaction_data['transaction_details'] = extracted_data.get('transaction_details')
+            transaction_data["transaction_sender"] = extracted_data.get("from")
+            transaction_data["transaction_receiver"] = extracted_data.get("to")
+            transaction_data["counterparty_name"] = extracted_data.get(
+                "counterparty_name"
+            )
+            transaction_data["transaction_details"] = extracted_data.get(
+                "transaction_details"
+            )
 
             # Validate that we have minimum required data
             if not self._validate_transaction_data(transaction_data):
@@ -380,18 +422,32 @@ class TransactionParser:
             # First try custom parsing for specific formats to ensure DD/MM/YY interpretation
 
             # Format: 13 MAY 25 17:20
-            match = re.match(r'(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2})\s+(\d{1,2}):(\d{1,2})', date_str)
+            match = re.match(
+                r"(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2})\s+(\d{1,2}):(\d{1,2})", date_str
+            )
             if match:
                 day, month_str, year, hour, minute = match.groups()
                 month_map = {
-                    'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
-                    'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12
+                    "JAN": 1,
+                    "FEB": 2,
+                    "MAR": 3,
+                    "APR": 4,
+                    "MAY": 5,
+                    "JUN": 6,
+                    "JUL": 7,
+                    "AUG": 8,
+                    "SEP": 9,
+                    "OCT": 10,
+                    "NOV": 11,
+                    "DEC": 12,
                 }
                 month = month_map.get(month_str.upper(), 1)
 
                 # Handle two-digit years properly
                 current_year = datetime.now().year
-                year_prefix = str(current_year)[0:2]  # Get first 2 digits of current year
+                year_prefix = str(current_year)[
+                    0:2
+                ]  # Get first 2 digits of current year
                 full_year = int(year_prefix + year)
 
                 # If the resulting year is more than 10 years in the future, assume previous century
@@ -401,7 +457,9 @@ class TransactionParser:
                 return datetime(full_year, month, int(day), int(hour), int(minute))
 
             # Format: DD/MM/YY HH:MM - Handle time component
-            match = re.match(r'(\d{1,2})/(\d{1,2})/(\d{2,4})(?:\s+(\d{1,2}):(\d{1,2}))?', date_str)
+            match = re.match(
+                r"(\d{1,2})/(\d{1,2})/(\d{2,4})(?:\s+(\d{1,2}):(\d{1,2}))?", date_str
+            )
             if match:
                 groups = match.groups()
                 day, month, year = groups[0:3]
@@ -409,7 +467,9 @@ class TransactionParser:
                 # Handle two-digit years properly
                 if len(year) == 2:
                     current_year = datetime.now().year
-                    year_prefix = str(current_year)[0:2]  # Get first 2 digits of current year
+                    year_prefix = str(current_year)[
+                        0:2
+                    ]  # Get first 2 digits of current year
                     full_year = int(year_prefix + year)
 
                     # If the resulting year is more than 10 years in the future, assume previous century
@@ -437,7 +497,9 @@ class TransactionParser:
             # Handle two-digit years properly
             if dt.year < 100:
                 current_year = datetime.now().year
-                year_prefix = str(current_year)[0:2]  # Get first 2 digits of current year
+                year_prefix = str(current_year)[
+                    0:2
+                ]  # Get first 2 digits of current year
                 full_year = int(year_prefix + str(dt.year).zfill(2))
 
                 # If the resulting year is more than 10 years in the future, assume previous century
@@ -466,34 +528,37 @@ class TransactionParser:
 
         logger.info(f"Validating transaction data: {data}")
         # Check required fields exist
-        required_fields = ['transaction_type', 'account_number', 'amount']
+        required_fields = ["transaction_type", "account_number", "amount"]
         for field in required_fields:
             if field not in data or data[field] is None:
                 logger.warning(f"Missing required field: {field}")
                 return False
 
         # Validate transaction_type
-        valid_types = ['income', 'expense', 'transfer', 'unknown']
-        if data['transaction_type'] not in valid_types:
+        valid_types = ["income", "expense", "transfer", "unknown"]
+        if data["transaction_type"] not in valid_types:
             logger.warning(f"Invalid transaction_type: {data['transaction_type']}")
-            data['transaction_type'] = 'unknown'  # Set to default if invalid
+            data["transaction_type"] = "unknown"  # Set to default if invalid
 
         # Validate account_number
-        if not isinstance(data['account_number'], str) or not data['account_number'].strip():
+        if (
+            not isinstance(data["account_number"], str)
+            or not data["account_number"].strip()
+        ):
             logger.warning(f"Invalid account_number: {data['account_number']}")
             return False
 
         # Validate amount
         try:
             # Ensure amount is a float
-            if not isinstance(data['amount'], float):
-                data['amount'] = float(data['amount'])
+            if not isinstance(data["amount"], float):
+                data["amount"] = float(data["amount"])
 
             # Check for unreasonable amounts (e.g., negative or extremely large)
-            if data['amount'] < 0:
+            if data["amount"] < 0:
                 logger.warning(f"Negative amount: {data['amount']}")
                 # Don't return False, just log the warning
-            elif data['amount'] > 1000000:  # Arbitrary large amount threshold
+            elif data["amount"] > 1000000:  # Arbitrary large amount threshold
                 logger.warning(f"Unusually large amount: {data['amount']}")
                 # Don't return False, just log the warning
         except (ValueError, TypeError):
@@ -501,8 +566,8 @@ class TransactionParser:
             return False
 
         # Validate value_date if present
-        if 'value_date' in data and data['value_date'] is not None:
-            if not isinstance(data['value_date'], datetime):
+        if "value_date" in data and data["value_date"] is not None:
+            if not isinstance(data["value_date"], datetime):
                 logger.warning(f"Invalid value_date: {data['value_date']}")
                 return False
 

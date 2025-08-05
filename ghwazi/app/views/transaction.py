@@ -1,6 +1,7 @@
 """
 transaction views for the Flask application.
 """
+
 import csv
 import io
 import logging
@@ -8,78 +9,95 @@ import json
 from datetime import time, datetime, timedelta
 from threading import Lock
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response, Blueprint
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    session,
+    jsonify,
+    Response,
+    Blueprint,
+)
 from app.models import Database, TransactionRepository, Transaction, Account, Category
 from app.utils.decorators import login_required
 
 from app.services import counterparty_service
 
 # Create blueprint
-transaction_bp = Blueprint('transaction', __name__)
+transaction_bp = Blueprint("transaction", __name__)
 
 # Initialize database and logger
 db = Database()
 logger = logging.getLogger(__name__)
 
 
-@transaction_bp.route('/account/<account_number>/export')
+@transaction_bp.route("/account/<account_number>/export")
 @login_required
 def export_transactions(account_number):
     """Export transactions for a specific account as CSV."""
-    user_id = session.get('user_id')
-    filter_type = request.args.get('filter', None)
+    user_id = session.get("user_id")
+    filter_type = request.args.get("filter", None)
     db_session = db.get_session()
 
     try:
         # Get account for this user
-        account = db_session.query(Account).filter(
-            Account.user_id == user_id,
-            Account.account_number == account_number
-        ).first()
+        account = (
+            db_session.query(Account)
+            .filter(
+                Account.user_id == user_id, Account.account_number == account_number
+            )
+            .first()
+        )
 
         if not account:
-            flash(f'Account {account_number} not found or you do not have permission to view it', 'error')
-            return redirect(url_for('account.accounts'))
+            flash(
+                f"Account {account_number} not found or you do not have permission to view it",
+                "error",
+            )
+            return redirect(url_for("account.accounts"))
 
         # Apply filters if specified
         filter_params = {}
 
         # Transaction type filter
         if filter_type:
-            if filter_type == 'income':
-                filter_params['transaction_type'] = 'INCOME'
-            elif filter_type == 'expense':
-                filter_params['transaction_type'] = 'EXPENSE'
-            elif filter_type == 'transfer':
-                filter_params['transaction_type'] = 'TRANSFER'
-            elif filter_type == 'recent':
-                filter_params['date_from'] = datetime.now() - timedelta(days=30)
+            if filter_type == "income":
+                filter_params["transaction_type"] = "INCOME"
+            elif filter_type == "expense":
+                filter_params["transaction_type"] = "EXPENSE"
+            elif filter_type == "transfer":
+                filter_params["transaction_type"] = "TRANSFER"
+            elif filter_type == "recent":
+                filter_params["date_from"] = datetime.now() - timedelta(days=30)
 
         # Date range filters
-        date_from_str = request.args.get('date_from')
-        date_to_str = request.args.get('date_to')
+        date_from_str = request.args.get("date_from")
+        date_to_str = request.args.get("date_to")
 
         if date_from_str:
             try:
                 # Parse the date string from the format YYYY-MM-DD
-                date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
-                filter_params['date_from'] = date_from
+                date_from = datetime.strptime(date_from_str, "%Y-%m-%d")
+                filter_params["date_from"] = date_from
             except ValueError:
                 logger.warning(f"Invalid date_from format: {date_from_str}")
 
         if date_to_str:
             try:
                 # Parse the date string and set it to the end of the day
-                date_to = datetime.strptime(date_to_str, '%Y-%m-%d')
+                date_to = datetime.strptime(date_to_str, "%Y-%m-%d")
                 date_to = date_to.replace(hour=23, minute=59, second=59)
-                filter_params['date_to'] = date_to
+                filter_params["date_to"] = date_to
             except ValueError:
                 logger.warning(f"Invalid date_to format: {date_to_str}")
 
         # Search text filter
-        search_text = request.args.get('search')
+        search_text = request.args.get("search")
         if search_text:
-            filter_params['search_text'] = search_text
+            filter_params["search_text"] = search_text
 
         # Get all transactions without pagination
         transactions_history = TransactionRepository.get_account_transaction_history(
@@ -91,19 +109,39 @@ def export_transactions(account_number):
         writer = csv.writer(output)
 
         # Write header row
-        writer.writerow(['Date', 'Type', 'Amount', 'Currency', 'Description', 'Category', 'Counterparty'])
+        writer.writerow(
+            [
+                "Date",
+                "Type",
+                "Amount",
+                "Currency",
+                "Description",
+                "Category",
+                "Counterparty",
+            ]
+        )
 
         # Write transaction data
-        for transaction in transactions_history['transactions']:
-            writer.writerow([
-                transaction.date_time.strftime('%Y-%m-%d %H:%M:%S') if transaction.date_time else '',
-                transaction.transaction_type,
-                transaction.amount,
-                transaction.currency,
-                transaction.transaction_details or '',
-                transaction.category.name if transaction.category else 'Uncategorized',
-                transaction.counterparty_name or ''
-            ])
+        for transaction in transactions_history["transactions"]:
+            writer.writerow(
+                [
+                    (
+                        transaction.date_time.strftime("%Y-%m-%d %H:%M:%S")
+                        if transaction.date_time
+                        else ""
+                    ),
+                    transaction.transaction_type,
+                    transaction.amount,
+                    transaction.currency,
+                    transaction.transaction_details or "",
+                    (
+                        transaction.category.name
+                        if transaction.category
+                        else "Uncategorized"
+                    ),
+                    transaction.counterparty_name or "",
+                ]
+            )
 
         # Prepare response
         output.seek(0)
@@ -111,64 +149,77 @@ def export_transactions(account_number):
 
         return Response(
             output,
-            mimetype='text/csv',
-            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+            mimetype="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
     except Exception as e:
         logger.error(f"Error exporting transactions: {str(e)}")
-        flash(f'Error exporting transactions: {str(e)}', 'error')
-        return redirect(url_for('account.account_details', account_number=account_number))
+        flash(f"Error exporting transactions: {str(e)}", "error")
+        return redirect(
+            url_for("account.account_details", account_number=account_number)
+        )
     finally:
         db.close_session(db_session)
 
 
-@transaction_bp.route('/transactions/<int:transaction_id>/edit', methods=['GET', 'POST'])
+@transaction_bp.route(
+    "/transactions/<int:transaction_id>/edit", methods=["GET", "POST"]
+)
 @login_required
 def edit_transaction(transaction_id):
     """Edit a transaction."""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     db_session = db.get_session()
 
     try:
         # Get transaction and verify it belongs to the user
-        transaction = db_session.query(Transaction).join(Account).filter(
-            Transaction.id == transaction_id,
-            Account.user_id == user_id
-        ).first()
+        transaction = (
+            db_session.query(Transaction)
+            .join(Account)
+            .filter(Transaction.id == transaction_id, Account.user_id == user_id)
+            .first()
+        )
 
         if not transaction:
-            flash('Transaction not found or you do not have permission to edit it', 'error')
-            return redirect(url_for('account.accounts'))
+            flash(
+                "Transaction not found or you do not have permission to edit it",
+                "error",
+            )
+            return redirect(url_for("account.accounts"))
 
         # Get all categories for the current user
         categories = db_session.query(Category.id, Category.name).all()
 
-        if request.method == 'POST':
+        if request.method == "POST":
 
             # Update transaction data
 
-            counterparty_name = request.form.get('counterparty_name', '').strip()
-            logger.info(f'Counterparty name: {counterparty_name}')
-            category_id = request.form.get('category')
-            category_update_scope = request.form.get('category_update_scope', 'single')
+            counterparty_name = request.form.get("counterparty_name", "").strip()
+            logger.info(f"Counterparty name: {counterparty_name}")
+            category_id = request.form.get("category")
+            category_update_scope = request.form.get("category_update_scope", "single")
 
             transaction_data = {
                 "counterparty_name": counterparty_name,
-                'amount': float(request.form.get('amount', 0.0)),
-                'transaction_type': request.form.get('transaction_type', 'unknown'),
-                'value_date': datetime.strptime(request.form.get('date_time'), '%Y-%m-%dT%H:%M'),
-                'description': request.form.get('description', ''),
-                'transaction_details': request.form.get('transaction_details', ''),
-                'category_id': category_id
+                "amount": float(request.form.get("amount", 0.0)),
+                "transaction_type": request.form.get("transaction_type", "unknown"),
+                "value_date": datetime.strptime(
+                    request.form.get("date_time"), "%Y-%m-%dT%H:%M"
+                ),
+                "description": request.form.get("description", ""),
+                "transaction_details": request.form.get("transaction_details", ""),
+                "category_id": category_id,
             }
             updated_transaction = TransactionRepository.update_transaction(
                 db_session, transaction_id, transaction_data
             )
 
             if updated_transaction:
-                if (category_update_scope == 'all_counterparty' and
-                        counterparty_name and
-                        category_id):
+                if (
+                    category_update_scope == "all_counterparty"
+                    and counterparty_name
+                    and category_id
+                ):
 
                     # Update all transactions from this counterparty
                     try:
@@ -176,147 +227,208 @@ def edit_transaction(transaction_id):
                             user_id=user_id,
                             counterparty_name=counterparty_name,
                             description=None,  # Only match by counterparty name
-                            category_id=int(category_id)
+                            category_id=int(category_id),
                         )
 
                         if success:
                             flash(
                                 f'Transaction updated successfully. All transactions from "{counterparty_name}" have been categorized.',
-                                'success')
+                                "success",
+                            )
                         else:
                             flash(
-                                'Transaction updated successfully, but failed to update other transactions from this counterparty.',
-                                'warning')
+                                "Transaction updated successfully, but failed to update other transactions from this counterparty.",
+                                "warning",
+                            )
                     except Exception as e:
-                        logger.error(f"Error updating counterparty transactions: {str(e)}")
+                        logger.error(
+                            f"Error updating counterparty transactions: {str(e)}"
+                        )
                         flash(
-                            'Transaction updated successfully, but failed to update other transactions from this counterparty.',
-                            'warning')
+                            "Transaction updated successfully, but failed to update other transactions from this counterparty.",
+                            "warning",
+                        )
                 else:
-                    flash('Transaction updated successfully', 'success')
-                    return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
+                    flash("Transaction updated successfully", "success")
+                    return redirect(
+                        url_for(
+                            "account.account_details",
+                            account_number=transaction.account.account_number,
+                        )
+                    )
 
             else:
-                flash('Error updating transaction', 'error')
+                flash("Error updating transaction", "error")
 
-        return render_template('transaction.edit_transaction.html', transaction=transaction, categories=categories)
+        return render_template(
+            "transaction.edit_transaction.html",
+            transaction=transaction,
+            categories=categories,
+        )
     except Exception as e:
         logger.error(f"Error editing transaction: {str(e)}")
-        flash(f'Error editing transaction: {str(e)}', 'error')
-        return redirect(url_for('account.accounts'))
+        flash(f"Error editing transaction: {str(e)}", "error")
+        return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
 
 
-@transaction_bp.route('/transaction/<int:transaction_id>', methods=['DELETE'])
+@transaction_bp.route("/transaction/<int:transaction_id>", methods=["DELETE"])
 @login_required
 def delete_transaction(transaction_id):
     """Delete a transaction."""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     db_session = db.get_session()
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     try:
         # Get transaction and verify it belongs to the user
-        transaction = db_session.query(Transaction).join(Account).filter(
-            Transaction.id == transaction_id,
-            Account.user_id == user_id
-        ).first()
+        transaction = (
+            db_session.query(Transaction)
+            .join(Account)
+            .filter(Transaction.id == transaction_id, Account.user_id == user_id)
+            .first()
+        )
 
         if not transaction:
             if is_ajax:
-                return jsonify({'success': False, 'message': 'Transaction not found or you do not have permission to delete it'})
-            flash('Transaction not found or you do not have permission to delete it', 'error')
-            return redirect(url_for('account.accounts'))
+                return jsonify(
+                    {
+                        "success": False,
+                        "message": "Transaction not found or you do not have permission to delete it",
+                    }
+                )
+            flash(
+                "Transaction not found or you do not have permission to delete it",
+                "error",
+            )
+            return redirect(url_for("account.accounts"))
 
         account_number = transaction.account.account_number
 
         result = TransactionRepository.delete_transaction(db_session, transaction_id)
         if result:
             if is_ajax:
-                return jsonify({
-                    'success': True,
-                    'message': 'Transaction deleted successfully',
-                    'transaction_id': transaction_id
-                })
-            flash('Transaction deleted successfully', 'success')
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Transaction deleted successfully",
+                        "transaction_id": transaction_id,
+                    }
+                )
+            flash("Transaction deleted successfully", "success")
         else:
             if is_ajax:
-                return jsonify({'success': False, 'message': 'Error deleting transaction'})
-            flash('Error deleting transaction', 'error')
+                return jsonify(
+                    {"success": False, "message": "Error deleting transaction"}
+                )
+            flash("Error deleting transaction", "error")
 
-        return redirect(url_for('account_details', account_number=account_number))
+        return redirect(url_for("account_details", account_number=account_number))
     except Exception as e:
         logger.error(f"Error deleting transaction: {str(e)}")
         if is_ajax:
-            return jsonify({'success': False, 'message': f'Error deleting transaction: {str(e)}'})
-        flash(f'Error deleting transaction: {str(e)}', 'error')
-        return redirect(url_for('account.accounts'))
+            return jsonify(
+                {"success": False, "message": f"Error deleting transaction: {str(e)}"}
+            )
+        flash(f"Error deleting transaction: {str(e)}", "error")
+        return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
 
 
-@transaction_bp.route('/transaction/<int:transaction_id>/category', methods=['PUT'])
+@transaction_bp.route("/transaction/<int:transaction_id>/category", methods=["PUT"])
 @login_required
 def update_transaction_category(transaction_id):
     """Update the category of a transaction."""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     db_session = db.get_session()
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     try:
         # Get transaction and verify it belongs to the user
-        transaction = db_session.query(Transaction).join(Account).filter(
-            Transaction.id == transaction_id,
-            Account.user_id == user_id
-        ).first()
+        transaction = (
+            db_session.query(Transaction)
+            .join(Account)
+            .filter(Transaction.id == transaction_id, Account.user_id == user_id)
+            .first()
+        )
 
         if not transaction:
             if is_ajax:
                 return jsonify(
-                    {'success': False, 'message': 'Transaction not found or you do not have permission to edit it'})
-            flash('Transaction not found or you do not have permission to edit it', 'error')
-            return redirect(url_for('account.accounts'))
+                    {
+                        "success": False,
+                        "message": "Transaction not found or you do not have permission to edit it",
+                    }
+                )
+            flash(
+                "Transaction not found or you do not have permission to edit it",
+                "error",
+            )
+            return redirect(url_for("account.accounts"))
 
         # Get the category ID from the request
-        category_id = request.form.get('category_id')
+        category_id = request.form.get("category_id")
         if not category_id:
             if is_ajax:
-                return jsonify({'success': False, 'message': 'Category ID is required'})
-            flash('Category ID is required', 'error')
-            return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
+                return jsonify({"success": False, "message": "Category ID is required"})
+            flash("Category ID is required", "error")
+            return redirect(
+                url_for(
+                    "account.account_details",
+                    account_number=transaction.account.account_number,
+                )
+            )
 
         # Update the transaction category
-        transaction_data = {
-            'category_id': category_id
-        }
+        transaction_data = {"category_id": category_id}
         updated_transaction = TransactionRepository.update_transaction(
             db_session, transaction_id, transaction_data
         )
 
         if updated_transaction:
             # Get the category name for the response
-            category = db_session.query(Category).filter(Category.id == category_id).first()
-            category_name = category.name if category else 'Uncategorized'
+            category = (
+                db_session.query(Category).filter(Category.id == category_id).first()
+            )
+            category_name = category.name if category else "Uncategorized"
 
             if is_ajax:
-                return jsonify({
-                    'success': True,
-                    'message': 'Category updated successfully',
-                    'category_name': category_name
-                })
-            flash('Category updated successfully', 'success')
-            return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Category updated successfully",
+                        "category_name": category_name,
+                    }
+                )
+            flash("Category updated successfully", "success")
+            return redirect(
+                url_for(
+                    "account.account_details",
+                    account_number=transaction.account.account_number,
+                )
+            )
         else:
             if is_ajax:
-                return jsonify({'success': False, 'message': 'Error updating category'})
-            flash('Error updating category', 'error')
-            return redirect(url_for('account.account_details', account_number=transaction.account.account_number))
+                return jsonify({"success": False, "message": "Error updating category"})
+            flash("Error updating category", "error")
+            return redirect(
+                url_for(
+                    "account.account_details",
+                    account_number=transaction.account.account_number,
+                )
+            )
     except Exception as e:
         logger.error(f"Error updating transaction category: {str(e)}")
         if is_ajax:
-            return jsonify({'success': False, 'message': f'Error updating transaction category: {str(e)}'})
-        flash(f'Error updating transaction category: {str(e)}', 'error')
-        return redirect(url_for('account.accounts'))
+            return jsonify(
+                {
+                    "success": False,
+                    "message": f"Error updating transaction category: {str(e)}",
+                }
+            )
+        flash(f"Error updating transaction category: {str(e)}", "error")
+        return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)

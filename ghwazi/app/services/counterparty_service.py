@@ -6,13 +6,21 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 
 from app.models.database import Database
-from app.models.models import Category, CategoryMapping, CategoryType, Transaction, Counterparty, CounterpartyCategory
+from app.models.models import (
+    Category,
+    CategoryMapping,
+    CategoryType,
+    Transaction,
+    Counterparty,
+    CounterpartyCategory,
+)
 from app.models.category import CategoryRepository
 
 logger = logging.getLogger(__name__)
 
 # Import CategoryService for reusing category CRUD operations
 from app.services.category_service import CategoryService
+
 
 class CounterpartyService:
     """Service for managing unique counterparty transactions with dynamic categorization."""
@@ -24,7 +32,9 @@ class CounterpartyService:
         self.db.create_tables()
         self.category_service = CategoryService()
 
-    def get_unique_counterparties(self, user_id: int, account_number: str = None) -> List[Dict[str, Any]]:
+    def get_unique_counterparties(
+        self, user_id: int, account_number: str = None
+    ) -> List[Dict[str, Any]]:
         """
         Get all unique counterparties for a user, optionally filtered by account.
 
@@ -44,92 +54,98 @@ class CounterpartyService:
                 from app.models.models import Account
 
                 # Query all counterparties with transactions for this user
-                counterparties_query = session.query(
-                    Counterparty,
-                    func.max(Transaction.value_date).label('last_transaction_date'),
-                    func.max(Transaction.transaction_details).label('transaction_details')
-                ).join(
-                    Transaction, Transaction.counterparty_id == Counterparty.id
-                ).join(
-                    Account, Account.id == Transaction.account_id
-                ).filter(
-                    Account.user_id == user_id
+                counterparties_query = (
+                    session.query(
+                        Counterparty,
+                        func.max(Transaction.value_date).label("last_transaction_date"),
+                        func.max(Transaction.transaction_details).label(
+                            "transaction_details"
+                        ),
+                    )
+                    .join(Transaction, Transaction.counterparty_id == Counterparty.id)
+                    .join(Account, Account.id == Transaction.account_id)
+                    .filter(Account.user_id == user_id)
                 )
-                
+
                 # Filter by account_number if provided
-                if account_number and account_number != 'all':
+                if account_number and account_number != "all":
                     counterparties_query = counterparties_query.filter(
                         Account.account_number == account_number
                     )
-                    
+
                 # Group by counterparty ID
-                counterparties_query = counterparties_query.group_by(
-                    Counterparty.id
-                )
-                
+                counterparties_query = counterparties_query.group_by(Counterparty.id)
+
                 # Execute the query
                 counterparties_data = counterparties_query.all()
-                
+
                 # For each counterparty, get its categories for this user
                 result = []
                 for cp_data in counterparties_data:
                     counterparty = cp_data[0]
                     last_transaction_date = cp_data[1]
                     transaction_details = cp_data[2]
-                    
-                    # Get the user-specific category for this counterparty
-                    counterparty_category = session.query(
-                        CounterpartyCategory,
-                        Category.name.label('category_name')
-                    ).join(
-                        Category, Category.id == CounterpartyCategory.category_id
-                    ).filter(
-                        CounterpartyCategory.counterparty_id == counterparty.id,
-                        CounterpartyCategory.user_id == user_id
-                    ).first()
 
-                    
+                    # Get the user-specific category for this counterparty
+                    counterparty_category = (
+                        session.query(
+                            CounterpartyCategory, Category.name.label("category_name")
+                        )
+                        .join(Category, Category.id == CounterpartyCategory.category_id)
+                        .filter(
+                            CounterpartyCategory.counterparty_id == counterparty.id,
+                            CounterpartyCategory.user_id == user_id,
+                        )
+                        .first()
+                    )
+
                     category_id = None
                     category_name = None
-                    
+
                     if counterparty_category:
                         category_id = counterparty_category[0].category_id
                         category_name = counterparty_category[1]
-                    
+
                     # If no specific category mapping exists, try to get from the most recent transaction
                     if category_id is None:
-                        latest_transaction = session.query(
-                            Transaction,
-                            Category.name.label('category_name'),
-                            Category.id.label('category_id')
-                        ).join(
-                            Account, Account.id == Transaction.account_id
-                        ).outerjoin(
-                            Category, Category.id == Transaction.category_id
-                        ).filter(
-                            Account.user_id == user_id,
-                            Transaction.counterparty_id == counterparty.id,
-                            Category.id != None
-                        ).order_by(
-                            Transaction.value_date.desc()
-                        ).first()
-                        
+                        latest_transaction = (
+                            session.query(
+                                Transaction,
+                                Category.name.label("category_name"),
+                                Category.id.label("category_id"),
+                            )
+                            .join(Account, Account.id == Transaction.account_id)
+                            .outerjoin(Category, Category.id == Transaction.category_id)
+                            .filter(
+                                Account.user_id == user_id,
+                                Transaction.counterparty_id == counterparty.id,
+                                Category.id != None,
+                            )
+                            .order_by(Transaction.value_date.desc())
+                            .first()
+                        )
+
                         if latest_transaction:
                             category_id = latest_transaction.category_id
                             category_name = latest_transaction.category_name
-                    
-                    result.append({
-                        'counterparty_id': counterparty.id,
-                        'counterparty_name': counterparty.name,
-                        'transaction_details': transaction_details,
-                        'category_name': category_name,
-                        'category_id': category_id,
-                        'last_transaction_date': last_transaction_date
-                    })
 
+                    result.append(
+                        {
+                            "counterparty_id": counterparty.id,
+                            "counterparty_name": counterparty.name,
+                            "transaction_details": transaction_details,
+                            "category_name": category_name,
+                            "category_id": category_id,
+                            "last_transaction_date": last_transaction_date,
+                        }
+                    )
 
                 # Sort by counterparty name
-                result.sort(key=lambda x: x['counterparty_name'].lower() if x['counterparty_name'] else '')
+                result.sort(
+                    key=lambda x: (
+                        x["counterparty_name"].lower() if x["counterparty_name"] else ""
+                    )
+                )
 
                 return result
             finally:
@@ -138,8 +154,9 @@ class CounterpartyService:
             logger.error(f"Error getting unique counterparties: {str(e)}")
             return []
 
-    def categorize_counterparty(self, user_id: int, counterparty_name: str, description: str, 
-                               category_id: int) -> bool:
+    def categorize_counterparty(
+        self, user_id: int, counterparty_name: str, description: str, category_id: int
+    ) -> bool:
         """
         Categorize a counterparty with a specific description.
 
@@ -171,59 +188,80 @@ class CounterpartyService:
 
             try:
                 # Verify the category exists and belongs to the user
-                category = session.query(Category).filter(
-                    Category.id == category_id,
-                    Category.user_id == user_id
-                ).first()
+                category = (
+                    session.query(Category)
+                    .filter(Category.id == category_id, Category.user_id == user_id)
+                    .first()
+                )
 
                 if not category:
-                    logger.error(f"Category {category_id} not found or user {user_id} does not have permission")
+                    logger.error(
+                        f"Category {category_id} not found or user {user_id} does not have permission"
+                    )
                     return False
 
                 # Handle counterparty categorization
                 counterparty_id = None
                 if counterparty_name:
                     # Find or create the counterparty
-                    counterparty = session.query(Counterparty).filter(
-                        Counterparty.name == counterparty_name
-                    ).first()
-                    
+                    counterparty = (
+                        session.query(Counterparty)
+                        .filter(Counterparty.name == counterparty_name)
+                        .first()
+                    )
+
                     if not counterparty:
                         # Create new counterparty
                         counterparty = Counterparty(name=counterparty_name)
                         session.add(counterparty)
                         session.flush()  # Get ID without committing
-                        logger.info(f"Created new counterparty: {counterparty.name} with ID {counterparty.id}")
-                    
+                        logger.info(
+                            f"Created new counterparty: {counterparty.name} with ID {counterparty.id}"
+                        )
+
                     counterparty_id = counterparty.id
-                    
+
                     # Create or update CounterpartyCategory entry
-                    existing_mapping = session.query(CounterpartyCategory).filter(
-                        CounterpartyCategory.counterparty_id == counterparty_id,
-                        CounterpartyCategory.user_id == user_id
-                    ).first()
-                    
+                    existing_mapping = (
+                        session.query(CounterpartyCategory)
+                        .filter(
+                            CounterpartyCategory.counterparty_id == counterparty_id,
+                            CounterpartyCategory.user_id == user_id,
+                        )
+                        .first()
+                    )
+
                     if existing_mapping:
                         # Update existing mapping
                         existing_mapping.category_id = category_id
-                        logger.info(f"Updated category mapping for counterparty {counterparty_name} to category {category.name}")
+                        logger.info(
+                            f"Updated category mapping for counterparty {counterparty_name} to category {category.name}"
+                        )
                     else:
                         # Create new mapping
                         new_mapping = CounterpartyCategory(
                             counterparty_id=counterparty_id,
                             category_id=category_id,
-                            user_id=user_id
+                            user_id=user_id,
                         )
                         session.add(new_mapping)
-                        logger.info(f"Created new category mapping for counterparty {counterparty_name} to category {category.name}")
+                        logger.info(
+                            f"Created new category mapping for counterparty {counterparty_name} to category {category.name}"
+                        )
 
                 # Create mapping for description if provided (keep this functionality)
                 if description:
                     mapping = CategoryRepository.create_category_mapping(
-                        session, category_id, user_id, CategoryType.DESCRIPTION, description
+                        session,
+                        category_id,
+                        user_id,
+                        CategoryType.DESCRIPTION,
+                        description,
                     )
                     if not mapping:
-                        logger.warning(f"Failed to create mapping for description: {description}")
+                        logger.warning(
+                            f"Failed to create mapping for description: {description}"
+                        )
 
                 # Update all matching transactions with this category
                 from sqlalchemy import and_, or_
@@ -236,42 +274,58 @@ class CounterpartyService:
                     # If both are provided, find transactions with either match
                     filter_conditions.append(
                         or_(
-
                             Transaction.counterparty_id == counterparty_id,
-
-                            Transaction.transaction_details == description
+                            Transaction.transaction_details == description,
                         )
                     )
                 elif counterparty_id:
                     # Only counterparty provided
-                    filter_conditions.append(Transaction.counterparty_id == counterparty_id)
+                    filter_conditions.append(
+                        Transaction.counterparty_id == counterparty_id
+                    )
                 elif description:
                     # Only description provided
-                    filter_conditions.append(Transaction.transaction_details == description)
+                    filter_conditions.append(
+                        Transaction.transaction_details == description
+                    )
 
                 # Count transactions before update
-                transaction_count = session.query(Transaction).join(Account).filter(
-                    *filter_conditions
-                ).count()
+                transaction_count = (
+                    session.query(Transaction)
+                    .join(Account)
+                    .filter(*filter_conditions)
+                    .count()
+                )
 
                 if transaction_count == 0:
-                    logger.info(f"No transactions found matching counterparty {counterparty_name} or description {description}")
+                    logger.info(
+                        f"No transactions found matching counterparty {counterparty_name} or description {description}"
+                    )
                     # Still return True because we created the mappings successfully
                     return True
 
                 # Get transaction IDs that need to be updated
-                transaction_ids = [t.id for t in session.query(Transaction.id).join(Account).filter(
-                    *filter_conditions
-                ).all()]
+                transaction_ids = [
+                    t.id
+                    for t in session.query(Transaction.id)
+                    .join(Account)
+                    .filter(*filter_conditions)
+                    .all()
+                ]
 
                 # Update transactions without using join
                 if transaction_ids:
                     session.query(Transaction).filter(
                         Transaction.id.in_(transaction_ids)
-                    ).update({Transaction.category_id: category_id}, synchronize_session=False)
+                    ).update(
+                        {Transaction.category_id: category_id},
+                        synchronize_session=False,
+                    )
 
                 session.commit()
-                logger.info(f"Categorized {transaction_count} transactions with counterparty {counterparty_name} or description {description} as {category.name}")
+                logger.info(
+                    f"Categorized {transaction_count} transactions with counterparty {counterparty_name} or description {description} as {category.name}"
+                )
                 return True
             except Exception as e:
                 session.rollback()
@@ -283,7 +337,9 @@ class CounterpartyService:
             logger.error(f"Error categorizing counterparty: {str(e)}")
             return False
 
-    def auto_categorize_transaction(self, transaction_id: int, user_id: int) -> Optional[Transaction]:
+    def auto_categorize_transaction(
+        self, transaction_id: int, user_id: int
+    ) -> Optional[Transaction]:
         """
         Auto-categorize a transaction based on counterparty_name or description.
 
@@ -299,7 +355,9 @@ class CounterpartyService:
 
             try:
                 # Use the existing repository method
-                transaction = CategoryRepository.auto_categorize_transaction(session, transaction_id, user_id)
+                transaction = CategoryRepository.auto_categorize_transaction(
+                    session, transaction_id, user_id
+                )
                 return transaction
             finally:
                 self.db.close_session(session)
@@ -325,14 +383,18 @@ class CounterpartyService:
                 from sqlalchemy import and_
                 from app.models.models import Account
 
-                transactions = session.query(Transaction).join(Account).filter(
-                    Account.user_id == user_id,
-                    Transaction.category_id == None
-                ).all()
+                transactions = (
+                    session.query(Transaction)
+                    .join(Account)
+                    .filter(Account.user_id == user_id, Transaction.category_id == None)
+                    .all()
+                )
 
                 categorized_count = 0
                 for transaction in transactions:
-                    result = CategoryRepository.auto_categorize_transaction(session, transaction.id, user_id)
+                    result = CategoryRepository.auto_categorize_transaction(
+                        session, transaction.id, user_id
+                    )
                     if result and result.category_id is not None:
                         categorized_count += 1
 
@@ -345,7 +407,9 @@ class CounterpartyService:
 
     # Category CRUD operations
 
-    def create_category(self, user_id: int, name: str, description: str = None, color: str = None) -> Optional[Category]:
+    def create_category(
+        self, user_id: int, name: str, description: str = None, color: str = None
+    ) -> Optional[Category]:
         """
         Create a new category.
 
@@ -385,7 +449,14 @@ class CounterpartyService:
         """
         return self.category_service.get_category(category_id, user_id)
 
-    def update_category(self, category_id: int, user_id: int, name: str = None, description: str = None, color: str = None) -> bool:
+    def update_category(
+        self,
+        category_id: int,
+        user_id: int,
+        name: str = None,
+        description: str = None,
+        color: str = None,
+    ) -> bool:
         """
         Update a category.
 
@@ -399,7 +470,9 @@ class CounterpartyService:
         Returns:
             bool: True if update was successful, False otherwise.
         """
-        return self.category_service.update_category(category_id, user_id, name, description, color)
+        return self.category_service.update_category(
+            category_id, user_id, name, description, color
+        )
 
     def delete_category(self, category_id: int, user_id: int) -> bool:
         """
@@ -414,7 +487,9 @@ class CounterpartyService:
         """
         return self.category_service.delete_category(category_id, user_id)
 
-    def create_category_mapping(self, category_id: int, user_id: int, mapping_type: CategoryType, pattern: str) -> Optional[CategoryMapping]:
+    def create_category_mapping(
+        self, category_id: int, user_id: int, mapping_type: CategoryType, pattern: str
+    ) -> Optional[CategoryMapping]:
         """
         Create a category mapping.
 
@@ -427,7 +502,9 @@ class CounterpartyService:
         Returns:
             Optional[CategoryMapping]: Created mapping or None if creation fails.
         """
-        return self.category_service.create_category_mapping(category_id, user_id, mapping_type, pattern)
+        return self.category_service.create_category_mapping(
+            category_id, user_id, mapping_type, pattern
+        )
 
     def delete_category_mapping(self, mapping_id: int, user_id: int) -> bool:
         """
@@ -442,7 +519,9 @@ class CounterpartyService:
         """
         return self.category_service.delete_category_mapping(mapping_id, user_id)
 
-    def get_category_mappings(self, category_id: int, user_id: int) -> List[CategoryMapping]:
+    def get_category_mappings(
+        self, category_id: int, user_id: int
+    ) -> List[CategoryMapping]:
         """
         Get all mappings for a category.
 
