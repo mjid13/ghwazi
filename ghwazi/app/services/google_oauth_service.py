@@ -164,39 +164,19 @@ class GoogleOAuthService:
             User information dictionary or None
         """
         try:
-            # Build the People API service
-            service = build('people', 'v1', credentials=credentials)
-            
-            # Get user profile info
-            profile = service.people().get(
-                resourceName='people/me',
-                personFields='names,emailAddresses,photos'
-            ).execute()
-            
-            # Extract user information
+            # Build the OAuth2 service to get user info
+            service = build('oauth2', 'v2', credentials=credentials)
+
+            # Get user profile info using the simpler userinfo endpoint
+            profile = service.userinfo().get().execute()
+
+            # Extract user information - OAuth2 userinfo has a simpler structure
             user_info = {
-                'id': profile.get('resourceName', '').replace('people/', ''),
-                'name': '',
-                'email': '',
-                'picture': ''
+                'id': profile.get('id', ''),
+                'name': profile.get('name', ''),
+                'email': profile.get('email', ''),
+                'picture': profile.get('picture', '')
             }
-            
-            # Get name
-            names = profile.get('names', [])
-            if names:
-                user_info['name'] = names[0].get('displayName', '')
-            
-            # Get email
-            emails = profile.get('emailAddresses', [])
-            for email in emails:
-                if email.get('metadata', {}).get('primary'):
-                    user_info['email'] = email.get('value', '')
-                    break
-            
-            # Get profile picture
-            photos = profile.get('photos', [])
-            if photos:
-                user_info['picture'] = photos[0].get('url', '')
             
             return user_info
             
