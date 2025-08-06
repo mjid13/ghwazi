@@ -264,6 +264,9 @@ class GoogleOAuthService:
                 
                 db_session.add(oauth_user)
                 
+                # Flush to get the oauth_user.id before creating Gmail config
+                db_session.flush()
+
                 # Create default Gmail config
                 gmail_config = GmailConfig(
                     oauth_user_id=oauth_user.id,
