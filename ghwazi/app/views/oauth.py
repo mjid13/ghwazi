@@ -69,12 +69,12 @@ def google_callback():
             return redirect(url_for("auth.login"))
         
         # Log in the user
-        session['user_id'] = oauth_user.user_id
+        session['user_id'] = oauth_user['user_id']
         session['google_oauth'] = True
         session.permanent = True
-        
-        flash(f"Successfully connected with Google account: {oauth_user.email}", "success")
-        logger.info(f"User {oauth_user.user_id} logged in via Google OAuth")
+
+        flash(f"Successfully connected with Google account: {oauth_user['email']}", "success")
+        logger.info(f"User {oauth_user['user_id']} logged in via Google OAuth")
         
         # Redirect to dashboard
         return redirect(url_for("main.dashboard"))
