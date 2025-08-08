@@ -628,7 +628,7 @@ class EmailService:
             Optional[EmailService]: EmailService instance or None if configuration not found.
         """
         try:
-            from ..models.models import Account, EmailConfiguration
+            from ..models.models import Account, EmailManuConfigs
             from ..models.transaction import TransactionRepository
 
             # Get user's email configuration

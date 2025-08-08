@@ -8,7 +8,7 @@ from flask import (Blueprint, flash, jsonify, redirect, render_template,
                    request, session, url_for)
 
 from ..models import (Category, CategoryMapping, CategoryType,
-                EmailConfiguration)
+                EmailManuConfigs)
 from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..models.user import User
