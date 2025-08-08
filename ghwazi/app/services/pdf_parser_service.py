@@ -907,7 +907,6 @@ class PDFParser:
             # Create transaction data dictionary
             transaction_data = {
                 "account_number": account_info["account_number"],
-                "post_date": post_date,
                 "value_date": value_date,
                 "transaction_content": row["Narration"],
                 "amount": amount,

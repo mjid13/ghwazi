@@ -6,20 +6,20 @@ from .database import Database
 from .transaction import TransactionRepository
 from .user import User
 from .models import (Account, Bank, Category, CategoryMapping, CategoryType,
-                     EmailConfiguration, Transaction)
-from .oauth import OAuthUser, EmailConfig
+                     EmailManuConfigs, Transaction)
+from .oauth import OAuthUser, EmailAuthConfig
 
 __all__ = [
     "Database",
     "TransactionRepository",
     "User",
     "Account",
-    "EmailConfiguration", 
+    "EmailManuConfigs",
     "Transaction",
     "Category",
     "CategoryMapping",
     "CategoryType",
     "Bank",
     "OAuthUser",
-    "EmailConfig",
+    "EmailAuthConfig",
 ]

@@ -60,7 +60,7 @@
                     <tbody>
                     {% for cp in counterparties %}
                     <tr>
-                        <td>{{ cp.counterparty_name }}</td>
+                        <td>{{ cp.name }}</td>
                         <td>{{ cp.description or '-' }}</td>
                         <td>{{ cp.transaction_details or '-' }}</td>
                         <td>
@@ -76,7 +76,7 @@
                                     class="btn btn-sm btn-outline-primary categorize-btn"
                                     data-bs-toggle="modal"
                                     data-bs-target="#categorizeModal"
-                                    data-cp-name="{{ cp.counterparty_name }}"
+                                    data-cp-name="{{ cp.name }}"
                                     data-cp-description="{{ cp.description or '' }}"
                                     data-cp-category="{{ cp.category_id or '' }}"
                             >

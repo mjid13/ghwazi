@@ -252,7 +252,7 @@ def edit_transaction(transaction_id):
                 flash("Error updating transaction", "error")
 
         return render_template(
-            "transaction.edit_transaction.html",
+            "main/edit_transaction.html",
             transaction=transaction,
             categories=categories,
         )

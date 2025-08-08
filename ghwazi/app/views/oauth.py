@@ -7,7 +7,7 @@ from flask import (Blueprint, flash, redirect, render_template, request,
                    session, url_for, current_app, jsonify)
 
 from ..models.database import Database
-from ..models.oauth import OAuthUser, EmailConfig
+from ..models.oauth import OAuthUser, EmailAuthConfig
 from ..models.user import User
 from ..services.google_oauth_service import GoogleOAuthService
 from ..services.gmail_service import GmailService
@@ -156,13 +156,18 @@ def update_gmail_settings():
     user_id = session.get('user_id')
     
     try:
+        # Get OAuth user first
+        oauth_user = oauth_service.get_oauth_user_by_user_id(user_id)
+        if not oauth_user:
+            flash("Google account not connected.", "error")
+            return redirect(url_for("oauth.gmail_settings"))
+        
         db_session = db.get_session()
 
         try:
             # Get Email config within the same session
-            email_config = db_session.query(EmailConfig).filter_by(
-                user_id=user_id,
-                provider='google'
+            email_config = db_session.query(EmailAuthConfig).filter_by(
+                oauth_user_id=oauth_user.id
             ).first()
 
             if not email_config:
@@ -219,7 +224,7 @@ def update_gmail_settings():
     return redirect(url_for("oauth.gmail_settings"))
 
 
-@oauth_bp.route("/gmail/sync", methods=['POST'])
+@oauth_bp.route("/gmail/sync") #, methods=['POST'])
 @login_required
 def sync_gmail():
     """Manually trigger Gmail sync."""

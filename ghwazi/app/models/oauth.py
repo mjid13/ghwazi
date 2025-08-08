@@ -44,16 +44,13 @@ class OAuthUser(Base):
     
     # Relationships
     user = relationship("User", back_populates="oauth_users")
-    email_configs = relationship("EmailConfig", back_populates="oauth_user", cascade="all, delete-orphan")
+    email_configs = relationship("EmailAuthConfig", back_populates="oauth_user", cascade="all, delete-orphan")
     
     # Unique constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'provider', name='uq_user_provider'),
         UniqueConstraint('provider', 'provider_user_id', name='uq_provider_user_id'),
     )
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
     
     @property
     def encryption_key(self):
@@ -198,17 +195,13 @@ class OAuthUser(Base):
         return f'<OAuthUser {self.provider}:{self.email}>'
 
 
-class EmailConfig(Base):
+class EmailAuthConfig(Base):
     """Configuration for email provider API integration per user (Gmail, Outlook, etc.)."""
 
-    __tablename__ = 'email_configs'
+    __tablename__ = 'email_auth_configs'
 
     id = Column(Integer, primary_key=True)
     oauth_user_id = Column(Integer, ForeignKey('oauth_users.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # For convenience
-    
-    # Provider information
-    provider = Column(String(50), nullable=False, default='google')  # google, microsoft, yahoo, etc.
     
     # Email API settings
     enabled = Column(Boolean, default=True)
@@ -232,22 +225,21 @@ class EmailConfig(Base):
     
     # Relationships
     oauth_user = relationship("OAuthUser", back_populates="email_configs")
-    user = relationship("User")
     
-    # Unique constraint
+    # Unique constraint - one config per oauth user
     __table_args__ = (
-        UniqueConstraint('oauth_user_id', 'provider', name='uq_oauth_user_provider'),
+        UniqueConstraint('oauth_user_id', name='uq_oauth_user_config'),
     )
     
     @property
     def is_google(self):
         """Check if this is a Google provider config."""
-        return self.provider == 'google'
+        return self.oauth_user.provider == 'google'
     
     @property
     def is_microsoft(self):
         """Check if this is a Microsoft provider config."""
-        return self.provider == 'microsoft'
+        return self.oauth_user.provider == 'microsoft'
     
     @property
     def labels_list(self):
@@ -340,7 +332,8 @@ class EmailConfig(Base):
         return {
             'id': self.id,
             'oauth_user_id': self.oauth_user_id,
-            'user_id': self.user_id,
+            'user_id': self.oauth_user.user_id,
+            'provider': self.oauth_user.provider,
             'enabled': self.enabled,
             'auto_sync': self.auto_sync,
             'sync_frequency_hours': self.sync_frequency_hours,
@@ -357,4 +350,4 @@ class EmailConfig(Base):
         }
     
     def __repr__(self):
-        return f'<EmailConfig {self.provider} user_id={self.user_id} enabled={self.enabled}>'
+        return f'<EmailAuthConfig {self.oauth_user.provider} user_id={self.oauth_user.user_id} enabled={self.enabled}>'

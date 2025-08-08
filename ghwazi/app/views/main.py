@@ -11,7 +11,7 @@ from flask import (Blueprint, flash, redirect, render_template, request,
                    session, url_for)
 
 from ..models.database import Database
-from ..models.models import Account, EmailConfiguration
+from ..models.models import Account, EmailManuConfigs
 from ..models.transaction import TransactionRepository
 from ..models.user import User
 from ..services.counterparty_service import CounterpartyService
@@ -47,8 +47,8 @@ def dashboard():
 
         # Get user's email configurations
         email_configs = (
-            db_session.query(EmailConfiguration)
-            .filter(EmailConfiguration.user_id == user_id)
+            db_session.query(EmailManuConfigs)
+            .filter(EmailManuConfigs.user_id == user_id)
             .all()
         )
 

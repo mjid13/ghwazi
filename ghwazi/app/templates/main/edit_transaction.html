@@ -71,7 +71,7 @@
                                            class="form-control"
                                            id="counterparty_name"
                                            name="counterparty_name"
-                                           value="{{ transaction.counterparty_name or '' }}"
+                                           value="{{ (transaction.counterparty.name if transaction.counterparty else '' }}"
                                            maxlength="200"
                                            placeholder="Enter counterparty name">
                                     <div class="form-text">The name of the person or entity involved in this transaction</div>

@@ -14,8 +14,11 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from ..models.database import Database
-from ..models.oauth import EmailConfig, OAuthUser
+from ..models.oauth import EmailAuthConfig, OAuthUser
+from ..models.models import Transaction, Account
+from ..models.transaction import TransactionRepository
 from .google_oauth_service import GoogleOAuthService
+from .parser_service import TransactionParser
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +29,8 @@ class GmailService:
     def __init__(self):
         self.db = Database()
         self.oauth_service = GoogleOAuthService()
+        self.parser = TransactionParser()
+        self.transaction_repo = TransactionRepository()
     
     def get_gmail_service(self, oauth_user: OAuthUser):
         """
@@ -113,14 +118,14 @@ class GmailService:
             logger.error(f"Error listing Gmail labels: {e}")
             return []
     
-    def search_messages(self, oauth_user: OAuthUser, gmail_config: EmailConfig, 
+    def search_messages(self, oauth_user: OAuthUser, gmail_config: EmailAuthConfig,
                        max_results: int = 50) -> List[Dict]:
         """
         Search for messages based on Gmail configuration.
         
         Args:
             oauth_user: OAuthUser instance
-            gmail_config: EmailConfig instance
+            gmail_config: EmailAuthConfig instance
             max_results: Maximum number of messages to return
             
         Returns:
@@ -170,7 +175,7 @@ class GmailService:
             # Combine query parts
             query = ' '.join(query_parts) if query_parts else 'in:inbox'
             
-            logger.info(f"Gmail search query: {query}")
+            logger.error(f"Gmail search query: {query}")
             
             # Search messages
             response = service.users().messages().list(
@@ -383,12 +388,11 @@ class GmailService:
             if not oauth_user:
                 return False, "No Google OAuth connection found", {}
             
-            gmail_config = db_session.query(EmailConfig).filter_by(
+            gmail_config = db_session.query(EmailAuthConfig).filter_by(
                 user_id=user_id,
                 provider='google',
                 enabled=True
             ).first()
-            
             if not gmail_config:
                 return False, "Gmail sync not enabled", {}
             
@@ -398,7 +402,8 @@ class GmailService:
             
             # Search and process messages
             messages = self.search_messages(oauth_user, gmail_config, max_results=100)
-            
+
+            logger.error(f'thie the search result: {messages}')
             stats = {
                 'messages_found': len(messages),
                 'messages_processed': 0,
@@ -413,14 +418,37 @@ class GmailService:
                     transactions = self._extract_transactions_from_message(message, user_id)
                     
                     if transactions:
-                        # Store transactions (this would integrate with your transaction service)
-                        stats['transactions_created'] += len(transactions)
+                        # Store transactions in database
+                        for transaction_data in transactions:
+                            try:
+                                # Create Transaction object
+                                transaction = Transaction(**transaction_data)
+                                db_session.add(transaction)
+                                
+                                # Update account balance if balance_after is provided
+                                if transaction_data.get('balance_after') is not None:
+                                    account = db_session.query(Account).filter_by(
+                                        id=transaction_data['account_id']
+                                    ).first()
+                                    if account:
+                                        account.balance = transaction_data['balance_after']
+                                        account.updated_at = datetime.now()
+                                
+                                stats['transactions_created'] += 1
+                                logger.info(f"Saved transaction: {transaction_data['description'][:50]}...")
+                                
+                            except Exception as trans_error:
+                                logger.error(f"Error saving transaction: {trans_error}")
+                                stats['errors'] += 1
                     
                     stats['messages_processed'] += 1
                     
                 except Exception as e:
                     logger.error(f"Error processing message {message['id']}: {e}")
                     stats['errors'] += 1
+            
+            # Commit all transaction changes
+            db_session.commit()
             
             # Update sync completion
             last_message_id = messages[0]['id'] if messages else None
@@ -446,7 +474,7 @@ class GmailService:
     
     def _extract_transactions_from_message(self, message: Dict, user_id: int) -> List[Dict]:
         """
-        Extract financial transactions from email message.
+        Extract financial transactions from email message using the TransactionParser.
         
         Args:
             message: Message dictionary
@@ -456,60 +484,77 @@ class GmailService:
             List of transaction dictionaries
         """
         transactions = []
+        db_session = self.db.get_session()
         
         try:
-            subject = message.get('subject', '').lower()
-            body = message.get('body_text', '').lower()
-            sender = message.get('sender', '').lower()
+            subject = message.get('subject', '')
+            body_text = message.get('body_text', '')
+            sender = message.get('sender', '')
             
-            # Check if this is a financial email
-            financial_keywords = [
-                'transaction', 'payment', 'transfer', 'deposit', 'withdrawal',
-                'balance', 'account', 'statement', 'receipt', 'invoice',
-                'debit', 'credit', 'charge', 'purchase', 'refund'
-            ]
+            # Clean the email text using the parser
+            clean_text = self.parser.clean_text(body_text)
             
-            is_financial = any(keyword in subject or keyword in body or keyword in sender
-                             for keyword in financial_keywords)
+            # Try to parse transaction data using the parser service
+            transaction_data = self.parser.parse_email_text(clean_text, subject)
             
-            if not is_financial:
-                return transactions
-            
-            # Extract transaction patterns (this is a basic example)
-            # You would enhance this based on specific bank email formats
-            
-            # Look for amount patterns
-            amount_patterns = [
-                r'\$\s*([0-9,]+\.?\d*)',  # $1,234.56
-                r'([0-9,]+\.?\d*)\s*USD',  # 1,234.56 USD
-                r'amount[:\s]+\$?([0-9,]+\.?\d*)',  # Amount: $1,234.56
-            ]
-            
-            text_to_search = f"{subject} {body}"
-            
-            for pattern in amount_patterns:
-                matches = re.findall(pattern, text_to_search, re.IGNORECASE)
-                for match in matches:
-                    try:
-                        amount = float(match.replace(',', ''))
-                        if amount > 0:
-                            transaction = {
-                                'user_id': user_id,
-                                'amount': amount,
-                                'description': message.get('subject', 'Gmail transaction'),
-                                'date': message.get('date') or datetime.now(),
-                                'source': 'gmail',
-                                'source_id': message.get('id'),
-                                'counterparty': self._extract_counterparty(subject, body, sender),
-                                'category': self._classify_transaction(subject, body, sender)
-                            }
-                            transactions.append(transaction)
-                            break  # Take first amount found
-                    except ValueError:
-                        continue
+            if transaction_data:
+                # Find the appropriate account for this transaction
+                account_number = transaction_data.get('account_number')
+                account = None
+                
+                if account_number:
+                    # Try to find existing account by account number
+                    account = db_session.query(Account).filter_by(
+                        user_id=user_id,
+                        account_number=account_number
+                    ).first()
+                
+                if not account:
+                    # If no specific account found, use the first account for this user
+                    account = db_session.query(Account).filter_by(user_id=user_id).first()
+                
+                if account:
+                    # Create transaction data for database insertion
+                    transaction = {
+                        'user_id': user_id,
+                        'account_id': account.id,
+                        'amount': transaction_data.get('amount', 0.0),
+                        'transaction_type': transaction_data.get('transaction_type', 'unknown'),
+                        'transaction_date': transaction_data.get('transaction_date', datetime.now()),
+                        'description': transaction_data.get('description', subject),
+                        'counterparty': transaction_data.get('counterparty', ''),
+                        'balance_after': transaction_data.get('balance_after'),
+                        'category_id': None,  # Will be categorized later
+                        'email_subject': subject,
+                        'email_sender': sender,
+                        'source': 'gmail_sync',
+                        'source_id': message.get('id'),
+                        'created_at': datetime.now()
+                    }
+                    
+                    # Check for duplicate transactions
+                    existing = db_session.query(Transaction).filter_by(
+                        user_id=user_id,
+                        amount=transaction['amount'],
+                        transaction_date=transaction['transaction_date'],
+                        description=transaction['description'][:100] if transaction['description'] else ''
+                    ).first()
+                    
+                    if not existing:
+                        transactions.append(transaction)
+                        logger.info(f"Extracted transaction: {transaction['amount']} {transaction['transaction_type']} on {transaction['transaction_date']}")
+                    else:
+                        logger.info(f"Duplicate transaction skipped: {transaction['description'][:50]}...")
+                else:
+                    logger.warning(f"No account found for transaction in message {message.get('id')}")
+            else:
+                # Log that no transaction data could be parsed
+                logger.debug(f"No transaction data parsed from message: {subject[:50]}...")
             
         except Exception as e:
-            logger.error(f"Error extracting transactions from message: {e}")
+            logger.error(f"Error extracting transactions from message {message.get('id', 'unknown')}: {e}")
+        finally:
+            self.db.close_session(db_session)
         
         return transactions
     

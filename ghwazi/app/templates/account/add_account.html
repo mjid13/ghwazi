@@ -9,8 +9,67 @@ document.addEventListener('DOMContentLoaded', function() {
     const bankSelect = document.getElementById('bank_id');
     const currencyInput = document.getElementById('currency');
     const bankNameInput = document.getElementById('bank_name');
+    const emailFilterPreview = document.getElementById('email-filter-preview');
+    const senderFiltersList = document.getElementById('sender-filters-list');
+    const subjectFiltersList = document.getElementById('subject-filters-list');
     
-    // Add event listener to update currency when bank is selected
+    // Function to update email filter preview
+    function updateEmailFilterPreview(bankId) {
+        if (!bankId) {
+            emailFilterPreview.style.display = 'none';
+            return;
+        }
+        
+        // Fetch email filter preview from server
+        fetch(`{{ url_for('account.preview_email_filters', bank_id=1) }}`.replace('/1', `/${bankId}`))
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error fetching email filter preview:', data.error);
+                    emailFilterPreview.style.display = 'none';
+                    return;
+                }
+                
+                // Update sender filters list
+                senderFiltersList.innerHTML = '';
+                if (data.sender_filters && data.sender_filters.length > 0) {
+                    data.sender_filters.forEach(filter => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<i class="bi bi-envelope me-1"></i>${filter}`;
+                        senderFiltersList.appendChild(li);
+                    });
+                } else {
+                    senderFiltersList.innerHTML = '<li class="text-muted">No sender filters configured</li>';
+                }
+                
+                // Update subject filters list
+                subjectFiltersList.innerHTML = '';
+                if (data.subject_filters && data.subject_filters.length > 0) {
+                    data.subject_filters.slice(0, 8).forEach(filter => { // Show first 8 filters
+                        const li = document.createElement('li');
+                        li.innerHTML = `<i class="bi bi-tag me-1"></i>${filter}`;
+                        subjectFiltersList.appendChild(li);
+                    });
+                    
+                    if (data.subject_filters.length > 8) {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<small class="text-muted">... and ${data.subject_filters.length - 8} more</small>`;
+                        subjectFiltersList.appendChild(li);
+                    }
+                } else {
+                    subjectFiltersList.innerHTML = '<li class="text-muted">No subject filters configured</li>';
+                }
+                
+                // Show the preview
+                emailFilterPreview.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error fetching email filter preview:', error);
+                emailFilterPreview.style.display = 'none';
+            });
+    }
+    
+    // Add event listener to update currency and email preview when bank is selected
     bankSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         
@@ -20,14 +79,24 @@ document.addEventListener('DOMContentLoaded', function() {
             currencyInput.value = currency;
             
             // Disable bank_name field when a bank is selected
-            bankNameInput.disabled = true;
-            bankNameInput.value = '';
+            if (bankNameInput) {
+                bankNameInput.disabled = true;
+                bankNameInput.value = '';
+            }
+            
+            // Update email filter preview
+            updateEmailFilterPreview(selectedOption.value);
         } else {
             // Reset currency to default
             currencyInput.value = 'OMR';
             
             // Enable bank_name field when no bank is selected
-            bankNameInput.disabled = false;
+            if (bankNameInput) {
+                bankNameInput.disabled = false;
+            }
+            
+            // Hide email filter preview
+            emailFilterPreview.style.display = 'none';
         }
     });
 });
@@ -100,6 +169,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% endfor %}
                         </select>
                         <div class="form-text">Select the email configuration to use for fetching transactions for this account.</div>
+                    </div>
+
+                    <!-- Email Filter Preview Section -->
+                    <div id="email-filter-preview" class="mb-3" style="display: none;">
+                        <div class="card border-info">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-envelope-check me-2"></i>Email Filter Preview</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Sender Filters:</h6>
+                                        <ul id="sender-filters-list" class="list-unstyled small text-muted">
+                                            <!-- Dynamic content -->
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Subject Filters:</h6>
+                                        <ul id="subject-filters-list" class="list-unstyled small text-muted">
+                                            <!-- Dynamic content -->
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mb-0 small">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    These filters will be automatically configured for Gmail sync when you add this account.
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-between">

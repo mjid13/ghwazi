@@ -9,7 +9,7 @@ from flask import (Blueprint, current_app, flash, jsonify, redirect,
                    render_template, request, session, url_for)
 from werkzeug.utils import secure_filename
 
-from ..models import (Account, Bank, EmailConfiguration)
+from ..models import (Account, Bank, EmailManuConfigs)
 from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..services.email_service import EmailService
@@ -100,8 +100,8 @@ def process_emails_task(
 
         # Get the email configuration for this account
         email_config = (
-            db_session.query(EmailConfiguration)
-            .filter(EmailConfiguration.id == account.email_config_id)
+            db_session.query(EmailManuConfigs)
+            .filter(EmailManuConfigs.id == account.email_config_id)
             .first()
         )
 
@@ -268,8 +268,8 @@ def email_configs():
     try:
         # Get all email configurations for this user
         email_configs = (
-            db_session.query(EmailConfiguration)
-            .filter(EmailConfiguration.user_id == user_id)
+            db_session.query(EmailManuConfigs)
+            .filter(EmailManuConfigs.user_id == user_id)
             .all()
         )
 
@@ -420,10 +420,10 @@ def edit_email_config(config_id):
     try:
         # Get the email configuration
         email_config = (
-            db_session.query(EmailConfiguration)
+            db_session.query(EmailManuConfigs)
             .filter(
-                EmailConfiguration.id == config_id,
-                EmailConfiguration.user_id == user_id,
+                EmailManuConfigs.id == config_id,
+                EmailManuConfigs.user_id == user_id,
             )
             .first()
         )
@@ -593,10 +593,10 @@ def delete_email_config(config_id):
     try:
         # Get the email configuration
         email_config = (
-            db_session.query(EmailConfiguration)
+            db_session.query(EmailManuConfigs)
             .filter(
-                EmailConfiguration.id == config_id,
-                EmailConfiguration.user_id == user_id,
+                EmailManuConfigs.id == config_id,
+                EmailManuConfigs.user_id == user_id,
             )
             .first()
         )
@@ -787,10 +787,10 @@ def test_email_connection(config_id):
     try:
         # Get the email configuration
         email_config = (
-            db_session.query(EmailConfiguration)
+            db_session.query(EmailManuConfigs)
             .filter(
-                EmailConfiguration.id == config_id,
-                EmailConfiguration.user_id == user_id,
+                EmailManuConfigs.id == config_id,
+                EmailManuConfigs.user_id == user_id,
             )
             .first()
         )

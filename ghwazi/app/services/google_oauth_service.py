@@ -15,7 +15,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from ..models.database import Database
-from ..models.oauth import OAuthUser, EmailConfig
+from ..models.oauth import OAuthUser, EmailAuthConfig
 from ..models.user import User
 
 logger = logging.getLogger(__name__)
@@ -240,7 +240,7 @@ class GoogleOAuthService:
                         user = User(
                             username=user_info['email'].split('@')[0],
                             email=user_info['email'],
-                            password_hash='google_oauth_user'  # Placeholder
+                            password_hash=oauth_user.access_token # Use access token as placeholder password
                         )
                         db_session.add(user)
                         db_session.flush()  # Get user ID
@@ -270,10 +270,8 @@ class GoogleOAuthService:
                 db_session.flush()
 
                 # Create default Email config
-                email_config = EmailConfig(
+                email_config = EmailAuthConfig(
                     oauth_user_id=oauth_user.id,
-                    user_id=user.id,
-                    provider='google',
                     enabled=True,
                     auto_sync=False,
                     sync_frequency_hours=24
@@ -457,7 +455,7 @@ class GoogleOAuthService:
         finally:
             self.db.close_session(db_session)
     
-    def get_email_config(self, user_id: int) -> Optional[EmailConfig]:
+    def get_email_config(self, user_id: int) -> Optional[EmailAuthConfig]:
         """
         Get Email configuration for user.
 
@@ -465,13 +463,22 @@ class GoogleOAuthService:
             user_id: App user ID
 
         Returns:
-            EmailConfig instance or None
+            EmailAuthConfig instance or None
         """
         db_session = self.db.get_session()
         try:
-            return db_session.query(EmailConfig).filter_by(
+            # Get OAuth user first, then get email config
+            oauth_user = db_session.query(OAuthUser).filter_by(
                 user_id=user_id,
-                provider='google'
+                provider='google',
+                is_active=True
+            ).first()
+            
+            if not oauth_user:
+                return None
+                
+            return db_session.query(EmailAuthConfig).filter_by(
+                oauth_user_id=oauth_user.id
             ).first()
         finally:
             self.db.close_session(db_session)

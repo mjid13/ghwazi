@@ -5,10 +5,11 @@ from flask import (Blueprint, flash, jsonify, redirect, render_template,
                    request, session, url_for)
 
 from ..models import (Account, Bank, Category, CategoryMapping,
-                     EmailConfiguration, Transaction)
+                     EmailManuConfigs, Transaction)
 from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..models.user import User
+from ..services.auto_sync_service import AutoSyncService
 from ..utils.decorators import login_required
 
 # Create blueprint
@@ -56,8 +57,8 @@ def add_account():
     try:
         # Get all email configurations for this user
         email_configs = (
-            db_session.query(EmailConfiguration)
-            .filter(EmailConfiguration.user_id == user_id)
+            db_session.query(EmailManuConfigs)
+            .filter(EmailManuConfigs.user_id == user_id)
             .all()
         )
 
@@ -134,7 +135,28 @@ def add_account():
 
             account = TransactionRepository.create_account(db_session, account_data)
             if account:
-                flash("Account added successfully", "success")
+                # Auto-configure email filters and sync if account was created successfully
+                auto_sync_service = AutoSyncService()
+                sync_results = auto_sync_service.process_new_account(user_id, account)
+                
+                # Flash success message with sync results
+                success_message = "Account added successfully"
+                if sync_results.get('filters_configured'):
+                    success_message += " and email filters configured"
+                if sync_results.get('sync_triggered'):
+                    stats = sync_results.get('sync_stats', {})
+                    if stats.get('messages_found', 0) > 0:
+                        success_message += f" ({stats['messages_found']} emails found)"
+                
+                flash(success_message, "success")
+                
+                # Show additional info messages if available
+                for message in sync_results.get('messages', []):
+                    if 'Error' not in message:
+                        flash(message, "info")
+                    else:
+                        flash(message, "warning")
+                
                 return redirect(url_for("main.dashboard"))
             else:
                 flash("Error adding account", "error")
@@ -173,8 +195,8 @@ def edit_account(account_id):
 
         # Get all email configurations for this user
         email_configs = (
-            db_session.query(EmailConfiguration)
-            .filter(EmailConfiguration.user_id == user_id)
+            db_session.query(EmailManuConfigs)
+            .filter(EmailManuConfigs.user_id == user_id)
             .all()
         )
 
@@ -525,3 +547,16 @@ def account_details(account_number):
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
+
+
+@account_bp.route("/preview-email-filters/<int:bank_id>")
+@login_required
+def preview_email_filters(bank_id):
+    """API endpoint to preview email filters for a selected bank."""
+    try:
+        auto_sync_service = AutoSyncService()
+        preview = auto_sync_service.get_bank_email_preview(bank_id)
+        return jsonify(preview)
+    except Exception as e:
+        logger.error(f"Error getting email filter preview: {e}")
+        return jsonify({'error': str(e)}), 500

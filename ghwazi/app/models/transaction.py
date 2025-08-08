@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import String
 from sqlalchemy.orm import Session
 
-from .models import (Account, Counterparty, EmailConfiguration, EmailMetadata,
+from .models import (Account, Counterparty, EmailManuConfigs, EmailMetadata,
                      Transaction, TransactionType)
 from .user import User
 
@@ -83,7 +83,7 @@ class TransactionRepository:
     @staticmethod
     def create_email_config(
         session: Session, config_data: Dict[str, Any]
-    ) -> Optional[EmailConfiguration]:
+    ) -> Optional[EmailManuConfigs]:
         """
         Create or update email configuration for a user.
 
@@ -92,15 +92,15 @@ class TransactionRepository:
             config_data (Dict[str, Any]): Email configuration data.
 
         Returns:
-            Optional[EmailConfiguration]: Created/updated configuration or None if creation fails.
+            Optional[EmailManuConfigs]: Created/updated configuration or None if creation fails.
         """
         try:
             user_id = config_data["user_id"]
 
             # Check if configuration already exists for this user
             existing_config = (
-                session.query(EmailConfiguration)
-                .filter(EmailConfiguration.user_id == user_id)
+                session.query(EmailManuConfigs)
+                .filter(EmailManuConfigs.user_id == user_id)
                 .first()
             )
 
@@ -115,7 +115,7 @@ class TransactionRepository:
                 return existing_config
 
             # Create new configuration
-            email_config = EmailConfiguration(
+            email_config = EmailManuConfigs(
                 user_id=user_id,
                 email_host=config_data["email_host"],
                 email_port=config_data["email_port"],
@@ -365,16 +365,10 @@ class TransactionRepository:
                 amount=transaction_data_copy.get("amount", 0.0),
                 currency=transaction_data_copy.get("currency", "OMR"),
                 value_date=transaction_data_copy.get("value_date", None),
-                # Using date_time from input for backward compatibility
                 transaction_id=transaction_data_copy.get("transaction_id"),
-                transaction_sender=transaction_data_copy.get("transaction_sender"),
-                transaction_receiver=transaction_data_copy.get("transaction_receiver"),
-                counterparty_name=counterparty_name,  # Keep for backward compatibility
-                counterparty_id=counterparty_id,  # Set the new counterparty relationship
+                counterparty_id=counterparty_id,  # Set the counterparty relationship
                 transaction_details=transaction_data_copy.get("transaction_details"),
                 country=transaction_data_copy.get("country"),
-                post_date=transaction_data_copy.get("post_date"),
-                # Using email_date from input for backward compatibility
                 transaction_content=transaction_data_copy.get("transaction_content"),
             )
 

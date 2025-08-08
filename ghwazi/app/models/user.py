@@ -24,7 +24,7 @@ class User(Base):
 
     # Relationships
     accounts = relationship("Account", back_populates="user")
-    email_configs = relationship("EmailConfiguration", back_populates="user")
+    email_configs = relationship("EmailManuConfigs", back_populates="user")
     oauth_users = relationship("OAuthUser", back_populates="user")
 
     def set_password(self, password):
