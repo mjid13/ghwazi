@@ -6,6 +6,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
+from secrets import token_urlsafe
 
 from flask import current_app, session, url_for
 from google.auth.transport.requests import Request
@@ -15,7 +16,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from ..models.database import Database
-from ..models.oauth import OAuthUser, EmailAuthConfig
+from ..models import OAuthUser, EmailAuthConfig, OAuthUserRepository, EmailAuthConfigRepository
 from ..models.user import User
 
 logger = logging.getLogger(__name__)
@@ -203,10 +204,7 @@ class GoogleOAuthService:
         try:
             # Find existing OAuth user by Google ID
             google_user_id = user_info['id']
-            oauth_user = db_session.query(OAuthUser).filter_by(
-                provider='google',
-                provider_user_id=google_user_id
-            ).first()
+            oauth_user = OAuthUserRepository.get_by_provider_user_id(db_session, 'google', google_user_id)
 
             if oauth_user:
                 # Update existing OAuth user
@@ -220,6 +218,7 @@ class GoogleOAuthService:
                     scope=credentials.scopes
                 )
                 oauth_user.is_active = True
+                db_session.commit()
 
                 logger.info(f"Updated existing OAuth user: {oauth_user.email}")
 
@@ -240,49 +239,39 @@ class GoogleOAuthService:
                         user = User(
                             username=user_info['email'].split('@')[0],
                             email=user_info['email'],
-                            password_hash=oauth_user.access_token # Use access token as placeholder password
+                            password_hash=token_urlsafe(48) # Use access token as placeholder password
                         )
                         db_session.add(user)
                         db_session.flush()  # Get user ID
 
                         logger.info(f"Created new app user: {user.email}")
 
-                # Create new OAuth user
-                oauth_user = OAuthUser(
+                # Create new OAuth user using repository
+                oauth_user = OAuthUserRepository.create_oauth_user(
+                    session=db_session,
                     user_id=user.id,
                     provider='google',
                     provider_user_id=google_user_id,
                     email=user_info['email'],
                     name=user_info['name'],
-                    picture=user_info['picture']
-                )
-
-                oauth_user.update_tokens(
                     access_token=credentials.token,
                     refresh_token=credentials.refresh_token,
                     expires_in=3600,
-                    scope=credentials.scopes
+                    scope=credentials.scopes,
+                    picture=user_info['picture']
                 )
 
-                db_session.add(oauth_user)
-
-                # Flush to get the oauth_user.id before creating Gmail config
-                db_session.flush()
-
-                # Create default Email config
-                email_config = EmailAuthConfig(
+                # Create default Email config using repository
+                email_config = EmailAuthConfigRepository.create(
+                    session=db_session,
                     oauth_user_id=oauth_user.id,
                     enabled=True,
                     auto_sync=False,
-                    sync_frequency_hours=24
+                    sync_frequency_hours=24,
+                    labels=['INBOX']
                 )
-                email_config.labels_list = ['INBOX']
-
-                db_session.add(email_config)
 
                 logger.info(f"Created new OAuth user: {oauth_user.email}")
-
-            db_session.commit()
 
             # Extract data before closing session
             oauth_user_data = {
@@ -447,11 +436,7 @@ class GoogleOAuthService:
         """
         db_session = self.db.get_session()
         try:
-            return db_session.query(OAuthUser).filter_by(
-                user_id=user_id,
-                provider='google',
-                is_active=True
-            ).first()
+            return OAuthUserRepository.get_by_user_and_provider(db_session, user_id, 'google')
         finally:
             self.db.close_session(db_session)
     
@@ -468,17 +453,11 @@ class GoogleOAuthService:
         db_session = self.db.get_session()
         try:
             # Get OAuth user first, then get email config
-            oauth_user = db_session.query(OAuthUser).filter_by(
-                user_id=user_id,
-                provider='google',
-                is_active=True
-            ).first()
+            oauth_user = OAuthUserRepository.get_by_user_and_provider(db_session, user_id, 'google')
             
             if not oauth_user:
                 return None
                 
-            return db_session.query(EmailAuthConfig).filter_by(
-                oauth_user_id=oauth_user.id
-            ).first()
+            return EmailAuthConfigRepository.get_by_oauth_user_id(db_session, oauth_user.id)
         finally:
             self.db.close_session(db_session)

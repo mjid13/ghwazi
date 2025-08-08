@@ -174,6 +174,7 @@ class TransactionRepository:
 
             account = Account(
                 user_id=user_id,
+                bank_id=account_data.get("bank_id"),
                 account_number=account_data["account_number"],
                 bank_name=account_data.get("bank_name", "Unknown"),
                 account_holder=account_data.get("account_holder"),
@@ -602,35 +603,34 @@ class TransactionRepository:
             old_type = transaction.transaction_type
 
             # Handle counterparty if counterparty_name is being updated
-            if (
-                "counterparty_name" in transaction_data
-                and transaction_data["counterparty_name"]
-                != transaction.counterparty_name
-            ):
-                counterparty_name = transaction_data["counterparty_name"]
+            if "counterparty_name" in transaction_data:
+                # Normalize names for comparison
+                new_name = (transaction_data.get("counterparty_name") or "").strip()
+                current_name = transaction.counterparty.name if transaction.counterparty else ""
 
-                if counterparty_name:
-                    # Check if counterparty already exists
-                    counterparty = (
-                        session.query(Counterparty)
-                        .filter(Counterparty.name == counterparty_name)
-                        .first()
-                    )
-
-                    if not counterparty:
-                        # Create new counterparty
-                        counterparty = Counterparty(name=counterparty_name)
-                        session.add(counterparty)
-                        session.flush()  # Get ID without committing
-                        logger.info(
-                            f"Created new counterparty: {counterparty.name} with ID {counterparty.id}"
+                if new_name != current_name:
+                    if new_name:
+                        # Check if counterparty already exists
+                        counterparty = (
+                            session.query(Counterparty)
+                            .filter(Counterparty.name == new_name)
+                            .first()
                         )
 
-                    # Update transaction's counterparty_id
-                    transaction.counterparty_id = counterparty.id
-                else:
-                    # If counterparty_name is empty, set counterparty_id to None
-                    transaction.counterparty_id = None
+                        if not counterparty:
+                            # Create new counterparty
+                            counterparty = Counterparty(name=new_name)
+                            session.add(counterparty)
+                            session.flush()  # Get ID without committing
+                            logger.info(
+                                f"Created new counterparty: {counterparty.name} with ID {counterparty.id}"
+                            )
+
+                        # Update transaction's counterparty_id
+                        transaction.counterparty_id = counterparty.id
+                    else:
+                        # If counterparty_name is empty, set counterparty_id to None
+                        transaction.counterparty_id = None
 
             # Update transaction fields
             for key, value in transaction_data.items():
@@ -647,6 +647,7 @@ class TransactionRepository:
                     "email_id",
                     "bank_name",
                     "counterparty_id",
+                    "counterparty_name",
                 ]:
                     continue
 

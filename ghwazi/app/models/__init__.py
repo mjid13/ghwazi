@@ -7,7 +7,9 @@ from .transaction import TransactionRepository
 from .user import User
 from .models import (Account, Bank, Category, CategoryMapping, CategoryType,
                      EmailManuConfigs, Transaction)
-from .oauth import OAuthUser, EmailAuthConfig
+from .models import OAuthUser, EmailAuthConfig
+from .oauth import OAuthUserRepository, EmailAuthConfigRepository  # type: ignore
+
 
 __all__ = [
     "Database",
@@ -22,4 +24,7 @@ __all__ = [
     "Bank",
     "OAuthUser",
     "EmailAuthConfig",
+    "OAuthUserRepository",
+    "EmailAuthConfigRepository",
 ]
+

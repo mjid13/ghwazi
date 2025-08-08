@@ -264,7 +264,7 @@ def edit_transaction(transaction_id):
         db.close_session(db_session)
 
 
-@transaction_bp.route("/transaction/<int:transaction_id>", methods=["DELETE"])
+@transaction_bp.route("/transaction/<int:transaction_id>", methods=["POST", "DELETE"])
 @login_required
 def delete_transaction(transaction_id):
     """Delete a transaction."""
@@ -315,7 +315,7 @@ def delete_transaction(transaction_id):
                 )
             flash("Error deleting transaction", "error")
 
-        return redirect(url_for("account_details", account_number=account_number))
+        return redirect(url_for("account.account_details", account_number=account_number))
     except Exception as e:
         logger.error(f"Error deleting transaction: {str(e)}")
         if is_ajax:

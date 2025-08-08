@@ -32,7 +32,7 @@
                                                class="form-control form-control-lg"
                                                id="amount"
                                                name="amount"
-                                               value="{{ "{:.3f}".format(transaction.amount) }}"
+                                               value="{{ '%.3f' % (transaction.amount or 0) }}"
                                                step="0.001"
                                                required>
                                     </div>
@@ -71,7 +71,7 @@
                                            class="form-control"
                                            id="counterparty_name"
                                            name="counterparty_name"
-                                           value="{{ (transaction.counterparty.name if transaction.counterparty else '' }}"
+                                           value="{{ transaction.counterparty.name if transaction.counterparty else '' }}"
                                            maxlength="200"
                                            placeholder="Enter counterparty name">
                                     <div class="form-text">The name of the person or entity involved in this transaction</div>

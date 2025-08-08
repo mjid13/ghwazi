@@ -96,41 +96,59 @@ class TransactionParser:
         return clean_text.strip()
 
     def _get_name(self, email_text: str) -> Optional[str]:
-        """Extract counterparty name from email text."""
-        counterparty_re1 = re.compile(
-            r"(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))", re.IGNORECASE
+        """Extract counterparty/merchant name from email text."""
+        # 1) Prefer extracting from the 'Description :' field. Stop before Amount/Date/Time/etc.
+        desc_match = re.search(
+            r"Description\s*:\s*(.+?)(?:\s+(?:Amount|Date/Time|Transaction Country|Txn Id)\b|[\r\n]|$)",
+            email_text,
+            re.IGNORECASE,
         )
+        if desc_match:
+            raw = desc_match.group(1).strip()
+
+            # Remove leading numeric reference like "911792-" or "911792 :"
+            raw = re.sub(r"^[#\s]*\d{2,}\s*[-:]\s*", "", raw)
+
+            # If there are multiple separators, pick the most name-like (usually the last text part)
+            parts = [p.strip() for p in re.split(r"[-:]", raw) if p.strip()]
+            candidate = None
+            for p in reversed(parts):
+                if re.search(r"[A-Za-z]{2}", p):
+                    candidate = p
+                    break
+            name = candidate or raw
+
+            # Guard against any leaked currency/amount tokens
+            name = re.split(r"\s+(?:OMR|USD|EUR|GBP|AED|SAR|QAR|KWD|BHD|JPY)\b", name)[0]
+
+            # Normalize whitespace
+            name = re.sub(r"\s{2,}", " ", name).strip()
+            if name:
+                return name
+
+        # 2) Fallback: try explicit "from/to NAME" pattern
+        counterparty_re1 = re.compile(r"(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))", re.IGNORECASE)
         counterparty_match = counterparty_re1.search(email_text)
         if counterparty_match:
-            # Clean up spaces, remove extra whitespace
             name = " ".join(counterparty_match.group(1).split())
             if name.upper().startswith("TRANSFER"):
-                name = name[
-                    8:
-                ].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
+                name = name[8:].strip()  # Remove 'TRANSFER'
             if name.endswith("from your a") or name.endswith("in your a"):
-                name = " ".join(
-                    name.split()[:-3]
-                ).strip()  # Remove 'from your account' or 'in your account'
+                name = " ".join(name.split()[:-3]).strip()
             return name
-        else:
-            # fallback: try to find uppercase name lines near transaction details (like Email #1)
-            # This will match 2+ uppercase words together
-            counterparty_re2 = re.compile(r"\n([A-Z][A-Z\s]{4,})\n", re.MULTILINE)
-            names = counterparty_re2.findall(email_text)
-            if names:  # Check if names list is not empty
-                name = " ".join(names[0].split())
-                if name.upper().startswith("TRANSFER"):
-                    name = name[
-                        8:
-                    ].strip()  # Remove 'TRANSFER' (8 characters) and any leading whitespace
-                if name.endswith("from your a") or name.endswith("in your a"):
-                    name = " ".join(
-                        name.split()[:-3]
-                    ).strip()  # Remove 'from your account' or 'in your account'
-                return name
-            else:
-                return None
+
+        # 3) Last resort: uppercase block between newlines
+        counterparty_re2 = re.compile(r"\n([A-Z][A-Z\s]{4,})\n", re.MULTILINE)
+        names = counterparty_re2.findall(email_text)
+        if names:
+            name = " ".join(names[0].split())
+            if name.upper().startswith("TRANSFER"):
+                name = name[8:].strip()
+            if name.endswith("from your a") or name.endswith("in your a"):
+                name = " ".join(name.split()[:-3]).strip()
+            return name
+
+        return None
 
     def determine_transaction_type(self, email_text: str) -> str:
         """
@@ -182,6 +200,7 @@ class TransactionParser:
             "from": None,
             "to": None,
             "currency": None,
+            "country": None,
         }
 
         # Account number (xxxx + digits)
@@ -270,7 +289,7 @@ class TransactionParser:
             data["country"] = country_match.group(1).strip()
 
         # Description: "Description : <text>"
-        desc_re = re.compile(r"Description\s*:\s*(.+)", re.IGNORECASE)
+        desc_re = re.compile(r"Description\s*:\s*(.+?)(?=[:/]|$)", re.IGNORECASE)
         desc_match = desc_re.search(email_text)
         description = None
         if desc_match:
@@ -322,16 +341,18 @@ class TransactionParser:
             Optional[Dict[str, Any]]: Extracted transaction data or None if parsing fails.
         """
         try:
-            body = email_data.get("body", "")
+            body = email_data.get("body") or email_data.get("body_text", "")
             if not body:
                 logger.warning("Email body is empty, cannot parse transaction")
                 return None
 
             # Clean the email text first
             clean_text = self.clean_text(body)
-
+            logger.error(f"Cleaned text: {clean_text}")
             # Extract bank email data using the new function
             extracted_data = self.extract_bank_email_data(clean_text)
+            logger.error(f"Extracted data: {extracted_data}")
+
 
             # Convert to the format expected by the rest of the system
             transaction_data = {
@@ -339,11 +360,15 @@ class TransactionParser:
                 "email_id": email_data.get("id"),
                 "currency": extracted_data.get("currency", "OMR"),
                 "transaction_content": clean_text,
+                "account_number": extracted_data.get("account_number"),
+                "transaction_type": extracted_data.get("transaction_type"),
+                "date": extracted_data.get("date"),
+                "transaction_details": extracted_data.get("transaction_details"),
+                "counterparty_name": extracted_data.get("counterparty_name"),
+                "transaction_id": extracted_data.get("transaction_id"),
+                "description": extracted_data.get("description"),
+                "type": extracted_data.get("type"),
             }
-
-            # Map the extracted data to transaction_data
-            if extracted_data.get("account_number"):
-                transaction_data["account_number"] = extracted_data["account_number"]
 
             if extracted_data.get("amount"):
                 try:
@@ -352,18 +377,14 @@ class TransactionParser:
                     logger.warning(
                         f"Could not convert amount to float: {extracted_data['amount']}"
                     )
-
+            if extracted_data.get("country"):
+                transaction_data["country"] = extracted_data["country"].split()[0]
             if extracted_data.get("type"):
                 transaction_data["transaction_type"] = extracted_data["type"]
             elif extracted_data.get("transaction_type"):
-                transaction_data["transaction_type"] = extracted_data[
-                    "transaction_type"
-                ]
+                transaction_data["transaction_type"] = extracted_data["transaction_type"]
             else:
                 transaction_data["transaction_type"] = "unknown"
-
-            if extracted_data.get("country"):
-                transaction_data["country"] = extracted_data["country"]
 
             if extracted_data.get("date"):
                 try:
@@ -375,15 +396,6 @@ class TransactionParser:
                         f"Failed to parse date '{extracted_data['date']}': {str(e)}"
                     )
 
-            if extracted_data.get("transaction_id"):
-                transaction_data["transaction_id"] = extracted_data["transaction_id"]
-
-            if extracted_data.get("branch"):
-                transaction_data["branch"] = extracted_data["branch"]
-
-            transaction_data["transaction_details"] = extracted_data.get(
-                "transaction_details"
-            )
 
             # Validate that we have minimum required data
             if not self._validate_transaction_data(transaction_data):
@@ -567,3 +579,53 @@ class TransactionParser:
                 return False
 
         return True
+
+def parse_bank_email(email_text: str) -> Optional[Dict[str, Any]]:
+    parser = TransactionParser()
+    email_data = {
+    "id": "1980c623880ae87a",
+    "thread_id": "1980768ef1a82533",
+    "label_ids": ["IMPORTANT", "CATEGORY_UPDATES", "INBOX"],
+    "snippet": "Dear Customer, Your Debit card number 4837**** ****1518 has been utilised as follows: Account number : xxxx0019 Description : 911792-JENAN TEA AIRP Amount : OMR 0.2 Date/Time : 15 JUL 25 08:39",
+    "history_id": "1965802",
+    "internal_date": "1752554415000",
+    "size_estimate": 6445,
+    "subject": "Account Transaction",
+    "sender": "NOREPLY@bankmuscat.com",
+    "recipient": "Abdulmajeed.alhadhrami@gmail.com",
+    "date": "2025-07-15T08:40:15+04:00",
+    "date_string": "Tue, 15 Jul 2025 08:40:15 +0400",
+    "body_text": "Dear Customer, Your Debit card number 4837**** ****1518 has been utilised as follows: Account number : xxxx0019 Description : 911792-JENAN TEA AIRP Amount : OMR 0.2 Date/Time : 15 JUL 25 08:39 Transaction Country : Oman Kind Regards, Bank Muscat To unsubscribe / modify the email alert service please contact your nearest Branch / ARM or contact bank muscat Call Center at 24795555. This e-mail is confidential and may also be legally privileged. If you are not the intended recipient, please notify us immediately. You should not copy, forward, disclose or use it for any purpose either partly or completely. If you have received this message by error, please delete all its copies from your system and notify us by e-mail to care@bankmuscat.com. Internet communications cannot be guaranteed to be timely, secure, error or virus-free. Also, the Web/ IT/ Email administrator might not allow emails with attachments, thus the sender does not accept liability for any errors or omissions.",
+    "headers": {
+      "delivered-to": "abdulmajeed.alhadhrami@gmail.com",
+      "received": "from dc1t24brchapp2.bmoman.bankmuscat.com ( [10.6.233.161]) by DC1MG3-OM-SMG.bmoman.bankmuscat.com (Symantec Messaging Gateway) with SMTP id 38.31.10146.EABD5786; Tue, 15 Jul 2025 08:40:14 +0400 (+04)",
+      "x-google-smtp-source": "AGHT+IHXcWPbbOeS4oJm5QGsY9a5ZLtv9dYIJD0hBz/vNyUGEoDd9WdRZtMh3DsfV1xS9Jaud1Jk",
+      "x-received": "by 2002:a05:600c:46c3:b0:439:86fb:7340 with SMTP id 5b1f17b1804b1-454f425a04bmr144764235e9.30.1752554420721; Mon, 14 Jul 2025 21:40:20 -0700 (PDT)",
+      "arc-seal": "i=1; a=rsa-sha256; t=1752554420; cv=none; d=google.com; s=arc-20240605; b=S//jkMF6Ogv8lJRNG+uqsXp3XbvHM1Ab6/NqTGvCO9k4ewP1gC4ZaMfTPilR5VmvgD7iYN70Ix+e7Wxl9d4+2Vuo6cz8FfQmKubXDW2n9kyXoTIwC7izetSq77ANWXXjaLK8AEFct0rR15fjh57ov6HIbCz5+HtO+vqu8L5dvdKJW6V5S+dwRItHiqRF6/16P5dCIZO+o5waRltnaCT9EDhnwmcVBQWPOmRAeh3LkCHzL9A9dCwPdk5+XLAPyudweXbH/kCi9rAZ3IrjlQJK4p0wyf9JuXISzXamnv92sj2njCS9yUTFQ0PpGrqkbRKP6MVzM6iH2pNTXzK2xguC5A==",
+      "arc-message-signature": "i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605; h=content-transfer-encoding:mime-version:subject:message-id:to:from:date:dkim-signature; bh=/jOT/FZ5YZtbAuBtTBeLf4O9KKx8BVUuN0HTzBJdzho=; fh=+/2bNCdLvIlW6mSN/DUx3u4RCdSMbFYBnTvHujmKYbU=; b=QskmJOVacsU7KCdszQvO+KP+YcfpRthQnZd/ROby0o6+EKJZP5GSIxBrrh7I2MQa0CYl/bAI4EbM62+a0Q0dtNsRKdt3zBcwH9UnsKmg3NMYn1FMgSseztU2ezRIFkqcTmPe2+M0A+vLtFzLzvVq0Ag3rmhsTSaToGJ/cl4kmns3GSH8nBmbG/6TBYRC5NWfIseF7EPRVk9GIMz6q/lECRHA2zMTo9NuoDqVhyS/IxVc6dhsKaYkMLJOJsYbZHnb8gk5H9AyR4XnItr1TWYCjYx4aHhfMfe/7jmdxY8Cr2XoDYmStHYVAzw04N3YAW4d4Yib4uhZAZm3y2R5AV2O7A==",
+      "arc-authentication-results": "i=1; mx.google.com; dkim=pass header.i=@bankmuscat.com header.s=selector3 header.b=ZtJlhV0b; spf=pass (google.com: domain of noreply@bankmuscat.com designates 85.154.45.22 as permitted sender) smtp.mailfrom=NOREPLY@bankmuscat.com; dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=bankmuscat.com",
+      "return-path": "<NOREPLY@bankmuscat.com>",
+      "received-spf": "pass (google.com: domain of noreply@bankmuscat.com designates 85.154.45.22 as permitted sender) client-ip=85.154.45.22;",
+      "authentication-results": "mx.google.com; dkim=pass header.i=@bankmuscat.com header.s=selector3 header.b=ZtJlhV0b; spf=pass (google.com: domain of noreply@bankmuscat.com designates 85.154.45.22 as permitted sender) smtp.mailfrom=NOREPLY@bankmuscat.com; dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=bankmuscat.com",
+      "dkim-signature": "v=1; a=rsa-sha256; d=bankmuscat.com; s=selector3; c=relaxed/simple; q=dns/txt; i=@bankmuscat.com; t=1752554415; x=1838868015; h=From:Sender:Reply-To:Subject:Date:Message-ID:To:Cc:MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive; bh=++OdcubP69THstLU32IDOGMHwAnJvDSAZLic1YvsQtw=; b=ZtJlhV0bAjb659F10oApQQEUXyEBb7wKe6+Mj9Hblk3P65+WUBjgZQuFhfX+2oze5H4jX4ohyUw3FtLjY2yYRrVYOUWXAjMNvuValxUNiUNcT6OEG1s32nPYU7yfUVp8YNn/lBnv3cS/DauO1UELMyEkZ6ewDYA6aA42zQEVb+8=;",
+      "date": "Tue, 15 Jul 2025 08:40:15 +0400",
+      "x-auditid": "0a061957-da6ca700000027a2-3e-6875dbaea517",
+      "from": "NOREPLY@bankmuscat.com",
+      "to": "Abdulmajeed.alhadhrami@gmail.com",
+      "message-id": "<-96706420.3599217.1752554414970@dc1t24brchapp2.bmoman.bankmuscat.com>",
+      "subject": "Account Transaction",
+      "mime-version": "1.0",
+      "content-type": "text/html; charset=UTF-8",
+      "content-transfer-encoding": "quoted-printable",
+      "x-brightmail-tracker": "H4sIAAAAAAAAA+NgFtrMJMWRmVeSWpSXmKPExsXCxfZyoe6626UZBpOW2VhcubWGyYHRY+es u+wBjFFcNimpOZllqUX6dglcGZNOJxS85ap42nCFtYGxh7OLkZNDQsBEYs/mXjYQW0jgCqPE jAsCIDabgIzEmp6NTCC2iICKxJUNX1hAbF6BIIk1j3exg9jCQDUP7lyFigtKnJz5BMxmFlCT uL3tKjuErS2xbOFr5gmMnLOQlM1CUjYLSdkCRuZVjDIuzoa+7sa6/r66wb7uek6Oft6+ocHO jiF6zv6+mxjBXpYM38G45VGT/iFGJg7GQ4zSHCxK4rxW67QyhATSE0tSs1NTC1KL4otKc1KL QUo4pRqY9BZvu7ghUHbywicf/jEfk3/CEnTOaF9IzDr9b/dfm75L/HM7b3vOtLBrBvyu5Qfc rBpjf058LsCble7OmlESVfJhW0P+tnU3NqYXxiSn7r/x6OuN2LV2x6JjA+9MPD5z8YTH52a0 28vXNX963N3tvDTb4e/NJy0H+/+/965if38o3vTa7AizxSV/4u3lvR2MktVKf+YbnFTcnuus XvbkaOaps4ZiCqv807cIrvldeN1oRqj5z/1Z+/Je63fHSkxx7GYodNG6ydnAuN0tp/KGncuX V8s2nNmowcI6o2bDW3lZ0z9sOx1mNDjkPlym1bBpx40WwY8bPN0eSS2fYv3Q1bVDd/2sbJe/ Yje02BR/KbEUZyQaajEXFScCAA9QtmRGAgAA"
+    }
+  }
+    return parser.parse_email(email_data)
+
+text = """Dear Customer, Your Debit card number 4837**** ****1518 has been utilised as follows: Account number : xxxx0019 Description : 998232-JENAN TEA MUTT Amount : OMR 0.2 Date/Time : 14 JUL 25 11:01 Transaction Country : Oman Kind Regards, Bank Muscat To unsubscribe / modify the email alert service please contact your nearest Branch / ARM or contact bank muscat Call Center at 24795555. This e-mail is confidential and may also be legally privileged. If you are not the intended recipient, please notify us immediately. You should not copy, forward, disclose or use it for any purpose either partly or completely. If you have received this message by error, please delete all its copies from your system and notify us by e-mail to care@bankmuscat.com. Internet communications cannot be guaranteed to be timely, secure, error or virus-free. Also, the Web/ IT/ Email administrator might not allow emails with attachments, thus the sender does not accept liability for any errors or omissions.
+"""
+#
+# output = parse_bank_email(text)
+# for i,j in output.items():
+#
+#     print(f"{i}: {j}")

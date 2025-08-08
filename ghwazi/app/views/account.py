@@ -9,7 +9,7 @@ from ..models import (Account, Bank, Category, CategoryMapping,
 from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..models.user import User
-from ..services.auto_sync_service import AutoSyncService
+from ..services.auto_sync_service import EmailSync
 from ..utils.decorators import login_required
 
 # Create blueprint
@@ -70,23 +70,27 @@ def add_account():
             bank_id = request.form.get("bank_id")
             account_holder = request.form.get("account_holder")
             balance = request.form.get("balance", 0.0)
-            currency = request.form.get("currency", "OMR")
-            email_config_id = request.form.get("email_config_id")
-
-            if not account_number:
-                flash("Account number is required", "error")
-                return render_template(
-                    "account/add_account.html", email_configs=email_configs, banks=banks
-                )
-
-            # Get bank information
+            currency = request.form.get("currency")
             bank_name = None
             if bank_id:
                 try:
                     bank = db_session.query(Bank).filter_by(id=int(bank_id)).first()
                     if bank:
                         bank_name = bank.name
-                        currency = bank.currency
+                        bank_currency = bank.currency
+
+                        if bank_currency != currency:
+                            flash(
+                                f"Selected bank's currency ({bank_currency}) does not match the provided currency ({currency})",
+                                "error",
+                            )
+                            return render_template(
+                                "account/add_account.html",
+                                email_configs=email_configs,
+                                banks=banks,
+                            )
+
+
                 except ValueError:
                     flash("Invalid bank selected", "error")
                     return render_template(
@@ -94,6 +98,15 @@ def add_account():
                         email_configs=email_configs,
                         banks=banks,
                     )
+
+
+
+            if not account_number:
+                flash("Account number is required", "error")
+                return render_template(
+                    "account/add_account.html", email_configs=email_configs, banks=banks
+                )
+
 
             if not bank_name:
                 flash("Please select a valid bank", "error")
@@ -118,25 +131,27 @@ def add_account():
                 "bank_name": bank_name,
                 "account_holder": account_holder,
                 "balance": balance_float,
-                "currency": currency,
+                "currency": currency , # TODO: remove it becouse there in bank table
             }
 
+            # email_config_id = request.form.get("email_config_id")
             # Add email_config_id if provided
-            if email_config_id:
-                try:
-                    account_data["email_config_id"] = int(email_config_id)
-                except ValueError:
-                    flash("Invalid email configuration selected", "error")
-                    return render_template(
-                        "account/add_account.html",
-                        email_configs=email_configs,
-                        banks=banks,
-                    )
+            # if email_config_id:
+            #     try:
+            #         account_data["email_config_id"] = int(email_config_id)
+            #     except ValueError:
+            #         flash("Invalid email configuration selected", "error")
+            #         return render_template(
+            #             "account/add_account.html",
+            #             email_configs=email_configs,
+            #             banks=banks,
+            #         )
 
             account = TransactionRepository.create_account(db_session, account_data)
             if account:
+
                 # Auto-configure email filters and sync if account was created successfully
-                auto_sync_service = AutoSyncService()
+                auto_sync_service = EmailSync()
                 sync_results = auto_sync_service.process_new_account(user_id, account)
                 
                 # Flash success message with sync results
@@ -554,7 +569,7 @@ def account_details(account_number):
 def preview_email_filters(bank_id):
     """API endpoint to preview email filters for a selected bank."""
     try:
-        auto_sync_service = AutoSyncService()
+        auto_sync_service = EmailSync()
         preview = auto_sync_service.get_bank_email_preview(bank_id)
         return jsonify(preview)
     except Exception as e:

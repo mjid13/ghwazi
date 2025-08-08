@@ -7,7 +7,7 @@ from flask import (Blueprint, flash, redirect, render_template, request,
                    session, url_for, current_app, jsonify)
 
 from ..models.database import Database
-from ..models.oauth import OAuthUser, EmailAuthConfig
+from ..models import OAuthUser, EmailAuthConfig
 from ..models.user import User
 from ..services.google_oauth_service import GoogleOAuthService
 from ..services.gmail_service import GmailService

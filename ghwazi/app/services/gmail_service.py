@@ -14,8 +14,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from ..models.database import Database
-from ..models.oauth import EmailAuthConfig, OAuthUser
-from ..models.models import Transaction, Account
+from ..models.models import Transaction, Account, TransactionType, OAuthUser, EmailAuthConfig
 from ..models.transaction import TransactionRepository
 from .google_oauth_service import GoogleOAuthService
 from .parser_service import TransactionParser
@@ -365,7 +364,7 @@ class GmailService:
         logger.warning(f"Could not parse email date: {date_str}")
         return None
     
-    def sync_gmail_messages(self, user_id: int) -> Tuple[bool, str, Dict]:
+    def sync_gmail_messages(self, user_id: int, account_number: str) -> Tuple[bool, str, Dict]:
         """
         Sync Gmail messages for a user.
         
@@ -389,8 +388,7 @@ class GmailService:
                 return False, "No Google OAuth connection found", {}
             
             gmail_config = db_session.query(EmailAuthConfig).filter_by(
-                user_id=user_id,
-                provider='google',
+                oauth_user_id=oauth_user.id,
                 enabled=True
             ).first()
             if not gmail_config:
@@ -415,27 +413,36 @@ class GmailService:
             for message in messages:
                 try:
                     # Extract financial transactions from message
-                    transactions = self._extract_transactions_from_message(message, user_id)
+                    transactions = self._extract_transactions_from_message(message, user_id, account_number)
                     
                     if transactions:
                         # Store transactions in database
                         for transaction_data in transactions:
                             try:
-                                # Create Transaction object
-                                transaction = Transaction(**transaction_data)
-                                db_session.add(transaction)
-                                
-                                # Update account balance if balance_after is provided
-                                if transaction_data.get('balance_after') is not None:
-                                    account = db_session.query(Account).filter_by(
-                                        id=transaction_data['account_id']
-                                    ).first()
-                                    if account:
-                                        account.balance = transaction_data['balance_after']
-                                        account.updated_at = datetime.now()
-                                
-                                stats['transactions_created'] += 1
-                                logger.info(f"Saved transaction: {transaction_data['description'][:50]}...")
+                                if isinstance(transaction_data, dict):
+                                    # Extract optional meta not part of Transaction model
+                                    balance_after = transaction_data.pop('balance_after', None)
+
+                                    # Create Transaction object
+                                    transaction = Transaction(**transaction_data)
+                                    db_session.add(transaction)
+
+                                    # Update account balance if balance_after is provided
+                                    if balance_after is not None:
+                                        account = db_session.query(Account).filter_by(
+                                            id=transaction_data.get('account_id')
+                                        ).first()
+                                        if account:
+                                            account.balance = balance_after
+                                            account.updated_at = datetime.now()
+
+                                    stats['transactions_created'] += 1
+                                    logger.info(f"Saved transaction: {(transaction.transaction_details or '')[:50]}...")
+                                else:
+                                    # Already a Transaction object created by repository
+                                    transaction = transaction_data
+                                    stats['transactions_created'] += 1
+                                    logger.info(f"Saved transaction (repo): {(transaction.transaction_details or '')[:50]}...")
                                 
                             except Exception as trans_error:
                                 logger.error(f"Error saving transaction: {trans_error}")
@@ -472,7 +479,7 @@ class GmailService:
         finally:
             self.db.close_session(db_session)
     
-    def _extract_transactions_from_message(self, message: Dict, user_id: int) -> List[Dict]:
+    def _extract_transactions_from_message(self, message: Dict, user_id: int, account_number: str) -> List[Dict]:
         """
         Extract financial transactions from email message using the TransactionParser.
         
@@ -481,70 +488,139 @@ class GmailService:
             user_id: App user ID
             
         Returns:
-            List of transaction dictionaries
+            List of transaction dictionaries compatible with Transaction model
         """
         transactions = []
         db_session = self.db.get_session()
-        
+
         try:
             subject = message.get('subject', '')
             body_text = message.get('body_text', '')
             sender = message.get('sender', '')
-            
+            message_dt = message.get('date') or datetime.now()
+
             # Clean the email text using the parser
             clean_text = self.parser.clean_text(body_text)
-            
+
             # Try to parse transaction data using the parser service
-            transaction_data = self.parser.parse_email_text(clean_text, subject)
-            
-            if transaction_data:
+            parsed = self.parser.parse_email(message, subject)
+
+            if parsed:
+                if account_number[-4:] not in parsed.get("account_number"):
+                    return transactions
                 # Find the appropriate account for this transaction
-                account_number = transaction_data.get('account_number')
+                account_number = parsed.get('account_number')
                 account = None
-                
+
+                email_metadata = self.transaction_repo.create_email_metadata(
+                    db_session,
+                    {
+                        "user_id": user_id,
+                        "id": message.get("id"),
+                        "subject": message.get("subject", ""),
+                        "from": message.get("sender", ""),
+                        "date": message.get("date", ""),
+                        "body": message.get("body_text", ""),
+                        "cleaned_body": parsed.get("transaction_content", ""),
+                        "processed": True,
+                    },
+                )
+                if email_metadata:
+                    parsed["email_metadata_id"] = email_metadata.id
+
+                # Add user_id, account_number, and email_metadata_id to transaction data
+                parsed["user_id"] = user_id
+                parsed["account_number"] = account_number
                 if account_number:
                     # Try to find existing account by account number
                     account = db_session.query(Account).filter_by(
                         user_id=user_id,
                         account_number=account_number
                     ).first()
-                
+
                 if not account:
                     # If no specific account found, use the first account for this user
                     account = db_session.query(Account).filter_by(user_id=user_id).first()
-                
+
                 if account:
-                    # Create transaction data for database insertion
-                    transaction = {
-                        'user_id': user_id,
-                        'account_id': account.id,
-                        'amount': transaction_data.get('amount', 0.0),
-                        'transaction_type': transaction_data.get('transaction_type', 'unknown'),
-                        'transaction_date': transaction_data.get('transaction_date', datetime.now()),
-                        'description': transaction_data.get('description', subject),
-                        'counterparty': transaction_data.get('counterparty', ''),
-                        'balance_after': transaction_data.get('balance_after'),
-                        'category_id': None,  # Will be categorized later
-                        'email_subject': subject,
-                        'email_sender': sender,
-                        'source': 'gmail_sync',
-                        'source_id': message.get('id'),
-                        'created_at': datetime.now()
-                    }
-                    
+                    # Map transaction type string to TransactionType enum
+                    # parsed_type = (parsed.get('transaction_type') or 'unknown').strip().lower()
+                    # if parsed_type == 'income':
+                    #     tx_type = TransactionType.INCOME
+                    # elif parsed_type == 'expense':
+                    #     tx_type = TransactionType.EXPENSE
+                    # elif parsed_type == 'transfer':
+                    #     tx_type = TransactionType.TRANSFER
+                    # else:
+                    #     tx_type = TransactionType.UNKNOWN
+                    #
+                    # # Determine currency from parsed data or account/bank defaults
+                    # currency = parsed.get('currency') or getattr(account, 'currency', None)
+                    # if not currency and getattr(account, 'bank', None):
+                    #     currency = getattr(account.bank, 'currency', None)
+                    # currency = currency or 'OMR'
+                    #
+                    # # Create transaction data for database insertion aligned with model
+                    # transaction = {
+                    #     'account_id': account.id,
+                    #     'amount': parsed.get('amount', 0.0),
+                    #     'transaction_type': tx_type,
+                    #     'currency': currency,
+                    #     'value_date': parsed.get('transaction_date') or message_dt,
+                    #     'transaction_id': parsed.get('transaction_id'),
+                    #     'category_id': None,  # Categorization can be applied later
+                    #     'transaction_details': parsed.get('description', subject),
+                    #     'country': parsed.get('country'),
+                    #     'transaction_content': clean_text or body_text,
+                    #     'created_at': datetime.now()
+                    # }
+                    #
+                    # # Optional meta for account updates (not a Transaction column)
+                    # if 'balance_after' in parsed:
+                    #     transaction['balance_after'] = parsed.get('balance_after')
+
                     # Check for duplicate transactions
-                    existing = db_session.query(Transaction).filter_by(
-                        user_id=user_id,
-                        amount=transaction['amount'],
-                        transaction_date=transaction['transaction_date'],
-                        description=transaction['description'][:100] if transaction['description'] else ''
-                    ).first()
-                    
-                    if not existing:
+                    transaction = self.transaction_repo.create_transaction(
+                        db_session, parsed
+                    )
+                    # if transaction.get('transaction_id'):
+                    #     query = query.filter_by(transaction_id=transaction['transaction_id'])
+                    # else:
+                    #     # Fall back to matching on details if no transaction_id
+                    #     details = transaction.get('transaction_details')
+                    #     if details is not None:
+                    #         query = query.filter_by(transaction_details=details)
+                    #
+                    # existing = query.first()
+
+                    # if not existing:
+                    if transaction:
                         transactions.append(transaction)
-                        logger.info(f"Extracted transaction: {transaction['amount']} {transaction['transaction_type']} on {transaction['transaction_date']}")
+                        try:
+                            # Handle both ORM object and dict for logging
+                            amount = getattr(transaction, 'amount', None)
+                            if amount is None:
+                                amount = transaction.get('amount')
+                            tx_type = getattr(transaction, 'transaction_type', None)
+                            if tx_type is None:
+                                tx_type = transaction.get('transaction_type')
+                            # If enum, get value
+                            tx_type_str = getattr(tx_type, 'value', tx_type)
+                            value_date = getattr(transaction, 'value_date', None)
+                            if value_date is None:
+                                value_date = transaction.get('value_date')
+                            logger.info(f"Extracted transaction: {amount} {tx_type_str} on {value_date}")
+                        except Exception:
+                            logger.info("Extracted a transaction")
                     else:
-                        logger.info(f"Duplicate transaction skipped: {transaction['description'][:50]}...")
+                        # Duplicate or failed creation
+                        try:
+                            details = getattr(transaction, 'transaction_details', None)
+                            if details is None and isinstance(transaction, dict):
+                                details = (transaction.get('transaction_details') or '')
+                            logger.info(f"Duplicate transaction skipped: {(details or '')[:50]}...")
+                        except Exception:
+                            logger.info("Duplicate transaction skipped")
                 else:
                     logger.warning(f"No account found for transaction in message {message.get('id')}")
             else:
