@@ -28,10 +28,10 @@ class CategoryType(enum.Enum):
 class TransactionType(enum.Enum):
     """Enum for transaction types."""
 
-    INCOME = "income"
-    EXPENSE = "expense"
-    TRANSFER = "transfer"
-    UNKNOWN = "unknown"
+    INCOME = 'INCOME'
+    EXPENSE = 'EXPENSE'
+    TRANSFER = 'TRANSFER'
+    UNKNOWN = 'UNKNOWN'
 
 
 class EmailServiceProvider(Base):
