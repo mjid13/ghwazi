@@ -54,6 +54,9 @@ class TransactionParser:
                 hex_value = match.group(1)
                 return chr(int(hex_value, 16))
             except (ValueError, OverflowError):
+
+
+
                 return match.group(0)  # Return original if can't decode
 
         text = re.sub(r"=([0-9A-F]{2})", decode_hex, text)
@@ -147,42 +150,70 @@ class TransactionParser:
             if name.endswith("from your a") or name.endswith("in your a"):
                 name = " ".join(name.split()[:-3]).strip()
             return name
+        # 4) NEW: Look for counterparty name at the end of the email after transaction details
+        # This handles cases like the Bank Muscat format where name appears as the last line
+        lines = email_text.split('\n')
+        lines = [line.strip() for line in lines if line.strip()]  # Remove empty lines
+
+        if lines:
+            # Look at the last few lines for potential counterparty names
+            for line in reversed(lines[-3:]):  # Check last 3 lines
+                # Skip common footer/signature patterns
+                if any(skip_word in line.lower() for skip_word in [
+                    'dear customer', 'thank you', 'regards', 'sincerely',
+                    'bank muscat', 'customer service', 'email', 'phone',
+                    'visit', 'website', 'disclaimer', 'confidential',
+                    'value date', 'transaction', 'account', 'amount', 'omr'
+                ]):
+                    continue
+
+                # if re.match(r'^[A-Z][A-Z\s]{2,50}$', line):
+                if re.match(r'^[A-Z][A-Z\s]', line):
+                    # Additional validation: should contain mostly letters
+                    # if re.search(r'[A-Za-z]', line) and len(re.findall(r'[A-Za-z]', line)) >= len(line) * 0.7:
+                    name = ' '.join(line.split())
+                    return name
 
         return None
 
     def determine_transaction_type(self, email_text: str) -> str:
         """
-        Determine transaction type based on bank email content.
+        Determine transaction type based on the first matching keyword
+        found in the email content.
         Returns one of: 'income', 'expense', 'transfer', 'unknown'.
         """
         text = email_text.lower()
 
-        # Typical wording for type detection (customize these as needed)
-        income_patterns = [
-            r"credited",
-            r"received",
-            r"deposited",
-        ]
+        pattern_types = {
+            "income": [
+                r"credited",
+                r"received",
+                r"deposited",
+            ],
+            "expense": [
+                r"debit",
+                r"utilised",
+                r"sent",
+                r"payment",
+                r"purchase",
+                r"withdrawal",
+                r"spent",
+            ],
+        }
 
-        expense_patterns = [
-            r"debit",
-            r"utilised",
-            r"sent",
-            r"payment",
-            r"purchase",
-            r"withdrawal",
-            r"spent",
-        ]
+        earliest_type = "unknown"
+        earliest_index = len(text) + 1
 
-        for pattern in income_patterns:
-            if re.search(pattern, text):
-                return "income"
+        for type_name, patterns in pattern_types.items():
+            for pattern in patterns:
+                match = re.search(pattern, text)
+                if match:
+                    pos = match.start()
+                    if pos < earliest_index:
+                        earliest_index = pos
+                        earliest_type = type_name
 
-        for pattern in expense_patterns:
-            if re.search(pattern, text):
-                return "expense"
-
-        return "unknown"
+        return earliest_type
 
     def extract_bank_email_data(self, email_text: str) -> Dict[str, Optional[str]]:
         """Extract structured data from bank email text."""
@@ -595,7 +626,12 @@ def parse_bank_email(email_text: str) -> Optional[Dict[str, Any]]:
     "recipient": "Abdulmajeed.alhadhrami@gmail.com",
     "date": "2025-07-15T08:40:15+04:00",
     "date_string": "Tue, 15 Jul 2025 08:40:15 +0400",
-    "body_text": "Dear Customer, Your Debit card number 4837**** ****1518 has been utilised as follows: Account number : xxxx0019 Description : 911792-JENAN TEA AIRP Amount : OMR 0.2 Date/Time : 15 JUL 25 08:39 Transaction Country : Oman Kind Regards, Bank Muscat To unsubscribe / modify the email alert service please contact your nearest Branch / ARM or contact bank muscat Call Center at 24795555. This e-mail is confidential and may also be legally privileged. If you are not the intended recipient, please notify us immediately. You should not copy, forward, disclose or use it for any purpose either partly or completely. If you have received this message by error, please delete all its copies from your system and notify us by e-mail to care@bankmuscat.com. Internet communications cannot be guaranteed to be timely, secure, error or virus-free. Also, the Web/ IT/ Email administrator might not allow emails with attachments, thus the sender does not accept liability for any errors or omissions.",
+    "body_text": """Dear customer,
+    Your account xxxx0019 with 0442 - Br Maabela Ind has been credited by OMR 13.000 with value date 07/29/25.
+    Details of this transaction are provided below for your reference.
+    Trnsfer
+    SULAIMAN MOHD Ka
+    """,
     "headers": {
       "delivered-to": "abdulmajeed.alhadhrami@gmail.com",
       "received": "from dc1t24brchapp2.bmoman.bankmuscat.com ( [10.6.233.161]) by DC1MG3-OM-SMG.bmoman.bankmuscat.com (Symantec Messaging Gateway) with SMTP id 38.31.10146.EABD5786; Tue, 15 Jul 2025 08:40:14 +0400 (+04)",

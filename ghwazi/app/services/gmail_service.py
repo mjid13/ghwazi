@@ -284,7 +284,7 @@ class GmailService:
                         data = part.get('body', {}).get('data')
                         if data:
                             html_body = base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
-                            body = self._html_to_text(html_body)
+                            body = self.parser.clean_text(html_body)
             else:
                 # Single part message
                 if payload.get('mimeType') == 'text/plain':
@@ -295,7 +295,7 @@ class GmailService:
                     data = payload.get('body', {}).get('data')
                     if data:
                         html_body = base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
-                        body = self._html_to_text(html_body)
+                        body = self.parser.clean_text(html_body)
         
         except Exception as e:
             logger.error(f"Error extracting message body: {e}")

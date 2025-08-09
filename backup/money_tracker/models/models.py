@@ -686,7 +686,7 @@ class CategoryRepository:
                 # Get transaction IDs that need to be updated
                 transaction_ids = [t.id for t in session.query(Transaction.id).join(Account).filter(
                     Account.user_id == user_id,
-                    Transaction.counterparty_name == pattern
+                    Transaction.counterparties.name == pattern
                 ).all()]
 
                 # Update transactions without using join

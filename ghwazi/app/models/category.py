@@ -5,7 +5,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from .models import (Account, Category, CategoryMapping, CategoryType,
-                     CounterpartyCategory, Transaction)
+                     Counterparty, CounterpartyCategory, Transaction)
 
 logger = logging.getLogger(__name__)
 
@@ -358,10 +358,11 @@ class CategoryRepository:
                 transaction_ids = [
                     t.id
                     for t in session.query(Transaction.id)
-                    .join(Account)
+                    .join(Account, Transaction.account)
+                    .join(Counterparty, Transaction.counterparty)
                     .filter(
                         Account.user_id == user_id,
-                        Transaction.counterparty_name == pattern,
+                        Counterparty.name == pattern,
                     )
                     .all()
                 ]
@@ -526,13 +527,14 @@ class CategoryRepository:
                     return transaction
 
             # Try to categorize by exact counterparty_name match (legacy approach)
-            if transaction.counterparty_name:
+            if transaction.counterparty_id and transaction.counterparty and transaction.counterparty.name:
+                cp_name = transaction.counterparty.name
                 mapping = (
                     session.query(CategoryMapping)
                     .join(Category)
                     .filter(
                         CategoryMapping.mapping_type == CategoryType.COUNTERPARTY,
-                        CategoryMapping.pattern == transaction.counterparty_name,
+                        CategoryMapping.pattern == cp_name,
                         Category.user_id == user_id,
                     )
                     .first()
@@ -568,7 +570,7 @@ class CategoryRepository:
                     return transaction
 
             # If no exact matches, try pattern matching for counterparty_name
-            if transaction.counterparty_name:
+            if transaction.counterparty_id:
                 # Get all counterparty mappings for this user
                 counterparty_mappings = (
                     session.query(CategoryMapping)
@@ -588,7 +590,7 @@ class CategoryRepository:
 
                     # Check if pattern is a whole word or part of a word
                     pattern = mapping.pattern.lower()
-                    counterparty = transaction.counterparty_name.lower()
+                    counterparty = transaction.counterparty.name.lower() if (transaction.counterparty and transaction.counterparty.name) else ""
 
                     # Check for word boundaries or exact match
                     if (
@@ -696,13 +698,13 @@ class CategoryRepository:
             logger.info(f"Categorized transaction {transaction_id} as {category.name}")
 
             # Create mapping if it doesn't exist
-            if transaction.counterparty_name:
+            if transaction.counterparty and transaction.counterparty.name:
                 CategoryRepository.create_category_mapping(
                     session,
                     category_id,
                     user_id,
                     CategoryType.COUNTERPARTY,
-                    transaction.counterparty_name,
+                    transaction.counterparty.name,
                 )
 
             if transaction.transaction_details:
