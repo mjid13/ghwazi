@@ -42,6 +42,9 @@ class ProductionConfig(Config):
         syslog_handler = SysLogHandler()
         syslog_handler.setLevel(logging.WARNING)
         app.logger.addHandler(syslog_handler)
+        GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+        GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+        GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI")
 
         # Email errors to administrators
         if app.config.get("MAIL_SERVER"):

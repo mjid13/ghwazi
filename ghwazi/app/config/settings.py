@@ -35,3 +35,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///transactions.db").replace(
 # Application settings
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 FETCH_INTERVAL = int(os.getenv("FETCH_INTERVAL", 3600))  # Default: 1 hour
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI")
