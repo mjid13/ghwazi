@@ -18,6 +18,7 @@ class ProductionConfig(Config):
         os.environ.get("DATABASE_URL")
         or "postgresql://user:password@localhost/production_db"
     )
+    DATABASE_URL = os.getenv("DATABASE_URL", "")
 
     # Production logging
     LOG_LEVEL = "WARNING"
