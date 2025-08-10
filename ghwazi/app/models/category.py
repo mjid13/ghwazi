@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from .models import (Account, Category, CategoryMapping, CategoryType,
                      Counterparty, CounterpartyCategory, Transaction)
+from ..services.default_categories import suggest_category, normalize_text
 
 logger = logging.getLogger(__name__)
 
@@ -588,9 +589,11 @@ class CategoryRepository:
                     if not mapping.pattern or not mapping.pattern.strip():
                         continue
 
-                    # Check if pattern is a whole word or part of a word
-                    pattern = mapping.pattern.lower()
-                    counterparty = transaction.counterparty.name.lower() if (transaction.counterparty and transaction.counterparty.name) else ""
+                    # Normalize both sides for robust matching (case-insensitive, accent-insensitive)
+                    pattern = normalize_text(mapping.pattern)
+                    counterparty = normalize_text(
+                        transaction.counterparty.name if (transaction.counterparty and transaction.counterparty.name) else ""
+                    )
 
                     # Check for word boundaries or exact match
                     if (
@@ -625,9 +628,9 @@ class CategoryRepository:
                     if not mapping.pattern or not mapping.pattern.strip():
                         continue
 
-                    # Check if pattern is a whole word or part of a word
-                    pattern = mapping.pattern.lower()
-                    description = transaction.transaction_details.lower()
+                    # Normalize both sides for robust matching (case-insensitive, accent-insensitive)
+                    pattern = normalize_text(mapping.pattern)
+                    description = normalize_text(transaction.transaction_details)
 
                     # Check for word boundaries or exact match
                     if (
@@ -642,6 +645,90 @@ class CategoryRepository:
                             f"Auto-categorized transaction {transaction_id} by description pattern match"
                         )
                         return transaction
+
+            # Fallback: progressive seeding from default categories without overriding user mappings
+            try:
+                cp_name = (
+                    transaction.counterparty.name
+                    if (transaction.counterparty and transaction.counterparty.name)
+                    else None
+                )
+                desc = transaction.transaction_details if transaction.transaction_details else None
+
+                suggestion = suggest_category(cp_name, desc)
+                if suggestion:
+                    # Determine mapping type and the textual field used
+                    mapping_type = (
+                        CategoryType.COUNTERPARTY
+                        if suggestion.get("mapping_type") == "COUNTERPARTY"
+                        else CategoryType.DESCRIPTION
+                    )
+                    raw_token = suggestion.get("matched_substring") or suggestion.get("matched_pattern") or ""
+                    pattern_token = normalize_text(raw_token)
+                    # Respect user priority: if user already mapped this token (any type), reuse that category and do NOT change mappings
+                    existing_user_mappings = (
+                        session.query(CategoryMapping)
+                        .join(Category)
+                        .filter(Category.user_id == user_id)
+                        .all()
+                    )
+                    normalized_pattern = pattern_token
+                    for m in existing_user_mappings:
+                        try:
+                            if normalize_text(m.pattern) == normalized_pattern:
+                                transaction.category_id = m.category_id
+                                session.commit()
+                                logger.info(
+                                    f"Auto-categorized transaction {transaction_id} by default pattern using existing user mapping"
+                                )
+                                return transaction
+                        except Exception:
+                            continue
+
+                    # No existing mapping found for this token; create category on-demand (minimal clutter)
+                    category = (
+                        session.query(Category)
+                        .filter(Category.user_id == user_id, Category.name == suggestion.get("name"))
+                        .first()
+                    )
+                    if not category:
+                        category = CategoryRepository.create_category(
+                            session,
+                            user_id,
+                            suggestion.get("name"),
+                            suggestion.get("description"),
+                        )
+                    if category:
+                        # Create a user mapping for the specific matched token
+                        # Ensure we don't duplicate a same-type mapping for safety
+                        existing_same_type = (
+                            session.query(CategoryMapping)
+                            .join(Category)
+                            .filter(
+                                Category.user_id == user_id,
+                                CategoryMapping.mapping_type == mapping_type,
+                                CategoryMapping.pattern == pattern_token,
+                            )
+                            .first()
+                        )
+                        if not existing_same_type:
+                            CategoryRepository.create_category_mapping(
+                                session,
+                                category.id,
+                                user_id,
+                                mapping_type,
+                                pattern_token,
+                            )
+                        # Categorize this transaction now
+                        transaction.category_id = category.id
+                        session.commit()
+                        logger.info(
+                            f"Auto-categorized transaction {transaction_id} by default pattern '{pattern_token}' into '{category.name}'"
+                        )
+                        return transaction
+            except Exception as e:
+                session.rollback()
+                logger.error(f"Default pattern fallback failed: {str(e)}")
 
             logger.info(f"Could not auto-categorize transaction {transaction_id}")
             return transaction

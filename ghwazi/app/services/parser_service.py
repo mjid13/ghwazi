@@ -252,10 +252,10 @@ class TransactionParser:
             data["branch"] = branch_match.group(1).strip()
 
         # Transaction type: debited, credited, received, sent
-        type_re = re.compile(r"\b(debited|credited|received|sent)\b", re.IGNORECASE)
-        type_match = type_re.search(email_text)
-        if type_match:
-            data["transaction_type"] = type_match.group(1).lower()
+        # type_re = re.compile(r"\b(debited|credited|received|sent)\b", re.IGNORECASE)
+        # type_match = type_re.search(email_text)
+        # if type_match:
+        #     data["transaction_type"] = type_match.group(1).lower()
 
         # Amount and currency: Currency code with decimal or integer (with optional commas)
         # Valid currency codes (ISO 4217)
@@ -342,6 +342,7 @@ class TransactionParser:
         # Determine transaction type using the helper function
         txn_type = self.determine_transaction_type(email_text)
         data["type"] = txn_type
+        data["transaction_type"] = txn_type
 
         # Determine "from" and "to" according to type
         if txn_type == "expense":

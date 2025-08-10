@@ -302,7 +302,7 @@ class TransactionRepository:
             # Convert transaction type
             transaction_type_str = transaction_data.get(
                 "transaction_type", "unknown"
-            ).lower()
+            ).upper()
             try:
                 transaction_type = TransactionType(transaction_type_str)
             except ValueError:
