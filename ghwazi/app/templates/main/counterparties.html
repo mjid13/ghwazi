@@ -13,12 +13,14 @@
             <i class="bi bi-magic me-2"></i>Auto-Categorize All
         </a>
     </div>
-          <div class="alert alert-info mb-4">
-                <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>About Counterparties</h5>
-                <p class="mb-0">Counterparties are the people or businesses you transact with.
-                    Each unique combination of counterparty name and description is listed here.
-                    You can categorize them to automatically organize your transactions.</p>
-            </div>
+
+    <div class="alert alert-info mb-4">
+        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>About Counterparties</h5>
+        <p class="mb-0">Counterparties are the people or businesses you transact with.
+            Each unique combination of counterparty name and description is listed here.
+            You can categorize them to automatically organize your transactions.</p>
+    </div>
+
     <!-- Account Filter -->
     {% if accounts %}
     <div class="card mb-4">
@@ -44,7 +46,6 @@
 
     <div class="card">
         <div class="card-body">
-
             {% if counterparties %}
             <div class="table-responsive">
                 <table class="table table-hover datatable" id="counterpartiesTable">
@@ -52,17 +53,52 @@
                     <tr>
                         <th>Counterparty</th>
                         <th>Description</th>
-                        <th>Transaction Details</th>
+                        <th>Last Transaction</th>
                         <th>Current Category</th>
-                        <th>Actions</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for cp in counterparties %}
                     <tr>
-                        <td>{{ cp.name }}</td>
-                        <td>{{ cp.description or '-' }}</td>
-                        <td>{{ cp.transaction_details or '-' }}</td>
+                        <td>
+                            <div class="fw-medium">{{ cp.counterparty_name }}</div>
+                        </td>
+                        <td>
+                            <div class="description-display" data-cp-id="{{ cp.counterparty_id }}">
+                                <span class="description-text">{{ cp.description or 'No details' }}</span>
+                                <button class="btn btn-sm btn-link edit-description-btn p-0 ms-2" title="Edit Description">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>
+                            <div class="description-edit d-none" data-cp-id="{{ cp.counterparty_id }}">
+                                <form class="description-form" data-cp-id="{{ cp.counterparty_id }}" data-cp-name="{{ cp.counterparty_name }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="description" class="form-control form-control-sm description-input"
+                                               value="{{ cp.description or '' }}" placeholder="Enter description">
+                                        <button type="submit" class="btn btn-sm btn-primary save-description-btn">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary cancel-description-btn">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </td>
+                        <td>
+                            {% if cp.last_transaction_date %}
+                                <div class="d-flex align-items-center">
+                                    <div class="transaction-date">
+                                        <strong class="d-block">{{ cp.last_transaction_date.strftime('%b %d, %Y') }}</strong>
+                                        <small class="text-body-secondary">{{ cp.last_transaction_date.strftime('%I:%M %p') }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">No date</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if cp.category_name %}
                             <span class="badge bg-primary">{{ cp.category_name }}</span>
@@ -70,15 +106,16 @@
                             <span class="badge bg-secondary">Uncategorized</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="text-end">
                             <button
-                                    type="button"
-                                    class="btn btn-sm btn-outline-primary categorize-btn"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#categorizeModal"
-                                    data-cp-name="{{ cp.name }}"
-                                    data-cp-description="{{ cp.description or '' }}"
-                                    data-cp-category="{{ cp.category_id or '' }}"
+                                type="button"
+                                class="btn btn-sm btn-outline-primary categorize-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#categorizeModal"
+                                data-cp-name="{{ cp.counterparty_name }}"
+                                data-cp-description="{{ cp.description or '' }}"
+                                data-cp-category-id="{{ cp.category_id or '' }}"
+                                data-cp-category-name="{{ cp.category_name or '' }}"
                             >
                                 <i class="bi bi-tag me-1"></i>Categorize
                             </button>
@@ -133,7 +170,7 @@
                         <select class="form-select" id="modal-category_id" name="category_id" required>
                             <option value="">Select a category</option>
                             {% for category in categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            <option value="{{ category.id }}" {% if category.id == category_id %}selected{% endif %}>{{ category.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -157,47 +194,48 @@
 {% block extra_js %}
 {% if counterparties %}
 <script>
-    // Fill modal fields dynamically
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle categorize modal
         var categorizeModal = document.getElementById('categorizeModal');
-        categorizeModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            if(!button) return; // Safety if modal opened directly
+        if (categorizeModal) {
+            categorizeModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                if(!button) return; // Safety if modal opened directly
 
-            var name = button.getAttribute('data-cp-name') || '';
-            var description = button.getAttribute('data-cp-description') || '';
-            var category = button.getAttribute('data-cp-category') || '';
+                var name = button.getAttribute('data-cp-name') || '';
+                var description = button.getAttribute('data-cp-description') || '';
+                var categoryId = button.getAttribute('data-cp-category-id') || '';
 
-            // Fill hidden form fields
-            document.getElementById('modal-counterparty_name').value = name;
-            document.getElementById('modal-description').value = description;
+                // Fill hidden form fields
+                document.getElementById('modal-counterparty_name').value = name;
+                document.getElementById('modal-description').value = description;
 
-            // Fill visible modal fields
-            document.getElementById('modal-counterparty_name-display').value = name;
-            document.getElementById('modal-description-display').value = description;
+                // Fill visible modal fields
+                document.getElementById('modal-counterparty_name-display').value = name;
+                document.getElementById('modal-description-display').value = description;
 
-            // Set category select
-            var select = document.getElementById('modal-category_id');
-            for (var i = 0; i < select.options.length; i++) {
-                select.options[i].selected = (select.options[i].value === category);
-            }
-        });
+                // Set category select
+                var select = document.getElementById('modal-category_id');
+                for (var i = 0; i < select.options.length; i++) {
+                    select.options[i].selected = (select.options[i].value === categoryId);
+                }
+            });
 
-        // Add AJAX form submission
-        var categorizeForm = document.querySelector('#categorizeModal form');
-        if (categorizeForm) {
-            categorizeForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+            // Add AJAX form submission for categorize
+            var categorizeForm = document.querySelector('#categorizeModal form');
+            if (categorizeForm) {
+                categorizeForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
 
-                var formData = new FormData(this);
+                    var formData = new FormData(this);
 
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -207,9 +245,6 @@
 
                             // Reload page to show updated category
                             location.reload();
-
-                            // Or alternatively, update the table row without reload:
-                            // updateTableRow(formData.get('counterparty_name'), data.category_name);
                         } else {
                             alert('Error: ' + (data.message || 'Failed to categorize counterparty'));
                         }
@@ -218,31 +253,134 @@
                         console.error('Error:', error);
                         alert('An error occurred while categorizing the counterparty');
                     });
-            });
+                });
+            }
         }
-        
-        // Add event listener for account filter
+
+        // Handle description editing
+        var editDescriptionBtns = document.querySelectorAll('.edit-description-btn');
+        var cancelDescriptionBtns = document.querySelectorAll('.cancel-description-btn');
+        var descriptionForms = document.querySelectorAll('.description-form');
+
+        // Show edit form
+        editDescriptionBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var cpId = this.closest('.description-display').getAttribute('data-cp-id');
+                var displayDiv = document.querySelector('.description-display[data-cp-id="' + cpId + '"]');
+                var editDiv = document.querySelector('.description-edit[data-cp-id="' + cpId + '"]');
+
+                displayDiv.classList.add('d-none');
+                editDiv.classList.remove('d-none');
+
+                // Focus on input
+                var input = editDiv.querySelector('.description-input');
+                input.focus();
+                input.select();
+            });
+        });
+
+        // Cancel edit
+        cancelDescriptionBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var cpId = this.closest('.description-edit').getAttribute('data-cp-id');
+                var displayDiv = document.querySelector('.description-display[data-cp-id="' + cpId + '"]');
+                var editDiv = document.querySelector('.description-edit[data-cp-id="' + cpId + '"]');
+
+                editDiv.classList.add('d-none');
+                displayDiv.classList.remove('d-none');
+            });
+        });
+
+        // Handle description form submission
+        descriptionForms.forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var cpId = this.getAttribute('data-cp-id');
+                var cpName = this.getAttribute('data-cp-name');
+                var newDescription = this.querySelector('.description-input').value.trim();
+                var formData = new FormData();
+
+                formData.append('counterparty_name', cpName);
+                formData.append('description', newDescription);
+                formData.append('csrf_token', this.querySelector('[name="csrf_token"]').value);
+
+                // Update description via categorize endpoint with current category
+                // First get current category if it exists
+                var row = this.closest('tr');
+                var categoryBadge = row.querySelector('.badge.bg-primary');
+                var categoryId = '';
+
+                // If there's a categorize button, get the category ID from it
+                var categorizeBtn = row.querySelector('.categorize-btn');
+                if (categorizeBtn) {
+                    categoryId = categorizeBtn.getAttribute('data-cp-category-id') || '';
+                }
+
+                if (categoryId) {
+                    formData.append('category_id', categoryId);
+
+                    fetch('{{ url_for("category.categorize_counterparty") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update the display text
+                            var displayDiv = document.querySelector('.description-display[data-cp-id="' + cpId + '"]');
+                            var editDiv = document.querySelector('.description-edit[data-cp-id="' + cpId + '"]');
+                            var textSpan = displayDiv.querySelector('.description-text');
+
+                            textSpan.textContent = newDescription || 'No details';
+
+                            // Update categorize button data
+                            if (categorizeBtn) {
+                                categorizeBtn.setAttribute('data-cp-description', newDescription);
+                            }
+
+                            // Hide edit form, show display
+                            editDiv.classList.add('d-none');
+                            displayDiv.classList.remove('d-none');
+                        } else {
+                            alert('Error: ' + (data.message || 'Failed to update description'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating the description');
+                    });
+                } else {
+                    // If no category, we need to create a default category or handle differently
+                    alert('Please categorize this counterparty first before editing description');
+                    var displayDiv = document.querySelector('.description-display[data-cp-id="' + cpId + '"]');
+                    var editDiv = document.querySelector('.description-edit[data-cp-id="' + cpId + '"]');
+                    editDiv.classList.add('d-none');
+                    displayDiv.classList.remove('d-none');
+                }
+            });
+        });
+
+        // Account filter functionality
         var accountFilter = document.getElementById('account_filter');
         if (accountFilter) {
             accountFilter.addEventListener('change', function() {
-                window.location.href = "{{ url_for('main.counterparties') }}?account_number=" + this.value;
+                var selectedAccount = this.value;
+                var url = new URL(window.location);
+
+                if (selectedAccount === 'all') {
+                    url.searchParams.delete('account');
+                } else {
+                    url.searchParams.set('account', selectedAccount);
+                }
+
+                window.location.href = url.toString();
             });
         }
     });
-
-    // Optional: Function to update table row without page reload
-    function updateTableRow(counterpartyName, categoryName) {
-        var rows = document.querySelectorAll('#counterpartiesTable tbody tr');
-        rows.forEach(function(row) {
-            var nameCell = row.cells[0];
-            if (nameCell && nameCell.textContent.trim() === counterpartyName) {
-                var categoryCell = row.cells[3];
-                if (categoryCell) {
-                    categoryCell.innerHTML = '<span class="badge bg-primary">' + categoryName + '</span>';
-                }
-            }
-        });
-    }
 </script>
 {% endif %}
 {% endblock %}

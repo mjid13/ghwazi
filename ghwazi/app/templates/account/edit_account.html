@@ -58,8 +58,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="account_number" class="form-label">Account Number *</label>
-                        <input type="text" class="form-control" id="account_number" name="account_number" value="{{ account.account_number }}" required>
-                        <div class="form-text">Enter your bank account number.</div>
+                        <input type="text" class="form-control" id="account_number" name="account_number" value="{{ account.account_number }}" required pattern="^[0-9]{6,20}$" minlength="6" maxlength="20" inputmode="numeric">
+                        <div class="form-text">Account number must be 6–20 digits (numbers only). Leading zeros are allowed.</div>
                     </div>
 
                     <div class="mb-3">
@@ -92,16 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="form-text">Currency is automatically set based on the selected bank.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="email_config_id" class="form-label">Email Configuration</label>
-                        <select class="form-select" id="email_config_id" name="email_config_id">
-                            <option value="">-- None --</option>
-                            {% for config in email_configs %}
-                                <option value="{{ config.id }}" {% if account.email_config_id == config.id %}selected{% endif %}>{{ config.name }} ({{ config.email_username }})</option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">Select the email configuration to use for fetching transactions for this account.</div>
-                    </div>
+
 
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('account.account_details', account_number=account.account_number) }}" class="btn btn-secondary">Cancel</a>

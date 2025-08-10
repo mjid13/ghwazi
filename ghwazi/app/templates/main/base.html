@@ -57,13 +57,13 @@
                     
                     <!-- Transactions Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-arrow-left-right"></i> Transactions
+                        <a class="nav-link" href="{{ url_for('main.upload_statement') }}" >
+                            <i class="bi bi-upload me-2"></i>PDF Statement
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}?mode=upload">Upload PDF Statement</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}?mode=email">Email Transactions</a></li>
-                        </ul>
+<!--                        <ul class="dropdown-menu">-->
+<!--                            <li><a class="dropdown-item" href="{{ url_for('main.upload_statement') }}">Upload PDF Statement</a></li>-->
+<!--&lt;!&ndash;                            <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}?mode=email">Email Transactions</a></li>&ndash;&gt;-->
+<!--                        </ul>-->
                     </li>
                     
                     <!-- Categories -->

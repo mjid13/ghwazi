@@ -75,6 +75,18 @@ class Database:
             # Initialize banks
             self._initialize_banks()
 
+            # Ensure counterparties table has description column
+            if "counterparties" in inspector.get_table_names():
+                columns = [column["name"] for column in inspector.get_columns("counterparties")]
+                if "description" not in columns:
+                    from sqlalchemy.sql import text
+                    with self.engine.connect() as connection:
+                        connection.execute(
+                            text("ALTER TABLE counterparties ADD COLUMN description TEXT")
+                        )
+                        connection.commit()
+                    logger.info("Added description column to counterparties table")
+
             # Tables that need user_id column
             tables_to_check = ["accounts", "email_configurations", "email_metadata"]
 

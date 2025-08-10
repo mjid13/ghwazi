@@ -8,14 +8,12 @@
         <div class="col-lg-6">
             <h1 class="display-4 fw-bold mb-4">Track Your Bank Transactions Smart Way</h1>
             <p class="lead mb-4">Automatically parse your bank transactions, track expense/incomes, and monitor your accounts transactions all in one place.</p>
-            <div class="d-flex gap-3">
+            <div class="d-flex gap-5">
                 {% if not session.user_id %}
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                        <i class="bi bi-person-plus me-2"></i>Get Started
+                    <a href="{{ url_for('oauth.google_login') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-google me-6"></i> Sign in with Google
                     </a>
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
-                    </a>
+
                 {% else %}
                     <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
                         <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard

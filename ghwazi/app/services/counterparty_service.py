@@ -53,9 +53,6 @@ class CounterpartyService:
                     session.query(
                         Counterparty,
                         func.max(Transaction.value_date).label("last_transaction_date"),
-                        func.max(Transaction.transaction_details).label(
-                            "transaction_details"
-                        ),
                     )
                     .join(Transaction, Transaction.counterparty_id == Counterparty.id)
                     .join(Account, Account.id == Transaction.account_id)
@@ -79,7 +76,7 @@ class CounterpartyService:
                 for cp_data in counterparties_data:
                     counterparty = cp_data[0]
                     last_transaction_date = cp_data[1]
-                    transaction_details = cp_data[2]
+                    description = counterparty.description
 
                     # Get the user-specific category for this counterparty
                     counterparty_category = (
@@ -128,7 +125,7 @@ class CounterpartyService:
                         {
                             "counterparty_id": counterparty.id,
                             "counterparty_name": counterparty.name,
-                            "transaction_details": transaction_details,
+                            "description": description,
                             "category_name": category_name,
                             "category_id": category_id,
                             "last_transaction_date": last_transaction_date,
@@ -215,6 +212,14 @@ class CounterpartyService:
                         )
 
                     counterparty_id = counterparty.id
+
+                    # Update counterparty description if provided
+                    if description:
+                        try:
+                            counterparty.description = description
+                        except Exception:
+                            # In case model/schema doesn't support yet, avoid breaking flow
+                            pass
 
                     # Create or update CounterpartyCategory entry
                     existing_mapping = (

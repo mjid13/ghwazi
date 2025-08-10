@@ -10,6 +10,7 @@ from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..models.user import User
 from ..services.auto_sync_service import EmailSync
+from ..services.counterparty_service import CounterpartyService
 from ..utils.decorators import login_required
 
 # Create blueprint
@@ -18,6 +19,25 @@ account_bp = Blueprint("account", __name__)
 # Initialize database and logger
 db = Database()
 logger = logging.getLogger(__name__)
+counterparty_service = CounterpartyService()
+
+# Helper: validate account number (digits only, length 6–20)
+def _validate_account_number(raw: str) -> tuple[bool, str, str]:
+    """
+    Validate account number string.
+    Returns (is_valid, normalized_value, error_message).
+    Normalization trims spaces; keeps leading zeros; allows only digits; length 6–20.
+    """
+    if raw is None:
+        return False, "", "Account number is required."
+    s = str(raw).strip()
+    if not s:
+        return False, "", "Account number is required."
+    if not s.isdigit():
+        return False, s, "Account number must contain digits only."
+    if not (6 <= len(s) <= 20):
+        return False, s, "Account number must be between 6 and 20 digits."
+    return True, s, ""
 
 
 @account_bp.route("/accounts")
@@ -66,7 +86,15 @@ def add_account():
         banks = db_session.query(Bank).all()
 
         if request.method == "POST":
-            account_number = request.form.get("account_number")
+            # Normalize and validate account number
+            raw_account_number = request.form.get("account_number")
+            is_valid, account_number, err = _validate_account_number(raw_account_number)
+            if not is_valid:
+                flash(err, "error")
+                return render_template(
+                    "account/add_account.html", email_configs=email_configs, banks=banks
+                )
+
             bank_id = request.form.get("bank_id")
             account_holder = request.form.get("account_holder")
             balance = request.form.get("balance", 0.0)
@@ -101,13 +129,6 @@ def add_account():
 
 
 
-            if not account_number:
-                flash("Account number is required", "error")
-                return render_template(
-                    "account/add_account.html", email_configs=email_configs, banks=banks
-                )
-
-
             if not bank_name:
                 flash("Please select a valid bank", "error")
                 return render_template(
@@ -119,6 +140,18 @@ def add_account():
                 balance_float = float(balance) if balance else 0.0
             except ValueError:
                 flash("Balance must be a valid number", "error")
+                return render_template(
+                    "account/add_account.html", email_configs=email_configs, banks=banks
+                )
+
+            # Before creating, ensure no duplicate account number for this user
+            existing_account = (
+                db_session.query(Account)
+                .filter(Account.user_id == user_id, Account.account_number == account_number)
+                .first()
+            )
+            if existing_account:
+                flash("An account with this number already exists.", "error")
                 return render_template(
                     "account/add_account.html", email_configs=email_configs, banks=banks
                 )
@@ -172,13 +205,16 @@ def add_account():
                     else:
                         flash(message, "warning")
                 
-                return redirect(url_for("main.dashboard"))
             else:
                 flash("Error adding account", "error")
                 return render_template(
                     "account/add_account.html", email_configs=email_configs, banks=banks
                 )
 
+            count = counterparty_service.auto_categorize_all_transactions(user_id)
+            flash(f"Auto-categorized {count} transactions", "success")
+
+            return redirect(url_for("main.dashboard"))
         return render_template(
             "account/add_account.html", email_configs=email_configs, banks=banks
         )
@@ -219,9 +255,42 @@ def edit_account(account_id):
         banks = db_session.query(Bank).all()
 
         if request.method == "POST":
-            account.account_number = request.form.get("account_number")
+            # Normalize and validate new account number
+            raw_new_account_number = request.form.get("account_number")
+            is_valid, new_account_number, err = _validate_account_number(raw_new_account_number)
+            if not is_valid:
+                flash(err, "error")
+                return render_template(
+                    "account/edit_account.html",
+                    account=account,
+                    email_configs=email_configs,
+                    banks=banks,
+                )
+
             account_holder = request.form.get("account_holder")
             balance = request.form.get("balance", 0.0)
+
+            # Prevent duplicate account numbers for the same user
+            if new_account_number != account.account_number:
+                dup = (
+                    db_session.query(Account)
+                    .filter(
+                        Account.user_id == user_id,
+                        Account.account_number == new_account_number,
+                        Account.id != account.id,
+                    )
+                    .first()
+                )
+                if dup:
+                    flash("Another account with this number already exists.", "error")
+                    return render_template(
+                        "account/edit_account.html",
+                        account=account,
+                        email_configs=email_configs,
+                        banks=banks,
+                    )
+
+            account.account_number = new_account_number
 
             # Handle bank selection
             bank_id = request.form.get("bank_id")
