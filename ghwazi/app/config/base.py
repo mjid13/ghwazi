@@ -52,7 +52,14 @@ class Config:
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
 
     # Session settings
-    PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
+    # Permanent session absolute lifetime (in seconds). Can be overridden via env.
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("PERMANENT_SESSION_LIFETIME", 3600))  # default: 1 hour
+    # Idle timeout (seconds) - user will be logged out after this period of inactivity
+    SESSION_IDLE_TIMEOUT = int(os.environ.get("SESSION_IDLE_TIMEOUT", 1800))  # default: 30 minutes
+    # Secure cookie flags (override via env if needed)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "False").lower() in ("true", "1", "t")
 
     # Pagination
     POSTS_PER_PAGE = int(os.environ.get("POSTS_PER_PAGE", 25))

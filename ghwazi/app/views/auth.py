@@ -97,9 +97,12 @@ def login():
                 flash("Invalid username or password", "error")
                 return render_template("auth/login.html")
 
-            # Set user session
+            # Rotate and set user session
+            session.clear()
             session["user_id"] = user.id
             session["username"] = user.username
+            session["last_activity"] = datetime.now().timestamp()
+            session.permanent = True
 
             flash(f"Welcome back, {user.username}!", "success")
             return redirect(url_for("main.dashboard"))

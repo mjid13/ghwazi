@@ -68,10 +68,12 @@ def google_callback():
             flash("Failed to create user account.", "error")
             return redirect(url_for("auth.login"))
         
-        # Log in the user
+        # Log in the user (rotate session to prevent fixation)
+        session.clear()
         session['user_id'] = oauth_user['user_id']
         session['google_oauth'] = True
         session['username'] = oauth_user['name']
+        session['last_activity'] = __import__('time').time()
         session.permanent = True
 
         flash(f"Successfully connected with Google account: {oauth_user['name']}", "success")

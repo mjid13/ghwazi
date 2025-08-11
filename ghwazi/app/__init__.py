@@ -7,7 +7,7 @@ import os
 import time
 from datetime import timedelta
 
-from flask import Flask, session
+from flask import Flask, session, redirect, url_for, flash, request, jsonify
 
 from .views.email import email_tasks, email_tasks_lock, scraping_accounts
 
@@ -88,13 +88,15 @@ def create_app(config_class=Config):
     # Or alternatively, register it as a global function:
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
 
-    # Add session configuration
-    app.permanent_session_lifetime = timedelta(days=30)
+    # Session configuration based on Config
+    app.permanent_session_lifetime = timedelta(seconds=app.config.get("PERMANENT_SESSION_LIFETIME", 3600))
 
     @app.before_request
     def before_request():
-        """Ensure user session is handled properly and proactively cleanup DB sessions."""
-        # Make session permanent
+        """Ensure user session is handled properly and proactively cleanup DB sessions.
+        Also enforce idle-timeout and basic session security.
+        """
+        # Make session permanent so PERMANENT_SESSION_LIFETIME applies
         session.permanent = True
 
         # Proactively cleanup any lingering sessions at the start of the request
@@ -108,9 +110,25 @@ def create_app(config_class=Config):
         except Exception as e:
             app.logger.debug(f"Custom Database scoped session pre-clean error: {e}")
 
-        # Check if user is logged in and update session timestamp
+        # Enforce idle timeout for authenticated users
+        idle_timeout = app.config.get("SESSION_IDLE_TIMEOUT", 1800)
+        is_api_request = request.path.startswith("/api") or (
+            request.accept_mimetypes and request.accept_mimetypes.best == "application/json"
+        )
+
         if "user_id" in session:
-            session["last_activity"] = time.time()
+            last = session.get("last_activity")
+            now = time.time()
+            if last and (now - float(last)) > idle_timeout:
+                # Session expired due to inactivity
+                session.clear()
+                if is_api_request:
+                    return jsonify({"error": "session_expired", "message": "Session expired due to inactivity."}), 401
+                else:
+                    flash("Your session has expired due to inactivity. Please log in again.", "warning")
+                    return redirect(url_for("auth.login"))
+            # Update last activity timestamp (sliding window)
+            session["last_activity"] = now
 
         # Clear old tasks from email_tasks dict
         current_time = time.time()
