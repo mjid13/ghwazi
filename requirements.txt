@@ -1,12 +1,3 @@
-# Main requirements file for the Bank Email Parser & Account Tracker
-# This file includes the base requirements for running the application
-
-# Include base requirements
--r ghwazi/requirements/base.txt
-
-# Additional production-ready packages
+# Requirements for the Django version of Money Tracker
+Django>=4.2,<5.0
 gunicorn==21.2.0
-
-# Note: For development, use: pip install -r requirements/development.txt
-# Note: For production, use: pip install -r requirements/production.txt
-# Note: For testing, use: pip install -r requirements/testing.txt

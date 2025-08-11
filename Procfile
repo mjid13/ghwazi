@@ -1,1 +1,1 @@
-web: gunicorn ghwazi.main:app
+web: gunicorn config.wsgi:application
