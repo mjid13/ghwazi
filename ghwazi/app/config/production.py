@@ -25,10 +25,16 @@ class ProductionConfig(Config):
     # Production logging
     LOG_LEVEL = "WARNING"
 
-    # Security settings
+    # Enhanced security settings for production
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SAMESITE = "Strict"  # Stricter for production
+    
+    # Shorter timeouts for production
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("PERMANENT_SESSION_LIFETIME", 1800))  # 30 minutes
+    SESSION_IDLE_TIMEOUT = int(os.environ.get("SESSION_IDLE_TIMEOUT", 900))  # 15 minutes
+    SESSION_ROTATION_INTERVAL = int(os.environ.get("SESSION_ROTATION_INTERVAL", 600))  # 10 minutes
+    MAX_SESSIONS_PER_USER = int(os.environ.get("MAX_SESSIONS_PER_USER", 2))  # Fewer concurrent sessions
 
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")

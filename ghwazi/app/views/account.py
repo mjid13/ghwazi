@@ -487,12 +487,12 @@ def delete_account(account_id):
 
         if is_ajax:
             return jsonify(
-                {
-                    "success": True,
-                    "message": "Account deleted successfully",
-                    "redirect": url_for("accounts"),
-                }
-            )
+                    {
+                        "success": True,
+                        "message": "Account deleted successfully",
+                        "redirect": url_for("account.accounts"),
+                    }
+                )
 
         flash("Account deleted successfully", "success")
         return redirect(url_for("account.accounts"))
@@ -541,7 +541,7 @@ def account_details(account_number):
                 f"Account {account_number} not found or you do not have permission to view it",
                 "error",
             )
-            return redirect(url_for("accounts"))
+            return redirect(url_for("account.accounts"))
 
         # Apply filters if specified
         filter_params = {}

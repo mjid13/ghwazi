@@ -34,12 +34,18 @@
                 <a href="{{ url_for('main.counterparties') }}" class="btn btn-outline-primary">
                     <i class="bi bi-people me-2"></i>Counterparties
                 </a>
-                <a href="{{ url_for('category.auto_categorize') }}" class="btn btn-outline-warning">
-                    <i class="bi bi-magic me-2"></i>Auto-Categorize
-                </a>
-                <a href="{{ url_for('oauth.sync_gmail') }}" class="btn btn-outline-warning" >
-                    <i class="bi bi-magic me-2"></i>sync
-                </a>
+                <form method="post" action="{{ url_for('category.auto_categorize') }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-warning" onclick="return confirm('Auto-categorize all uncategorized transactions?')">
+                        <i class="bi bi-magic me-2"></i>Auto-Categorize
+                    </button>
+                </form>
+                <form method="post" action="{{ url_for('oauth.sync_gmail') }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-warning">
+                        <i class="bi bi-arrow-repeat me-2"></i>Sync Gmail
+                    </button>
+                </form>
             </div>
         </div>
     </div>

@@ -198,7 +198,8 @@ if __name__ == '__main__':
         app.run(
             host=os.environ.get('FLASK_HOST', '127.0.0.1'),
             port=int(os.environ.get('FLASK_PORT', 5000)),
-            debug=os.environ.get('FLASK_DEBUG', 'True').lower() in ('true', '1', 't')
+            debug=os.environ.get('FLASK_DEBUG', 'True').lower() in ('true', '1', 't'),
+            use_reloader = False
         )
     else:
         # For production, recommend using a WSGI server
@@ -209,5 +210,7 @@ if __name__ == '__main__':
         app.run(
             host='0.0.0.0',
             port=int(os.environ.get('PORT', 5000)),
-            debug=False
+            debug=False,
+            use_reloader = False
+
         )

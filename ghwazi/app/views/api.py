@@ -8,12 +8,11 @@ import os
 from datetime import datetime, time
 from threading import Lock
 
-from flask import (Blueprint, Flask, current_app, flash, jsonify, redirect,
-                   render_template, request, session, url_for)
+from flask import (Blueprint, current_app, flash, jsonify, redirect,
+                    request, session, url_for)
 from werkzeug.utils import secure_filename
 
-from ..models import (Account, Category, Database, Transaction,
-                     TransactionRepository)
+from ..models import Account, Database, TransactionRepository
 from ..services.pdf_parser_service import PDFParser
 from ..utils.helpers import allowed_file
 from ..utils.decorators import login_required
@@ -65,15 +64,6 @@ def get_chart_data():
             start_date = end_date - timedelta(days=730)
         # For 'overall', start_date remains None
 
-        # Base query for transactions
-        base_query = db_session.query(Transaction).join(Account)
-
-        # Filter by user_id
-        base_query = base_query.filter(Account.user_id == user_id)
-
-        # Filter by account_number if specified
-        if account_number != "all":
-            base_query = base_query.filter(Account.account_number == account_number)
 
         # 1. Income vs. Expense Comparison Chart
         income_expense_query = db_session.query(

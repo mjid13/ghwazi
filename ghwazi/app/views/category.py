@@ -291,7 +291,7 @@ def categorize_counterparty():
     return redirect(url_for("main.counterparties"))
 
 
-@category_bp.route("/auto-categorize")
+@category_bp.route("/auto-categorize", methods=["POST"])
 @login_required
 def auto_categorize():
     """Auto-categorize all uncategorized transactions."""

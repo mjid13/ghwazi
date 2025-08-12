@@ -396,7 +396,7 @@
                 </div>
                 <div class="info-content">
                     <div class="info-label">Username</div>
-                    <div class="info-value">{{ user.oauth_users[0].name if user.oauth_users else user.username }}</div>
+                    <div class="info-value">{{ (user.oauth_users[0].name if user.oauth_users else user.username)|html_escape|default_if_empty }}</div>
                 </div>
             </div>
             <div class="info-item">
@@ -405,7 +405,7 @@
                 </div>
                 <div class="info-content">
                     <div class="info-label">Email Address</div>
-                    <div class="info-value">{{ user.email }}</div>
+                    <div class="info-value">{{ user.email|html_escape|default_if_empty }}</div>
                 </div>
             </div>
             <div class="info-item">
@@ -416,7 +416,7 @@
                     <div class="info-label">Member Since</div>
                     <div class="info-value">
                         {% if user.created_at %}
-                            {{ user.created_at.strftime('%B %d, %Y') }}
+                            {{ user.created_at|date_format('%B %d, %Y') }}
                         {% else %}
                             N/A
                         {% endif %}

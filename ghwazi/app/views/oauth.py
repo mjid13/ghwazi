@@ -88,7 +88,7 @@ def google_callback():
         return redirect(url_for("auth.login"))
 
 
-@oauth_bp.route("/google/disconnect")
+@oauth_bp.route("/google/disconnect", methods=['POST'])
 @login_required
 def google_disconnect():
     """Disconnect Google OAuth integration."""
@@ -226,7 +226,7 @@ def update_gmail_settings():
     return redirect(url_for("oauth.gmail_settings"))
 
 
-@oauth_bp.route("/gmail/sync") #, methods=['POST'])
+@oauth_bp.route("/gmail/sync", methods=['POST'])
 @login_required
 def sync_gmail():
     """Manually trigger Gmail sync."""

@@ -40,6 +40,12 @@
                         </ul>
                     </div>
                 </div>
+
+                {% if error_id %}
+                <div class="mt-4">
+                    <small class="text-muted">Error ID: {{ error_id }}</small>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
