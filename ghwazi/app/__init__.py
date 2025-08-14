@@ -16,11 +16,31 @@ from .config.base import Config
 from .extensions import db, migrate, limiter, csrf
 from flask_wtf.csrf import CSRFError, generate_csrf
 
+# Optional Redis session support
+try:
+    import redis
+    from flask_session import Session as FlaskSession
+except Exception:  # pragma: no cover
+    redis = None
+    FlaskSession = None
+
 
 def create_app(config_class=Config):
     """Create and configure the Flask application."""
     app = Flask(__name__)
     app.config.from_object(config_class)
+    
+    # Initialize Redis-backed sessions in production if REDIS_URL is set
+    try:
+        redis_url = app.config.get('REDIS_URL') or os.environ.get('REDIS_URL')
+        if redis_url and FlaskSession and redis:
+            app.config['SESSION_TYPE'] = 'redis'
+            app.config['SESSION_REDIS'] = redis.from_url(redis_url)
+            app.config['SESSION_PERMANENT'] = True
+            FlaskSession(app)
+            app.logger.info('Flask-Session initialized with Redis')
+    except Exception as e:
+        app.logger.error(f'Failed to initialize Redis-backed sessions: {e}')
     
     # Set application start time for uptime tracking
     app.config['START_TIME'] = time.time()
@@ -78,20 +98,35 @@ def create_app(config_class=Config):
     except Exception:
         pass
 
-    # Configure logging
+    # Configure logging: use stdout in production/Heroku, file in local dev if desired
     if not app.debug and not app.testing:
-        if not os.path.exists("logs"):
-            os.mkdir("logs")
-        file_handler = logging.FileHandler("logs/app.log")
-        file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
-            )
-        )
-        file_handler.setLevel(logging.DEBUG)
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.DEBUG)
-        app.logger.info("Application startup")
+        try:
+            import sys
+            # If running on Heroku (DYNO env), prefer stdout
+            if os.environ.get('DYNO') or os.environ.get('HEROKU', '').lower() in ('1', 'true', 'yes'):
+                stream_handler = logging.StreamHandler(sys.stdout)
+                stream_handler.setFormatter(
+                    logging.Formatter(
+                        "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
+                    )
+                )
+                stream_handler.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
+                app.logger.addHandler(stream_handler)
+            else:
+                if not os.path.exists("logs"):
+                    os.mkdir("logs")
+                file_handler = logging.FileHandler("logs/app.log")
+                file_handler.setFormatter(
+                    logging.Formatter(
+                        "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
+                    )
+                )
+                file_handler.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
+                app.logger.addHandler(file_handler)
+            app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO')))
+            app.logger.info("Application startup")
+        except Exception as e:
+            pass
 
     # Register comprehensive error handlers
     from .utils.error_handlers import (

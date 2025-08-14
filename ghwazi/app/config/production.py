@@ -18,12 +18,21 @@ class ProductionConfig(Config):
         os.environ.get("DATABASE_URL")
         or "postgresql://user:password@localhost/production_db"
     ).replace(
-    "postgres://", "postgresql://"
-)
-    DATABASE_URL = os.getenv("DATABASE_URL", "")
+        "postgres://", "postgresql://"
+    )
+    DATABASE_URL = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql://")
 
     # Production logging
-    LOG_LEVEL = "WARNING"
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "WARNING")
+
+    # File uploads on Heroku's ephemeral filesystem
+    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "/tmp/uploads")
+
+    # Redis-backed server-side sessions
+    REDIS_URL = os.environ.get("REDIS_URL")
+    SESSION_TYPE = "redis" if REDIS_URL else os.environ.get("SESSION_TYPE", "filesystem")
+    SESSION_USE_SIGNER = True
+    SESSION_PERMANENT = True
 
     # Enhanced security settings for production
     SESSION_COOKIE_SECURE = True
@@ -48,14 +57,19 @@ class ProductionConfig(Config):
         """Initialize production-specific settings."""
         Config.init_app(app)
 
-        # Log to syslog in production
+        # Configure logging to stdout for Heroku
         import logging
-        from logging.handlers import SysLogHandler
+        import sys
+        for h in list(app.logger.handlers):
+            app.logger.removeHandler(h)
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setLevel(getattr(logging, app.config.get("LOG_LEVEL", "WARNING")))
+        formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]")
+        stream_handler.setFormatter(formatter)
+        app.logger.addHandler(stream_handler)
+        app.logger.setLevel(getattr(logging, app.config.get("LOG_LEVEL", "WARNING")))
 
-        syslog_handler = SysLogHandler()
-        syslog_handler.setLevel(logging.WARNING)
-        app.logger.addHandler(syslog_handler)
-        # Email errors to administrators
+        # Optionally email errors to administrators
         if app.config.get("MAIL_SERVER"):
             from logging.handlers import SMTPHandler
 

@@ -61,7 +61,11 @@ class Database:
                 )
             return
 
-        self.database_url = database_url or settings.DATABASE_URL
+        # Normalize database URL and allow override via parameter
+        raw_url = database_url or settings.DATABASE_URL
+        if isinstance(raw_url, str):
+            raw_url = raw_url.replace("postgres://", "postgresql://")
+        self.database_url = raw_url
         # Instance references mirror class-level singletons
         self.engine = Database._engine
         self.session_factory = Database._session_factory

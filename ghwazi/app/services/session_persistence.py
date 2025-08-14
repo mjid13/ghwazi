@@ -11,22 +11,48 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+from urllib.parse import urlparse
 
 from flask import current_app
+
+try:
+    import psycopg2  # PostgreSQL support for Heroku
+except Exception:  # pragma: no cover
+    psycopg2 = None
 
 logger = logging.getLogger(__name__)
 
 
 class SessionPersistenceManager:
-    """Manages session persistence using SQLite for reliability."""
+    """Manages session persistence using SQLite by default and PostgreSQL on Heroku."""
     
     def __init__(self, db_path: Optional[str] = None):
-        """Initialize persistence manager with database path."""
-        if db_path is None:
-            db_path = self._get_default_db_path()
+        """Initialize persistence manager with database path or DATABASE_URL."""
+        # Determine backend from Flask config or environment
+        db_url = None
+        try:
+            if current_app:
+                db_url = (
+                    current_app.config.get("DATABASE_URL")
+                    or current_app.config.get("SQLALCHEMY_DATABASE_URI")
+                )
+        except Exception:
+            db_url = None
+        if not db_url:
+            db_url = os.environ.get("DATABASE_URL")
+        if isinstance(db_url, str):
+            db_url = db_url.replace("postgres://", "postgresql://")
+        self._db_url = db_url
+        self._backend = "postgres" if (isinstance(db_url, str) and db_url.startswith("postgresql")) else "sqlite"
         
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        if self._backend == "sqlite":
+            if db_path is None:
+                db_path = self._get_default_db_path()
+            self.db_path = Path(db_path)
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            self.db_path = None
+        
         self._init_database()
     
     def _get_default_db_path(self) -> str:
@@ -39,47 +65,85 @@ class SessionPersistenceManager:
     def _init_database(self) -> None:
         """Initialize the session persistence database."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS sessions (
-                        session_id TEXT PRIMARY KEY,
-                        user_id INTEGER NOT NULL,
-                        session_data TEXT NOT NULL,
-                        lifecycle_data TEXT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        expires_at TIMESTAMP,
-                        state TEXT DEFAULT 'active',
-                        metadata TEXT DEFAULT '{}'
-                    )
-                ''')
-                
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS session_events (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        session_id TEXT NOT NULL,
-                        event_type TEXT NOT NULL,
-                        event_data TEXT NOT NULL,
-                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (session_id) REFERENCES sessions (session_id)
-                    )
-                ''')
-                
-                conn.execute('''
-                    CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id)
-                ''')
-                
-                conn.execute('''
-                    CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at)
-                ''')
-                
-                conn.execute('''
-                    CREATE INDEX IF NOT EXISTS idx_session_events_session_id ON session_events (session_id)
-                ''')
-                
-                conn.commit()
-                logger.info(f"Session persistence database initialized: {self.db_path}")
-                
+            if self._backend == "postgres":
+                if not psycopg2:
+                    raise RuntimeError("psycopg2 is required for PostgreSQL session persistence")
+                # Create tables in PostgreSQL
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            CREATE TABLE IF NOT EXISTS sessions (
+                                session_id VARCHAR(128) PRIMARY KEY,
+                                user_id INTEGER NOT NULL,
+                                session_data TEXT NOT NULL,
+                                lifecycle_data TEXT NOT NULL,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                expires_at TIMESTAMP,
+                                state VARCHAR(32) DEFAULT 'active',
+                                metadata TEXT DEFAULT '{}'
+                            )
+                            """
+                        )
+                        cur.execute(
+                            """
+                            CREATE TABLE IF NOT EXISTS session_events (
+                                id SERIAL PRIMARY KEY,
+                                session_id VARCHAR(128) NOT NULL,
+                                event_type VARCHAR(64) NOT NULL,
+                                event_data TEXT NOT NULL,
+                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                CONSTRAINT fk_session FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+                            )
+                            """
+                        )
+                        cur.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id)")
+                        cur.execute("CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at)")
+                        cur.execute("CREATE INDEX IF NOT EXISTS idx_session_events_session_id ON session_events (session_id)")
+                        conn.commit()
+                logger.info("Session persistence database initialized (PostgreSQL)")
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.execute('''
+                        CREATE TABLE IF NOT EXISTS sessions (
+                            session_id TEXT PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            session_data TEXT NOT NULL,
+                            lifecycle_data TEXT NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            expires_at TIMESTAMP,
+                            state TEXT DEFAULT 'active',
+                            metadata TEXT DEFAULT '{}'
+                        )
+                    ''')
+                    
+                    conn.execute('''
+                        CREATE TABLE IF NOT EXISTS session_events (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            session_id TEXT NOT NULL,
+                            event_type TEXT NOT NULL,
+                            event_data TEXT NOT NULL,
+                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+                        )
+                    ''')
+                    
+                    conn.execute('''
+                        CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id)
+                    ''')
+                    
+                    conn.execute('''
+                        CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at)
+                    ''')
+                    
+                    conn.execute('''
+                        CREATE INDEX IF NOT EXISTS idx_session_events_session_id ON session_events (session_id)
+                    ''')
+                    
+                    conn.commit()
+                    logger.info(f"Session persistence database initialized: {self.db_path}")
         except Exception as e:
             logger.error(f"Failed to initialize session database: {e}")
             raise
@@ -96,18 +160,38 @@ class SessionPersistenceManager:
             session_json = json.dumps(session_data, default=str)
             lifecycle_json = json.dumps(lifecycle_data, default=str)
             state = lifecycle_data.get('lifecycle', {}).get('state', 'active')
+            user_id = session_data.get('user_id')
             
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute('''
-                    INSERT OR REPLACE INTO sessions 
-                    (session_id, user_id, session_data, lifecycle_data, 
-                     last_updated, expires_at, state)
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-                ''', (session_id, session_data.get('user_id'), session_json, 
-                      lifecycle_json, expires_at, state))
-                
-                conn.commit()
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            INSERT INTO sessions (session_id, user_id, session_data, lifecycle_data, last_updated, expires_at, state)
+                            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s)
+                            ON CONFLICT (session_id)
+                            DO UPDATE SET
+                                user_id = EXCLUDED.user_id,
+                                session_data = EXCLUDED.session_data,
+                                lifecycle_data = EXCLUDED.lifecycle_data,
+                                last_updated = CURRENT_TIMESTAMP,
+                                expires_at = EXCLUDED.expires_at,
+                                state = EXCLUDED.state
+                            """,
+                            (session_id, user_id, session_json, lifecycle_json, expires_at, state)
+                        )
+                        conn.commit()
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.execute('''
+                        INSERT OR REPLACE INTO sessions 
+                        (session_id, user_id, session_data, lifecycle_data, 
+                         last_updated, expires_at, state)
+                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+                    ''', (session_id, user_id, session_json, 
+                          lifecycle_json, expires_at, state))
+                    conn.commit()
+            
             logger.debug(f"Persisted session {session_id[:8]}...")
             return True
             
@@ -118,29 +202,47 @@ class SessionPersistenceManager:
     def recover_session(self, session_id: str) -> Optional[tuple[Dict, Dict]]:
         """Recover session data from persistent storage."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.execute('''
-                    SELECT session_data, lifecycle_data, expires_at, state
-                    FROM sessions 
-                    WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP
-                ''', (session_id,))
-                
-                row = cursor.fetchone()
-                
-                if row:
-                    session_data = json.loads(row['session_data'])
-                    lifecycle_data = json.loads(row['lifecycle_data'])
-                    
-                    # Check if session is still valid
-                    if row['state'] in ['active', 'suspended']:
-                        logger.info(f"Recovered session {session_id[:8]}...")
-                        return session_data, lifecycle_data
-                    else:
-                        logger.debug(f"Session {session_id[:8]}... in state {row['state']}, not recoverable")
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            SELECT session_data, lifecycle_data, state
+                            FROM sessions 
+                            WHERE session_id = %s AND expires_at > CURRENT_TIMESTAMP
+                            """,
+                            (session_id,)
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            session_json, lifecycle_json, state = row
+                            if state in ('active', 'suspended'):
+                                return json.loads(session_json), json.loads(lifecycle_json)
+                            return None
                 return None
-                
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.row_factory = sqlite3.Row
+                    cursor = conn.execute('''
+                        SELECT session_data, lifecycle_data, expires_at, state
+                        FROM sessions 
+                        WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP
+                    ''', (session_id,))
+                    
+                    row = cursor.fetchone()
+                    
+                    if row:
+                        session_data = json.loads(row['session_data'])
+                        lifecycle_data = json.loads(row['lifecycle_data'])
+                        
+                        # Check if session is still valid
+                        if row['state'] in ['active', 'suspended']:
+                            logger.info(f"Recovered session {session_id[:8]}...")
+                            return session_data, lifecycle_data
+                        else:
+                            logger.debug(f"Session {session_id[:8]}... in state {row['state']}, not recoverable")
+                    
+                    return None
         except Exception as e:
             logger.error(f"Failed to recover session {session_id[:8]}...: {e}")
             return None
@@ -150,23 +252,38 @@ class SessionPersistenceManager:
         sessions = []
         
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.execute('''
-                    SELECT session_id, session_data, lifecycle_data
-                    FROM sessions 
-                    WHERE user_id = ? AND expires_at > CURRENT_TIMESTAMP 
-                      AND state IN ('active', 'suspended')
-                    ORDER BY last_updated DESC
-                ''', (user_id,))
-                
-                for row in cursor.fetchall():
-                    session_data = json.loads(row['session_data'])
-                    lifecycle_data = json.loads(row['lifecycle_data'])
-                    sessions.append((row['session_id'], session_data, lifecycle_data))
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            SELECT session_id, session_data, lifecycle_data
+                            FROM sessions 
+                            WHERE user_id = %s AND expires_at > CURRENT_TIMESTAMP 
+                              AND state IN ('active', 'suspended')
+                            ORDER BY last_updated DESC
+                            """,
+                            (user_id,)
+                        )
+                        for sid, session_json, lifecycle_json in cur.fetchall():
+                            sessions.append((sid, json.loads(session_json), json.loads(lifecycle_json)))
                 logger.info(f"Recovered {len(sessions)} sessions for user {user_id}")
-                
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.row_factory = sqlite3.Row
+                    cursor = conn.execute('''
+                        SELECT session_id, session_data, lifecycle_data
+                        FROM sessions 
+                        WHERE user_id = ? AND expires_at > CURRENT_TIMESTAMP 
+                          AND state IN ('active', 'suspended')
+                        ORDER BY last_updated DESC
+                    ''', (user_id,))
+                    
+                    for row in cursor.fetchall():
+                        session_data = json.loads(row['session_data'])
+                        lifecycle_data = json.loads(row['lifecycle_data'])
+                        sessions.append((row['session_id'], session_data, lifecycle_data))
+                logger.info(f"Recovered {len(sessions)} sessions for user {user_id}")
         except Exception as e:
             logger.error(f"Failed to recover sessions for user {user_id}: {e}")
         
@@ -175,22 +292,30 @@ class SessionPersistenceManager:
     def remove_session(self, session_id: str) -> bool:
         """Remove session from persistent storage."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute('''
-                    DELETE FROM sessions WHERE session_id = ?
-                ''', (session_id,))
-                
-                # Also remove associated events
-                conn.execute('''
-                    DELETE FROM session_events WHERE session_id = ?
-                ''', (session_id,))
-                
-                conn.commit()
-                
-                if cursor.rowcount > 0:
-                    logger.debug(f"Removed persisted session {session_id[:8]}...")
-                    return True
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("DELETE FROM session_events WHERE session_id = %s", (session_id,))
+                        cur.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
+                        deleted = cur.rowcount
+                        conn.commit()
+                        return deleted > 0
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    cursor = conn.execute('''
+                        DELETE FROM sessions WHERE session_id = ?
+                    ''', (session_id,))
+                    
+                    # Also remove associated events
+                    conn.execute('''
+                        DELETE FROM session_events WHERE session_id = ?
+                    ''', (session_id,))
+                    
+                    conn.commit()
+                    
+                    if cursor.rowcount > 0:
+                        logger.debug(f"Removed persisted session {session_id[:8]}...")
+                        return True
         except Exception as e:
             logger.error(f"Failed to remove session {session_id[:8]}...: {e}")
         
@@ -199,28 +324,48 @@ class SessionPersistenceManager:
     def cleanup_expired_sessions(self) -> int:
         """Clean up expired sessions from persistent storage."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                # Remove expired sessions
-                cursor = conn.execute('''
-                    DELETE FROM sessions 
-                    WHERE expires_at <= CURRENT_TIMESTAMP OR state = 'cleaned'
-                ''')
-                
-                expired_count = cursor.rowcount
-                
-                # Remove orphaned events
-                conn.execute('''
-                    DELETE FROM session_events 
-                    WHERE session_id NOT IN (SELECT session_id FROM sessions)
-                ''')
-                
-                conn.commit()
-                
-                if expired_count > 0:
-                    logger.info(f"Cleaned up {expired_count} expired persisted sessions")
-                
-                return expired_count
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            DELETE FROM sessions 
+                            WHERE expires_at <= CURRENT_TIMESTAMP OR state = 'cleaned'
+                            """
+                        )
+                        expired_count = cur.rowcount
+                        cur.execute(
+                            """
+                            DELETE FROM session_events 
+                            WHERE session_id NOT IN (SELECT session_id FROM sessions)
+                            """
+                        )
+                        conn.commit()
+                        if expired_count > 0:
+                            logger.info(f"Cleaned up {expired_count} expired persisted sessions")
+                        return expired_count
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    # Remove expired sessions
+                    cursor = conn.execute('''
+                        DELETE FROM sessions 
+                        WHERE expires_at <= CURRENT_TIMESTAMP OR state = 'cleaned'
+                    ''')
+                    
+                    expired_count = cursor.rowcount
+                    
+                    # Remove orphaned events
+                    conn.execute('''
+                        DELETE FROM session_events 
+                        WHERE session_id NOT IN (SELECT session_id FROM sessions)
+                    ''')
+                    
+                    conn.commit()
+                    
+                    if expired_count > 0:
+                        logger.info(f"Cleaned up {expired_count} expired persisted sessions")
+                    
+                    return expired_count
         except Exception as e:
             logger.error(f"Failed to cleanup expired sessions: {e}")
             return 0
@@ -229,17 +374,25 @@ class SessionPersistenceManager:
         """Store session event in persistent storage."""
         try:
             event_json = json.dumps(event_data, default=str)
-            
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute('''
-                    INSERT INTO session_events (session_id, event_type, event_data)
-                    VALUES (?, ?, ?)
-                ''', (session_id, event_type, event_json))
-                
-                conn.commit()
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            INSERT INTO session_events (session_id, event_type, event_data, timestamp)
+                            VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                            """,
+                            (session_id, event_type, event_json)
+                        )
+                        conn.commit()
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.execute('''
+                        INSERT INTO session_events (session_id, event_type, event_data, timestamp)
+                        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    ''', (session_id, event_type, event_json))
+                    conn.commit()
             return True
-            
         except Exception as e:
             logger.error(f"Failed to store event for session {session_id[:8]}...: {e}")
             return False
@@ -249,24 +402,44 @@ class SessionPersistenceManager:
         events = []
         
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.execute('''
-                    SELECT event_type, event_data, timestamp
-                    FROM session_events 
-                    WHERE session_id = ?
-                    ORDER BY timestamp DESC 
-                    LIMIT ?
-                ''', (session_id, limit))
-                
-                for row in cursor.fetchall():
-                    event_data = json.loads(row['event_data'])
-                    events.append({
-                        'event_type': row['event_type'],
-                        'timestamp': row['timestamp'],
-                        **event_data
-                    })
-                
+            if self._backend == 'postgres':
+                with psycopg2.connect(self._db_url) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            SELECT event_type, event_data, timestamp
+                            FROM session_events 
+                            WHERE session_id = %s
+                            ORDER BY timestamp DESC 
+                            LIMIT %s
+                            """,
+                            (session_id, limit)
+                        )
+                        for event_type, event_json, ts in cur.fetchall():
+                            data = json.loads(event_json)
+                            events.append({
+                                'event_type': event_type,
+                                'timestamp': ts,
+                                **data
+                            })
+            else:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.row_factory = sqlite3.Row
+                    cursor = conn.execute('''
+                        SELECT event_type, event_data, timestamp
+                        FROM session_events 
+                        WHERE session_id = ?
+                        ORDER BY timestamp DESC 
+                        LIMIT ?
+                    ''', (session_id, limit))
+                    
+                    for row in cursor.fetchall():
+                        event_data = json.loads(row['event_data'])
+                        events.append({
+                            'event_type': row['event_type'],
+                            'timestamp': row['timestamp'],
+                            **event_data
+                        })
         except Exception as e:
             logger.error(f"Failed to get events for session {session_id[:8]}...: {e}")
         

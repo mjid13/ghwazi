@@ -21,7 +21,11 @@
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
                                         <span class="badge bg-primary-subtle text-primary mb-2"><i class="bi bi-bank"></i> {{ summary.bank_name }}</span>
-                                        <h3 class="h4 mb-1">•••• {{ summary.account_number[-4:] }}</h3>
+                                        <h3 class="h4 mb-1">•••• {{ summary.account_number[-4:] }}
+                                            <span class="ms-2 badge bg-info-subtle text-info d-none account-sync-badge" data-account-number="{{ summary.account_number }}">
+                                                <i class="bi bi-arrow-repeat me-1 spin"></i>Syncing
+                                            </span>
+                                        </h3>
                                         <p class="text-body-secondary mb-0">
                                             <i class="bi bi-person me-1"></i>
                                             {{ summary.account_holder }}
@@ -56,7 +60,7 @@
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <small class="d-block">Expense</small>
-                                                        <strong>{{ "{:,.3f}".format(summary.expense_count) }} Transactions </strong>
+                                                        <strong>{{ summary.expense_count3 }} Transactions </strong>
                                                     </div>
                                                     <i class="bi bi-graph-down-arrow"></i>
                                                 </div>
@@ -130,5 +134,34 @@
         font-size: 1.5rem;
         opacity: 0.8;
     }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  function pollSyncBadges(){
+    const els = document.querySelectorAll('.account-sync-badge');
+    els.forEach(function(el){
+      const acc = el.getAttribute('data-account-number');
+      if(!acc) return;
+      fetch(`/accounts/${encodeURIComponent(acc)}/sync-status`, {credentials:'same-origin'})
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          const st = (data && data.status) || 'none';
+          if(st === 'pending' || st === 'running'){
+            el.classList.remove('d-none');
+          } else {
+            el.classList.add('d-none');
+          }
+        })
+        .catch(() => { /* ignore */ });
+    });
+  }
+  pollSyncBadges();
+  setInterval(pollSyncBadges, 5000);
+})();
+</script>
 {% endblock %}
