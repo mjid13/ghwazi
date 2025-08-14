@@ -1,0 +1,44 @@
+# Exclude VCS and editor files
+.git/
+.github/
+.gitignore
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Python caches and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+.pytype/
+.pyre/
+
+# Test and coverage artifacts
+tests/
+.coverage*
+htmlcov/
+.tox/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local data and logs
+instance/
+logs/
+*.log
+
+# Docs and misc
+docs/
+examples/
+screenshots/
+
+# Local databases and backups
+*.sqlite3
+*.db
+*.bak
+backup/
