@@ -13,9 +13,8 @@ itsdangerous==2.1.2
 blinker==1.6.3
 
 # Database drivers
-psycopg2-binary==2.9.7  # PostgreSQL
 PyMySQL==1.1.0          # MySQL
-psycopg2
+# psycopg2
 
 # Email processing
 imaplib2==3.6
@@ -36,6 +35,7 @@ soupsieve==2.7
 
 # Cryptography (for security features)
 cryptography==45.0.5
+bleach==6.2.0
 
 # Google OAuth and Gmail API
 google-auth==2.23.4

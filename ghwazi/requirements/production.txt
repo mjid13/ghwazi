@@ -1,22 +1,49 @@
-p# Production requirements
--r base.txt
+# Production requirements (lean)
+
+# Core web stack
+Flask==3.1.1
+flask_limiter==3.12
+flask_session==0.8.0
+flask_sqlalchemy==3.1.1
+flask_wtf==1.2.2
+Werkzeug==3.1.3
+MarkupSafe==3.0.2
+
+# Database
+psycopg2-binary==2.9.7
+SQLAlchemy==2.0.43
+
+# Session/Cache
+redis==5.0.1
+Flask-Session==0.5.0
+
+# Security and validation
+bleach==6.2.0
+cryptography==45.0.6
+
+# Parsing and utilities
+beautifulsoup4==4.13.4
+python-dateutil==2.8.2
+requests==2.32.4
+
+# PDF processing
+pymupdf==1.26.3
+pdfplumber==0.11.7
+pypdf==5.8.0
+
+# Data processing
+pandas==2.3.1
+protobuf==6.32.0
+
+# Google Gmail API
+google-api-python-client==2.108.0
+google-auth==2.23.4
+google-auth-httplib2==0.1.1
+google-auth-oauthlib==1.1.0
+
+# System utilities
+psutil==7.0.0
 
 # WSGI server
 gunicorn==21.2.0
 
-# Production database
-psycopg2-binary==2.9.7
-
-# Monitoring and logging
-sentry-sdk[flask]==1.32.0
-prometheus-flask-exporter==0.23.0
-
-# Security
-cryptography==41.0.4
-
-# Performance
-redis==5.0.1
-celery==5.3.2
-
-# Email
-Flask-Mail==0.9.1
