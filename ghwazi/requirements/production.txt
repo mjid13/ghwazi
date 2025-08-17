@@ -3,7 +3,7 @@
 # Core web stack
 Flask==3.1.1
 flask_limiter==3.12
-flask_session==0.8.0
+flask_session==0.5.0
 flask_sqlalchemy==3.1.1
 flask_wtf==1.2.2
 Werkzeug==3.1.3
