@@ -561,8 +561,11 @@ function updateCategoryChartInstance(chartData) {
 function createCategoryFilter() {
     const categoryChartContainer = document.getElementById('categoryChart').closest('.chart-container');
 
-    // Check if filter already exists
-    if (categoryChartContainer.querySelector('.category-chart-filter')) {
+    // Check if filter already exists either in the chart container (fallback placement)
+    // or in the header toggle container (preferred placement). This prevents duplicates
+    // when charts are re-initialized.
+    const existingHeaderToggle = document.querySelector('#category-toggle-container .category-chart-filter');
+    if (categoryChartContainer.querySelector('.category-chart-filter') || existingHeaderToggle) {
         return;
     }
 
@@ -621,6 +624,8 @@ function createCategoryFilter() {
     
     if (toggleContainer) {
         console.log("Found header toggle container, placing toggle in header");
+        // Ensure only one toggle exists in the header
+        toggleContainer.innerHTML = '';
         toggleContainer.appendChild(filterContainer);
     } else {
         console.log("Header toggle container not found, using fallback positioning");

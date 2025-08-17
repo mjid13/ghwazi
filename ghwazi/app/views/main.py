@@ -374,9 +374,7 @@ def dashboard():
                         "account_balance": {"labels": [], "datasets": []},
                     }
 
-            # Convert chart data to JSON for the template
-            chart_data_json = json.dumps(chart_data)
-            logger.info(f"Chart data JSON length: {len(chart_data_json)}")
+            # Pass chart data as a Python dict; Jinja will JSON-encode it in the template with |tojson
             logger.info(f"Chart data keys: {list(chart_data.keys())}")
 
             return render_template(
@@ -385,7 +383,7 @@ def dashboard():
                 accounts=accounts,
                 email_configs=email_configs,
                 scraping_account_numbers=scraping_account_numbers,
-                chart_data=chart_data_json,
+                chart_data=chart_data,
                 show_charts=True if accounts else False,  # Only show charts if accounts exist
             )
 

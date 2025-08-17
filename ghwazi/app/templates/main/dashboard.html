@@ -237,11 +237,16 @@
 <script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-<!-- Include custom JavaScript files -->
+<!-- Include custom JavaScript files that don't depend on chart data -->
 <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/forms.js') }}"></script>
 <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/charts.js') }}"></script>
 
+<!-- Make chart data available BEFORE any chart init scripts run -->
 <div id="chart-data-holder" data-json='{{ chart_data|tojson }}' style="display:none"></div>
+
+<!-- This sets window.chartData by reading the holder above -->
 <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/dashboard_page_init.js') }}"></script>
+
+<!-- Now load charts.js which will see window.chartData populated -->
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/charts.js') }}"></script>
 {% endblock %}
