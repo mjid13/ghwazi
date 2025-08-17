@@ -12,8 +12,45 @@ class DevelopmentConfig(Config):
 
     DEBUG = True
     TESTING = False
-
-    # Development database (can be overridden by environment variable)
+    SECURITY_HEADERS = {
+        'FRAME_OPTIONS': 'SAMEORIGIN',
+    }
+    CSP_DOMAINS = {
+        'default_src': ["'self'"],
+        'script_src': [
+            "'self'",
+            'https://cdn.jsdelivr.net',
+            'https://code.jquery.com',
+            'https://cdn.datatables.net',
+            'http://localhost:5000',
+            'http://localhost:3000',
+            'ws://localhost:3000',
+            'ws://localhost:5000',
+        ],
+        'style_src': [
+            "'self'",
+            'https://cdn.jsdelivr.net',
+            'https://fonts.googleapis.com',
+            'https://cdn.datatables.net',
+        ],
+        'img_src': [
+            "'self'",
+            'data:',
+            'https:',
+        ],
+        'font_src': [
+            "'self'",
+            'https://fonts.gstatic.com',
+        ],
+        'connect_src': [
+            "'self'",
+            'http://localhost:5000',
+            'http://localhost:3000',
+            'ws://localhost:3000',
+            'ws://localhost:5000',
+        ],
+    }
+        # Development database (can be overridden by environment variable)
     SQLALCHEMY_DATABASE_URI = (
         os.environ.get("DEV_DATABASE_URL") or "sqlite:///dev_transactions.db"
     ).replace(

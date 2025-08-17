@@ -34,22 +34,86 @@
                 <a href="{{ url_for('main.counterparties') }}" class="btn btn-outline-primary">
                     <i class="bi bi-people me-2"></i>Counterparties
                 </a>
-                <a href="{{ url_for('category.auto_categorize') }}" class="btn btn-outline-warning">
-                    <i class="bi bi-magic me-2"></i>Auto-Categorize
-                </a>
-                <a href="{{ url_for('oauth.sync_gmail') }}" class="btn btn-outline-warning" >
-                    <i class="bi bi-magic me-2"></i>sync
-                </a>
+                <form method="post" action="{{ url_for('category.auto_categorize') }}" style="display:inline;" class="auto-categorize-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-warning auto-categorize-btn">
+                        <i class="bi bi-magic me-2"></i>Auto-Categorize
+                    </button>
+                </form>
+                <form method="post" action="{{ url_for('oauth.sync_gmail') }}" style="display:inline;" class="sync-gmail-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-warning">
+                        <i class="bi bi-arrow-repeat me-2"></i>Sync Gmail
+                    </button>
+                </form>
             </div>
         </div>
     </div>
-
+    <div class="col-md-12">
+        <div class="card h-100">
+            <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center">
+                <h3 class="h4 mb-0">Your Bank Accounts</h3>
+                <a href="{{ url_for('account.add_account') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <div class="card-body">
+                {% if accounts %}
+                <div class="account-list">
+                    {% for account in accounts %}
+                    <a href="{{ url_for('account.account_details', account_number=account.account_number) }}"
+                       class="account-item d-block text-decoration-none mb-1 p-3 rounded-3 border {% if loop.last %}mb-0{% endif %}"
+                       data-account-number="{{ account.account_number }}"
+                       style="transition: all 0.2s ease;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1 d-flex align-items-center">
+                                    <i class="bi bi-bank2 me-2"></i>
+                                    •••• {{account.account_number[-4:] }}
+                                    {% if account.account_number in scraping_account_numbers %}
+                                    <span class="badge bg-warning text-dark ms-2">
+                                        <i class="bi bi-arrow-repeat me-1 spin"></i>Scraping
+                                    </span>
+                                    {% endif %}
+                                    <span class="badge bg-info-subtle text-info ms-2 d-none account-sync-badge" data-account-number="{{ account.account_number }}">
+                                        <i class="bi bi-arrow-repeat me-1 spin"></i>Syncing
+                                    </span>
+                                </h5>
+                                <p class="mb-1 text-body-secondary">Holder: {{ account.account_holder }}</p>
+                                <small class="text-body-secondary">{{ account.bank_name }}</small>
+                            </div>
+                            <span class="badge bg-primary bg-opacity-10 text-primary p-3 rounded-3">
+                                {{ account.currency }} {{ "{:,.3f}".format(account.balance) }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-bank2 display-4 text-muted"></i>
+                    <p class="mt-3 mb-4">You don't have any bank accounts yet.</p>
+                    <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Add Your First Account
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
     {% if accounts %}
+
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-primary mb-0">
+                <i class="bi bi-graph-up me-2"></i>Overview Charts
+            </h4>
+        </div>
     <div class="col-12">
         <!-- Account Selection for Charts -->
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="mb-3">Chart Filters</h5>
+                <h5 class="mb-3"><i class="bi bi-funnel me-2"></i>Chart Filters</h5>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -85,8 +149,11 @@
             <div class="col-md-6 col-lg-6">
                 <div class="card h-100 chart-card">
                     <div class="card-body">
-                        <h5 class="chart-title">Monthly Trends</h5>
-                        <p class="chart-description">Income and expense trends over time</p>
+                        <h5 class="chart-title">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            Monthly Trends
+                        </h5>
+                        <p class="chart-description">Track your financial patterns with income and expense trends over time</p>
                         <div class="chart-container">
                             <canvas id="trendChart"></canvas>
                         </div>
@@ -96,21 +163,28 @@
             <!-- Category Distribution Chart -->
             <div class="col-md-6 col-lg-6">
                 <div class="card h-100 chart-card">
-                    <div class="card-body">
-                            <h5 class="chart-title">Category Distribution</h5>
-                            <p class="chart-description">Distribution of expenses & income by category</p>
+                    <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="chart-title mb-0">
+                            <i class="bi bi-pie-chart-fill"></i>
+                            Category Distribution
+                        </h5>
+                        <!-- Toggle will be inserted here by JavaScript -->
+                        <div id="category-toggle-container" class="category-header-toggle"></div>
+                    </div>
+                    <div class="card-body pt-2">
+                        <p class="chart-description mb-3">Visualize your spending patterns with interactive category breakdown</p>
                         {% if categories %}
-                            <div class="chart-container">
-                                <canvas id="categoryChart"></canvas>
-                            </div>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
                         {% else %}
-                              <div class="text-center py-5">
-                                <i class="bi bi-tags display-4 text-muted"></i>
-                                <p class="mt-3 mb-4">You don't have any categories yet.</p>
-                                <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle me-2"></i>Add Your First Category
-                                </a>
-                            </div>
+                        <div class="text-center py-5">
+                            <i class="bi bi-tags display-4 text-muted"></i>
+                            <p class="mt-3 mb-4">You don't have any categories yet.</p>
+                            <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Add Your First Category
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -120,8 +194,11 @@
             <div class="col-md-6 col-lg-6">
                 <div class="card h-100 chart-card">
                     <div class="card-body">
-                        <h5 class="chart-title">Account Balances</h5>
-                        <p class="chart-description">Comparison of account balances</p>
+                        <h5 class="chart-title">
+                            <i class="bi bi-bar-chart-fill"></i>
+                            Account Balances
+                        </h5>
+                        <p class="chart-description">Compare balances across all your linked accounts at a glance</p>
                         <div class="chart-container">
                             <canvas id="balanceChart"></canvas>
                         </div>
@@ -133,29 +210,15 @@
             <div class="col-md-6 col-lg-6">
                 <div class="card h-100 chart-card">
                     <div class="card-body">
-                        <h5 class="chart-title">Income vs Expense</h5>
-                        <p class="chart-description">Comparison of total income and expenses</p>
+                        <h5 class="chart-title">
+                            <i class="bi bi-circle-half"></i>
+                            Income vs Expense
+                        </h5>
+                        <p class="chart-description">Get insights into your financial balance with this comprehensive overview</p>
                         <div class="chart-container">
                             <canvas id="incomeExpenseChart"></canvas>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="col-md-12">
-        <div class="card h-100">
-            <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center">
-                <h3 class="h4 mb-0">Your Bank Accounts</h3>
-            </div>
-            <div class="card-body">
-                <div class="text-center py-4">
-                    <i class="bi bi-bank2 display-4 text-muted"></i>
-                    <p class="mt-3 mb-4">You don't have any bank accounts yet.</p>
-                    <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Add Your First Account
-                    </a>
                 </div>
             </div>
         </div>
@@ -170,42 +233,20 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<!-- Include Chart.js with plugins -->
+<script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-<!-- Include custom JavaScript files -->
-<script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-<script src="{{ url_for('static', filename='js/ajax.js') }}"></script>
+<!-- Include custom JavaScript files that don't depend on chart data -->
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/forms.js') }}"></script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
-<!-- Pass chart data to JavaScript -->
-<script>
-    // Store chart data in a global variable that can be accessed by charts.js
-    window.chartData = JSON.parse('{{ chart_data|default("{}")|safe }}');
+<!-- Make chart data available BEFORE any chart init scripts run -->
+<div id="chart-data-holder" data-json='{{ chart_data|tojson }}' style="display:none"></div>
 
-    // Initialize AJAX for transaction upload forms
-    document.addEventListener('DOMContentLoaded', function() {
-        // Email form AJAX handling
-        const emailForm = document.getElementById('email-form');
-        if (emailForm) {
-            Ajax.submitForm(emailForm, function(response) {
-                if (response.success) {
-                    Ajax.showNotification(response.message, 'success');
-                    // If there's a redirect URL, redirect after a short delay
-                    if (response.redirect) {
-                        setTimeout(function() {
-                            window.location.href = response.redirect;
-                        }, 2000);
-                    }
-                } else {
-                    Ajax.showNotification(response.message, 'error');
-                }
-            });
-        }
+<!-- This sets window.chartData by reading the holder above -->
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/dashboard_page_init.js') }}"></script>
 
-        // PDF upload form is handled by initPdfUploadForm() in dashboard.js
-        // No need for duplicate event handler here
-    });
-</script>
+<!-- Now load charts.js which will see window.chartData populated -->
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/charts.js') }}"></script>
 {% endblock %}

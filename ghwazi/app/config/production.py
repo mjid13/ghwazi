@@ -13,22 +13,69 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
 
+    SECURITY_HEADERS = {
+        'FRAME_OPTIONS': 'SAMEORIGIN',
+    }
+
+    # Clean CSP configuration that works with nonces
+    CSP_DOMAINS = {
+        'default_src': ["'self'"],
+        'script_src': [
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://code.jquery.com",
+            "https://cdn.datatables.net",
+        ],
+        'style_src': [
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://fonts.googleapis.com",
+        ],
+        'img_src': [
+            "'self'",
+            "data:",
+            "https:",
+        ],
+        'font_src': [
+            "'self'",
+            "https://fonts.gstatic.com",
+        ],
+        'connect_src': [
+            "'self'",
+        ]
+    }
+
     # Production database (must be set via environment variable)
     SQLALCHEMY_DATABASE_URI = (
         os.environ.get("DATABASE_URL")
         or "postgresql://user:password@localhost/production_db"
     ).replace(
-    "postgres://", "postgresql://"
-)
-    DATABASE_URL = os.getenv("DATABASE_URL", "")
+        "postgres://", "postgresql://"
+    )
+    DATABASE_URL = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql://")
 
     # Production logging
-    LOG_LEVEL = "WARNING"
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "WARNING")
 
-    # Security settings
+    # File uploads on Heroku's ephemeral filesystem
+    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "/tmp/uploads")
+
+    # Redis-backed server-side sessions
+    REDIS_URL = os.environ.get("REDIS_URL")
+    SESSION_TYPE = "redis" if REDIS_URL else os.environ.get("SESSION_TYPE", "filesystem")
+    SESSION_USE_SIGNER = True
+    SESSION_PERMANENT = True
+
+    # Enhanced security settings for production
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SAMESITE = "Strict"  # Stricter for production
+    
+    # Shorter timeouts for production
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("PERMANENT_SESSION_LIFETIME", 1800))  # 30 minutes
+    SESSION_IDLE_TIMEOUT = int(os.environ.get("SESSION_IDLE_TIMEOUT", 900))  # 15 minutes
+    SESSION_ROTATION_INTERVAL = int(os.environ.get("SESSION_ROTATION_INTERVAL", 600))  # 10 minutes
+    MAX_SESSIONS_PER_USER = int(os.environ.get("MAX_SESSIONS_PER_USER", 2))  # Fewer concurrent sessions
 
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
@@ -42,14 +89,19 @@ class ProductionConfig(Config):
         """Initialize production-specific settings."""
         Config.init_app(app)
 
-        # Log to syslog in production
+        # Configure logging to stdout for Heroku
         import logging
-        from logging.handlers import SysLogHandler
+        import sys
+        for h in list(app.logger.handlers):
+            app.logger.removeHandler(h)
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setLevel(getattr(logging, app.config.get("LOG_LEVEL", "WARNING")))
+        formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]")
+        stream_handler.setFormatter(formatter)
+        app.logger.addHandler(stream_handler)
+        app.logger.setLevel(getattr(logging, app.config.get("LOG_LEVEL", "WARNING")))
 
-        syslog_handler = SysLogHandler()
-        syslog_handler.setLevel(logging.WARNING)
-        app.logger.addHandler(syslog_handler)
-        # Email errors to administrators
+        # Optionally email errors to administrators
         if app.config.get("MAIL_SERVER"):
             from logging.handlers import SMTPHandler
 

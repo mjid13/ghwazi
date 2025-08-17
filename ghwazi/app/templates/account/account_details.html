@@ -65,7 +65,7 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <small class="text-success d-block">Total Income</small>
-                                                <strong class="text-success">{{ summary.total_income }} {{ account.currency }}</strong>
+                                                <strong class="text-success">{{ "{:,.3f}".format(summary.total_income) }} {{ account.currency }}</strong>
                                             </div>
                                             <div class="text-success">
                                                 <i class="bi bi-graph-up-arrow"></i>
@@ -79,7 +79,7 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <small class="text-danger d-block">Total Expenses</small>
-                                                <strong class="text-danger">{{ summary.total_expense }} {{ account.currency }}</strong>
+                                                <strong class="text-danger">{{ "{:,.3f}".format(summary.total_expense) }} {{ account.currency }}</strong>
                                             </div>
                                             <div class="text-danger">
                                                 <i class="bi bi-graph-down-arrow"></i>
@@ -249,7 +249,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-<script src="{{ url_for('static', filename='js/account_details.js') }}"></script>
-<script src="{{ url_for('static', filename='js/transaction-table.js') }}"></script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/forms.js') }}"></script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/account_details.js') }}"></script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/transaction-table.js') }}"></script>
 {% endblock %}

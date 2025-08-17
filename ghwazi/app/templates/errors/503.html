@@ -1,0 +1,112 @@
+{% extends "main/base.html" %}
+
+{% block title %}503 - Service Unavailable - GHWAZI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center text-center">
+        <div class="col-lg-6">
+            <div class="error-page">
+                <div class="error-code mb-4">
+                    <span class="display-1 fw-bold text-danger">503</span>
+                </div>
+                <div class="error-icon mb-4">
+                    <i class="bi bi-tools display-4 text-danger opacity-75"></i>
+                </div>
+                <h1 class="h3 mb-4">Service Unavailable</h1>
+                <p class="lead text-body-secondary mb-3">The service is temporarily unavailable due to maintenance or high load.</p>
+                <p class="text-body-secondary mb-5">We're working to restore service as quickly as possible.</p>
+
+                <div class="alert alert-warning text-start mb-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-wrench me-2"></i>
+                        Service Status
+                    </h6>
+                    <p class="mb-2">This could be due to:</p>
+                    <ul class="mb-0 small">
+                        <li>Scheduled maintenance</li>
+                        <li>High server load</li>
+                        <li>Database connectivity issues</li>
+                        <li>Temporary system updates</li>
+                    </ul>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3 mb-4">
+                    <button onclick="window.location.reload()" class="btn btn-primary px-4">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                    </button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary px-4">
+                        <i class="bi bi-house-door me-2"></i>Home
+                    </a>
+                </div>
+
+                <div class="mt-5">
+                    <div class="alert alert-light border text-start">
+                        <h6 class="alert-heading d-flex align-items-center">
+                            <i class="bi bi-clock-history me-2"></i>
+                            What to do while you wait
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li>Try again in a few minutes</li>
+                            <li>Check our status page for updates</li>
+                            <li>Clear your browser cache</li>
+                            <li>Contact support if the issue persists</li>
+                        </ul>
+                    </div>
+                </div>
+
+                {% if error_id %}
+                <div class="mt-4">
+                    <small class="text-muted">Error ID: {{ error_id }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-page {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .error-code {
+        position: relative;
+    }
+
+    .error-code:after {
+        content: "503";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 8rem;
+        font-weight: bold;
+        opacity: 0.05;
+        z-index: -1;
+    }
+
+    [data-bs-theme="dark"] .alert-light {
+        background-color: var(--bs-dark);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+
+    [data-bs-theme="dark"] .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border-color: rgba(255, 193, 7, 0.3);
+        color: var(--bs-warning);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

@@ -7,7 +7,7 @@ import email
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 from googleapiclient.discovery import build
@@ -166,10 +166,49 @@ class GmailService:
                     query_parts.append(subject_query)
             
             # Add date filter for new messages
-            if gmail_config.last_sync_at:
-                # Only get messages newer than last sync
-                last_sync_date = gmail_config.last_sync_at.strftime('%Y/%m/%d')
-                query_parts.append(f'after:{last_sync_date}')
+            # Use incremental sync only if we have previously processed at least one message.
+            # Otherwise, treat as first-time sync and use a reasonable historical window.
+            # Determine if this is a first-time sync based on absence of any last_sync_at
+            is_first_sync = not bool(gmail_config.last_sync_at)
+            first_window_days = 90
+            try:
+                # Prefer app config when available
+                from flask import current_app
+                try:
+                    cfg_days = current_app.config.get('GMAIL_FIRST_SYNC_DAYS')
+                    if isinstance(cfg_days, int) and cfg_days > 0:
+                        first_window_days = cfg_days
+                except RuntimeError:
+                    # Outside application context; keep default
+                    pass
+            except Exception:
+                pass
+
+            if not is_first_sync and gmail_config.last_sync_at:
+                # Only get messages newer than last completed sync, using epoch seconds for time precision
+                cutoff_dt = gmail_config.last_sync_at
+                try:
+                    if cutoff_dt.tzinfo is None:
+                        cutoff_dt_utc = cutoff_dt.replace(tzinfo=timezone.utc)
+                    else:
+                        cutoff_dt_utc = cutoff_dt.astimezone(timezone.utc)
+                    cutoff_epoch = int(cutoff_dt_utc.timestamp())
+                except Exception:
+                    # Fallback to date-only if timestamp conversion fails
+                    cutoff_epoch = None
+                if cutoff_epoch is not None:
+                    query_parts.append(f'after:{cutoff_epoch}')
+                    logger.info(
+                        f"Using incremental Gmail sync after epoch {cutoff_epoch} (UTC {cutoff_dt.isoformat()}), has last_sync_at"
+                    )
+                else:
+                    last_sync_date = cutoff_dt.strftime('%Y/%m/%d')
+                    query_parts.append(f'after:{last_sync_date}')
+                    logger.info(f"Using incremental Gmail sync after:{last_sync_date} (fallback, has last_sync_at)")
+            else:
+                # First sync: fetch a historical window to seed data
+                query_parts.append(f'newer_than:{first_window_days}d')
+                logger.info(f"Using first Gmail sync window newer_than:{first_window_days}d (no last_sync_at)")
             
             # Combine query parts
             query = ' '.join(query_parts) if query_parts else 'in:inbox'
@@ -409,9 +448,26 @@ class GmailService:
                 'errors': 0
             }
             
+            # Enforce strict cutoff: skip any messages received at or before last_sync_at
+            cutoff = gmail_config.last_sync_at if gmail_config.last_sync_at else None
             # Process each message for financial data
             for message in messages:
                 try:
+                    # Strictly skip messages received at or before last sync time
+                    if cutoff:
+                        try:
+                            msg_dt = None
+                            if message.get('internal_date'):
+                                # Gmail internalDate is in milliseconds since epoch (UTC)
+                                msg_dt = datetime.utcfromtimestamp(int(message['internal_date'])/1000.0)
+                            elif message.get('date'):
+                                msg_dt = message.get('date')
+                            if msg_dt and msg_dt <= cutoff:
+                                logger.info(f"Skipping message {message.get('id')} at {msg_dt} <= last_sync_at {cutoff}")
+                                continue
+                        except Exception as _:
+                            # On parsing issues, fall back to processing
+                            pass
                     # Extract financial transactions from message
                     transactions = self._extract_transactions_from_message(message, user_id, account_number)
                     
@@ -504,7 +560,7 @@ class GmailService:
 
             # Try to parse transaction data using the parser service
             parsed = self.parser.parse_email(message, subject)
-            logger.error(f"this the account number: {account_number} and thie the parsed: {parsed.get("account_number")}")
+            logger.debug(f"this the account number: {account_number} and thie the parsed: {parsed.get("account_number")}")
             if parsed:
                 if account_number[-4:] not in parsed.get("account_number"):
                     return transactions

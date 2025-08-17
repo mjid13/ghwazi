@@ -212,7 +212,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 // Form validation
 (function () {
     'use strict'

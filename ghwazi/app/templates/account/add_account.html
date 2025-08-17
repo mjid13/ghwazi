@@ -3,7 +3,7 @@
 {% block title %}Add Bank Account - Bank Email Parser{% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Get the bank_id and currency elements
     const bankSelect = document.getElementById('bank_id');

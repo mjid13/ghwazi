@@ -22,8 +22,6 @@ class CounterpartyService:
     def __init__(self):
         """Initialize the counterparty service."""
         self.db = Database()
-        self.db.connect()
-        self.db.create_tables()
         self.category_service = CategoryService()
 
     # Context manager support

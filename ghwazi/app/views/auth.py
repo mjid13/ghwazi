@@ -8,6 +8,8 @@ from datetime import datetime
 from flask import (Blueprint, flash, redirect, render_template, request,
                    session, url_for)
 
+from ..extensions import limiter
+
 from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..models.user import User
@@ -21,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("3 per minute")
 def register():
     """Register a new user."""
     if request.method == "POST":
@@ -79,6 +82,7 @@ def register():
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def login():
     """Log in a user."""
     if request.method == "POST":
@@ -97,9 +101,35 @@ def login():
                 flash("Invalid username or password", "error")
                 return render_template("auth/login.html")
 
-            # Set user session
-            session["user_id"] = user.id
-            session["username"] = user.username
+            # Enhanced session creation with security features
+            from ..services.session_service import SessionService
+            
+            try:
+                # Create secure session
+                session_id = SessionService.create_session(
+                    user_id=user.id,
+                    user_agent=request.headers.get('User-Agent'),
+                    ip_address=request.remote_addr
+                )
+                
+                # Set Flask session
+                session.clear()
+                session["user_id"] = user.id
+                session["username"] = user.username
+                session["session_id"] = session_id
+                session["last_activity"] = datetime.now().timestamp()
+                session.permanent = True
+                
+                logger.info(f"Secure session created for user {user.username}")
+                
+            except Exception as e:
+                logger.error(f"Failed to create secure session: {e}")
+                # Fallback to basic session
+                session.clear()
+                session["user_id"] = user.id
+                session["username"] = user.username
+                session["last_activity"] = datetime.now().timestamp()
+                session.permanent = True
 
             flash(f"Welcome back, {user.username}!", "success")
             return redirect(url_for("main.dashboard"))
@@ -116,7 +146,19 @@ def login():
 
 @auth_bp.route("/logout")
 def logout():
-    """Log out a user."""
+    """Log out a user with enhanced session cleanup."""
+    from ..services.session_service import SessionService
+    
+    # Clean up secure session if it exists
+    session_id = session.get("session_id")
+    if session_id:
+        try:
+            SessionService.invalidate_session(session_id)
+            logger.info(f"Secure session invalidated: {session_id[:8]}...")
+        except Exception as e:
+            logger.error(f"Failed to invalidate secure session: {e}")
+    
+    # Clear Flask session
     session.clear()
     flash("You have been logged out", "success")
     return redirect(url_for("main.index"))

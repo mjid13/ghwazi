@@ -27,6 +27,7 @@
 - [🔧 API Reference](#-api-reference)
 - [🧪 Development](#-development)
 - [🚀 Deployment](#-deployment)
+- [🐳 Docker](#-docker)
 - [🔒 Security](#-security)
 - [📈 Performance](#-performance)
 - [❓ FAQ](#-faq)
@@ -390,3 +391,15 @@ For support and questions:
 - Transaction management
 - Dashboard with charts
 - Admin interface for categories and email configs
+
+---
+
+## 🐳 Docker
+
+A production-ready Dockerfile and docker-compose.yml are included.
+
+Quick start:
+- Build: docker build -t money-tracker:latest .
+- Run (compose): docker compose up -d --build
+
+For full instructions, environment variables, and persistence details, see DOCKER.md.

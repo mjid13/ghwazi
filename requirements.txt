@@ -10,3 +10,6 @@ gunicorn==21.2.0
 # Note: For development, use: pip install -r requirements/development.txt
 # Note: For production, use: pip install -r requirements/production.txt
 # Note: For testing, use: pip install -r requirements/testing.txt
+psycopg2-binary==2.9.7
+redis==5.0.1
+Flask-Session==0.5.0

@@ -3,36 +3,196 @@
 {% block title %}Edit Bank Account - Bank Email Parser{% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Get the bank_id and currency elements
     const bankSelect = document.getElementById('bank_id');
     const currencyInput = document.getElementById('currency');
     const bankNameInput = document.getElementById('bank_name');
-    
-    // Add event listener to update currency when bank is selected
+    const emailFilterPreview = document.getElementById('email-filter-preview');
+    const accountNumberInput = document.getElementById('account_number');
+    const validationMessage = document.getElementById('account-validation-message');
+
+    // Account number input masking and validation
+    function formatAccountNumber(value) {
+        // Remove all non-digits
+        const digits = value.replace(/\D/g, '');
+        // Add spaces every 4 digits
+        return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+    }
+
+    function validateAccountNumber(value) {
+        const digits = value.replace(/\D/g, '');
+        const isValid = digits.length === 16;
+        const isComplete = digits.length === 16;
+        const isPartial = digits.length > 0 && digits.length < 16;
+
+        return {
+            isValid,
+            isComplete,
+            isPartial,
+            digitCount: digits.length,
+            cleanValue: digits
+        };
+    }
+
+    function showValidationMessage(type, message) {
+        validationMessage.textContent = message;
+        validationMessage.className = `form-text validation-message ${type}`;
+        validationMessage.style.display = 'block';
+    }
+
+    function hideValidationMessage() {
+        validationMessage.style.display = 'none';
+    }
+
+    // Account number input event handlers
+    accountNumberInput.addEventListener('input', function(e) {
+        const cursorPosition = e.target.selectionStart;
+        const oldValue = e.target.value;
+        const formatted = formatAccountNumber(e.target.value);
+        const validation = validateAccountNumber(formatted);
+
+        // Update input value with formatting
+        e.target.value = formatted;
+
+        // Restore cursor position accounting for added spaces
+        const spacesAdded = formatted.length - oldValue.replace(/\s/g, '').length;
+        e.target.setSelectionRange(cursorPosition + spacesAdded, cursorPosition + spacesAdded);
+
+        // Show validation feedback
+        if (validation.digitCount === 0) {
+            hideValidationMessage();
+            e.target.classList.remove('is-valid', 'is-invalid');
+        } else if (validation.isComplete) {
+            showValidationMessage('success', '✓ Valid account number format');
+            e.target.classList.remove('is-invalid');
+            e.target.classList.add('is-valid');
+        } else if (validation.isPartial) {
+            const missingDigits = 16 - validation.digitCount;
+            showValidationMessage('warning', `${missingDigits} digits missing`);
+            e.target.classList.remove('is-valid', 'is-invalid');
+        }
+
+        // Update the hidden input value (clean digits only for form submission)
+        e.target.setAttribute('data-clean-value', validation.cleanValue);
+    });
+
+    // Prevent non-numeric input
+    accountNumberInput.addEventListener('keydown', function(e) {
+        // Allow: backspace, delete, tab, escape, enter
+        if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            (e.keyCode === 65 && e.ctrlKey === true) ||
+            (e.keyCode === 67 && e.ctrlKey === true) ||
+            (e.keyCode === 86 && e.ctrlKey === true) ||
+            (e.keyCode === 88 && e.ctrlKey === true) ||
+            // Allow: home, end, left, right, down, up
+            (e.keyCode >= 35 && e.keyCode <= 40)) {
+            return;
+        }
+        // Ensure that it is a number and stop the keypress
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+
+    // Handle paste events
+    accountNumberInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        const digits = paste.replace(/\D/g, '');
+        if (digits.length <= 16) {
+            e.target.value = formatAccountNumber(digits);
+            e.target.dispatchEvent(new Event('input'));
+        }
+    });
+
+    // Form submission handler - ensure clean value is submitted
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const cleanValue = accountNumberInput.getAttribute('data-clean-value') || '';
+        const validation = validateAccountNumber(cleanValue);
+
+        if (!validation.isComplete) {
+            e.preventDefault();
+            showValidationMessage('error', 'Please enter a complete 16-digit account number');
+            accountNumberInput.classList.add('is-invalid');
+            accountNumberInput.focus();
+            return false;
+        }
+
+        // Set the clean value for submission
+        accountNumberInput.value = cleanValue;
+    });
+
+    // Add event listener to update currency and email preview when bank is selected
     bankSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
-        
+
         if (selectedOption.value) {
             // Get currency from data attribute
             const currency = selectedOption.getAttribute('data-currency');
             currencyInput.value = currency;
-            
+
             // Disable bank_name field when a bank is selected
-            bankNameInput.disabled = true;
-            bankNameInput.value = '';
+            if (bankNameInput) {
+                bankNameInput.disabled = true;
+                bankNameInput.value = '';
+            }
+
+            // Update email filter preview
+            updateEmailFilterPreview(selectedOption.value);
         } else {
             // Reset currency to default
             currencyInput.value = 'OMR';
-            
+
             // Enable bank_name field when no bank is selected
-            bankNameInput.disabled = false;
+            if (bankNameInput) {
+                bankNameInput.disabled = false;
+            }
+
+            // Hide email filter preview
+            emailFilterPreview.style.display = 'none';
         }
     });
 });
 </script>
+
+<style>
+.validation-message {
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+}
+
+.validation-message.success {
+    color: #28a745;
+}
+
+.validation-message.warning {
+    color: #ffc107;
+}
+
+.validation-message.error {
+    color: #dc3545;
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+#account_number {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+</style>
 {% endblock %}
+
+
 
 {% block content %}
 <div class="row">
@@ -58,9 +218,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="account_number" class="form-label">Account Number *</label>
-                        <input type="text" class="form-control" id="account_number" name="account_number" value="{{ account.account_number }}" required pattern="^[0-9]{6,20}$" minlength="6" maxlength="20" inputmode="numeric">
-                        <div class="form-text">Account number must be 6–20 digits (numbers only). Leading zeros are allowed.</div>
+                        <input type="text" class="form-control" id="account_number" name="account_number" value="{{ account.account_number }}"  required autocomplete="off" placeholder="0000 0000 0000 0000" maxlength="19">
+                        <div id="account-validation-message" class="form-text validation-message" style="display: none;"></div>
+                        <div class="form-text">Account number must be 16 digits. </div>
                     </div>
+
 
                     <div class="mb-3">
                         <label for="bank_id" class="form-label">Bank *</label>
@@ -85,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="number" class="form-control" id="balance" name="balance" step="0.01" value="{{ account.balance }}">
                         <div class="form-text">Enter the current balance of your account.</div>
                     </div>
-
                     <div class="mb-3">
                         <label for="currency" class="form-label">Currency</label>
                         <input type="text" class="form-control" id="currency" name="currency" value="{{ account.currency }}" readonly>

@@ -18,6 +18,7 @@ from googleapiclient.errors import HttpError
 from ..models.database import Database
 from ..models import OAuthUser, EmailAuthConfig, OAuthUserRepository, EmailAuthConfigRepository
 from ..models.user import User
+from ..utils.db_session_manager import database_session
 
 logger = logging.getLogger(__name__)
 
@@ -195,189 +196,217 @@ class GoogleOAuthService:
         Returns:
             Dictionary with OAuth user data or None
         """
-        db_session = self.db.get_session()
-
         try:
-            # Find existing OAuth user by Google ID
-            google_user_id = user_info['id']
-            oauth_user = OAuthUserRepository.get_by_provider_user_id(db_session, 'google', google_user_id)
+            with database_session() as db_session:
+                # Find existing OAuth user by Google ID
+                google_user_id = user_info['id']
+                oauth_user = OAuthUserRepository.get_by_provider_user_id(db_session, 'google', google_user_id)
 
-            if oauth_user:
-                # Update existing OAuth user
-                oauth_user.email = user_info['email']
-                oauth_user.name = user_info['name']
-                oauth_user.picture = user_info['picture']
-                oauth_user.update_tokens(
-                    access_token=credentials.token,
-                    refresh_token=credentials.refresh_token,
-                    expires_in=3600,  # Default 1 hour
-                    scope=credentials.scopes
-                )
-                oauth_user.is_active = True
-                db_session.commit()
+                if oauth_user:
+                    # Update existing OAuth user
+                    oauth_user.email = user_info['email']
+                    oauth_user.name = user_info['name']
+                    oauth_user.picture = user_info['picture']
+                    oauth_user.update_tokens(
+                        access_token=credentials.token,
+                        refresh_token=credentials.refresh_token,
+                        expires_in=3600,  # Default 1 hour
+                        scope=credentials.scopes
+                    )
+                    oauth_user.is_active = True
 
-                logger.info(f"Updated existing OAuth user: {oauth_user.email}")
+                    logger.info(f"Updated existing OAuth user: {oauth_user.email}")
 
-            else:
-                # Check if we need to link to existing app user
-                current_user_id = session.get('user_id')
-                if current_user_id:
-                    # User is already logged in, link OAuth to existing account
-                    user = db_session.query(User).filter_by(id=current_user_id).first()
-                    if not user:
-                        logger.error(f"Current user {current_user_id} not found")
-                        return None
                 else:
-                    # Check if user exists by email
-                    user = db_session.query(User).filter_by(email=user_info['email']).first()
-                    if not user:
-                        # Create new app user
-                        user = User(
-                            username=user_info['email'].split('@')[0],
-                            email=user_info['email'],
-                            password_hash=token_urlsafe(48) # Use access token as placeholder password
-                        )
-                        db_session.add(user)
-                        db_session.flush()  # Get user ID
+                    # Check if we need to link to existing app user
+                    current_user_id = session.get('user_id')
+                    if current_user_id:
+                        # User is already logged in, link OAuth to existing account
+                        user = db_session.query(User).filter_by(id=current_user_id).first()
+                        if not user:
+                            logger.error(f"Current user {current_user_id} not found")
+                            return None
+                    else:
+                        # Check if user exists by email
+                        user = db_session.query(User).filter_by(email=user_info['email']).first()
+                        if not user:
+                            # Create new app user
+                            user = User(
+                                username=user_info['email'].split('@')[0],
+                                email=user_info['email'],
+                                password_hash=token_urlsafe(48) # Use access token as placeholder password
+                            )
+                            db_session.add(user)
+                            db_session.flush()  # Get user ID
 
-                        logger.info(f"Created new app user: {user.email}")
+                            logger.info(f"Created new app user: {user.email}")
 
-                # Create new OAuth user using repository
-                oauth_user = OAuthUserRepository.create_oauth_user(
-                    session=db_session,
-                    user_id=user.id,
-                    provider='google',
-                    provider_user_id=google_user_id,
-                    email=user_info['email'],
-                    name=user_info['name'],
-                    access_token=credentials.token,
-                    refresh_token=credentials.refresh_token,
-                    expires_in=3600,
-                    scope=credentials.scopes,
-                    picture=user_info['picture']
-                )
+                    # Create new OAuth user using repository
+                    oauth_user = OAuthUserRepository.create_oauth_user(
+                        session=db_session,
+                        user_id=user.id,
+                        provider='google',
+                        provider_user_id=google_user_id,
+                        email=user_info['email'],
+                        name=user_info['name'],
+                        access_token=credentials.token,
+                        refresh_token=credentials.refresh_token,
+                        expires_in=3600,
+                        scope=credentials.scopes,
+                        picture=user_info['picture']
+                    )
 
-                # Create default Email config using repository
-                email_config = EmailAuthConfigRepository.create(
-                    session=db_session,
-                    oauth_user_id=oauth_user.id,
-                    enabled=True,
-                    auto_sync=False,
-                    sync_frequency_hours=24,
-                    labels=['INBOX']
-                )
+                    # Create default Email config using repository
+                    email_config = EmailAuthConfigRepository.create(
+                        session=db_session,
+                        oauth_user_id=oauth_user.id,
+                        enabled=True,
+                        auto_sync=False,
+                        sync_frequency_hours=24,
+                        labels=['INBOX']
+                    )
 
-                logger.info(f"Created new OAuth user: {oauth_user.email}")
+                    logger.info(f"Created new OAuth user: {oauth_user.email}")
 
-            # Extract data before closing session
-            oauth_user_data = {
-                'id': oauth_user.id,
-                'user_id': oauth_user.user_id,
-                'provider_user_id': oauth_user.provider_user_id,
-                'email': oauth_user.email,
-                'name': oauth_user.name,
-                'picture': oauth_user.picture,
-                'is_active': oauth_user.is_active,
-                'access_token': oauth_user.access_token,
-                'refresh_token': oauth_user.refresh_token,
-                'scopes': oauth_user.scopes
-            }
+                # Extract data before session closes
+                oauth_user_data = {
+                    'id': oauth_user.id,
+                    'user_id': oauth_user.user_id,
+                    'provider_user_id': oauth_user.provider_user_id,
+                    'email': oauth_user.email,
+                    'name': oauth_user.name,
+                    'picture': oauth_user.picture,
+                    'is_active': oauth_user.is_active,
+                    'access_token': oauth_user.access_token,
+                    'refresh_token': oauth_user.refresh_token,
+                    'scopes': oauth_user.scopes
+                }
 
-            return oauth_user_data
+                return oauth_user_data
             
         except Exception as e:
             logger.error(f"Error creating/updating OAuth user: {e}")
-            db_session.rollback()
             return None
-        finally:
-            self.db.close_session(db_session)
-    
+
     def refresh_access_token(self, oauth_user: OAuthUser) -> bool:
         """
         Refresh OAuth access token for user.
 
         Args:
             oauth_user: OAuthUser instance
-            
+
         Returns:
             True if token refreshed successfully
         """
         if not oauth_user.refresh_token:
             logger.error(f"No refresh token available for user {oauth_user.email}")
             return False
-        
+
         try:
+            # Import current_app here and handle context issues
+            from flask import current_app
+
+            # Try to get config from current_app, fallback to environment variables
+            try:
+                client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+                client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET')
+            except RuntimeError as e:
+                if "Working outside of application context" in str(e):
+                    # Fallback to environment variables when outside app context
+                    import os
+                    client_id = os.environ.get('GOOGLE_CLIENT_ID')
+                    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+                    if not client_id or not client_secret:
+                        logger.error("Google OAuth credentials not found in app config or environment variables")
+                        return False
+                else:
+                    raise e
+
             credentials = Credentials(
                 token=oauth_user.access_token,
                 refresh_token=oauth_user.refresh_token,
                 token_uri="https://oauth2.googleapis.com/token",
-                client_id=current_app.config.get('GOOGLE_CLIENT_ID'),
-                client_secret=current_app.config.get('GOOGLE_CLIENT_SECRET'),
+                client_id=client_id,
+                client_secret=client_secret,
                 scopes=oauth_user.scopes
             )
-            
+
             # Refresh the token
             credentials.refresh(Request())
-            
+
             # Update stored tokens
-            db_session = self.db.get_session()
-            try:
+            with database_session() as db_session:
                 oauth_user.update_tokens(
                     access_token=credentials.token,
                     refresh_token=credentials.refresh_token,
                     expires_in=3600,
                     scope=credentials.scopes
                 )
-                
-                db_session.commit()
+
                 logger.info(f"Refreshed access token for user {oauth_user.email}")
                 return True
-                
-            except Exception as e:
-                logger.error(f"Error updating refreshed tokens: {e}")
-                db_session.rollback()
-                return False
-            finally:
-                self.db.close_session(db_session)
-                
+
         except Exception as e:
             logger.error(f"Error refreshing access token: {e}")
             return False
-    
+
     def get_valid_credentials(self, oauth_user: OAuthUser) -> Optional[Credentials]:
         """
         Get valid OAuth credentials, refreshing if necessary.
 
         Args:
             oauth_user: OAuthUser instance
-            
+
         Returns:
             Valid Credentials or None
         """
         if not oauth_user or not oauth_user.is_active:
             return None
-        
+
         # Check if token needs refresh
         if oauth_user.needs_refresh:
             if not self.refresh_access_token(oauth_user):
                 return None
-        
+
         try:
+            # Import current_app here and handle context issues
+            from flask import current_app
+
+            # Try to get config from current_app, fallback to environment variables
+            try:
+                client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+                client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET')
+            except RuntimeError as e:
+                if "Working outside of application context" in str(e):
+                    # Fallback to environment variables when outside app context
+                    import os
+                    client_id = os.environ.get('GOOGLE_CLIENT_ID')
+                    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+                    if not client_id or not client_secret:
+                        logger.error("Google OAuth credentials not found in app config or environment variables")
+                        return None
+                else:
+                    raise e
+
             credentials = Credentials(
                 token=oauth_user.access_token,
                 refresh_token=oauth_user.refresh_token,
                 token_uri="https://oauth2.googleapis.com/token",
-                client_id=current_app.config.get('GOOGLE_CLIENT_ID'),
-                client_secret=current_app.config.get('GOOGLE_CLIENT_SECRET'),
+                client_id=client_id,
+                client_secret=client_secret,
                 scopes=oauth_user.scopes
             )
-            
+
             return credentials
-            
+
         except Exception as e:
             logger.error(f"Error creating credentials: {e}")
             return None
-    
+
+
+
     def revoke_oauth_access(self, oauth_user: OAuthUser) -> bool:
         """
         Revoke OAuth access for user.
@@ -401,20 +430,10 @@ class GoogleOAuthService:
                     logger.warning(f"Failed to revoke token with Google: {e}")
             
             # Update local OAuth record
-            db_session = self.db.get_session()
-            try:
+            with database_session() as db_session:
                 oauth_user.revoke_access()
-                db_session.commit()
-                
                 logger.info(f"Revoked local OAuth access for user {oauth_user.email}")
                 return True
-                
-            except Exception as e:
-                logger.error(f"Error revoking local OAuth access: {e}")
-                db_session.rollback()
-                return False
-            finally:
-                self.db.close_session(db_session)
                 
         except Exception as e:
             logger.error(f"Error revoking OAuth access: {e}")
@@ -430,11 +449,8 @@ class GoogleOAuthService:
         Returns:
             OAuthUser instance or None
         """
-        db_session = self.db.get_session()
-        try:
+        with database_session() as db_session:
             return OAuthUserRepository.get_by_user_and_provider(db_session, user_id, 'google')
-        finally:
-            self.db.close_session(db_session)
     
     def get_email_config(self, user_id: int) -> Optional[EmailAuthConfig]:
         """
@@ -446,8 +462,7 @@ class GoogleOAuthService:
         Returns:
             EmailAuthConfig instance or None
         """
-        db_session = self.db.get_session()
-        try:
+        with database_session() as db_session:
             # Get OAuth user first, then get email config
             oauth_user = OAuthUserRepository.get_by_user_and_provider(db_session, user_id, 'google')
             
@@ -455,5 +470,3 @@ class GoogleOAuthService:
                 return None
                 
             return EmailAuthConfigRepository.get_by_oauth_user_id(db_session, oauth_user.id)
-        finally:
-            self.db.close_session(db_session)

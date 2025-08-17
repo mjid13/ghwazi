@@ -17,13 +17,92 @@ let pendingRequests = {
     categoryChart: false
 };
 
+// Styles for the category filter toggle (injected once into <head>)
+const CATEGORY_FILTER_STYLES = `
+.category-chart-filter {
+    margin: 0 0 20px 0;
+    padding: 0;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+}
+.filter-toggle-container { position: relative; display: flex; align-items: center; justify-content: center; margin: 0; padding: 8px 0; }
+.filter-toggle-wrapper { position: relative; background: var(--bs-body-bg, #fff); border-radius: 20px; padding: 1px; box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.08); transition: all 0.4s cubic-bezier(0.25,0.46,0.45,0.94); }
+.filter-toggle-wrapper:hover { box-shadow: 0 6px 25px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8); transform: translateY(-1px); }
+.filter-toggle-track { position: relative; display: flex; border-radius: 17px; overflow: hidden; background: rgba(0,0,0,0.02); }
+.filter-toggle-slider { position: absolute; top: 0; left: 0; width: 50%; height: 100%; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 50%, #dc3545 100%); border-radius: 17px; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 3px 12px rgba(220, 53, 69, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3); z-index: 2; display: flex; align-items: center; justify-content: center; }
+.filter-toggle-label { position: relative; z-index: 3; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s ease; color: #495057; font-size: 16px; }
+.filter-toggle-label:first-of-type { border-radius: 16px 0 0 16px; }
+.filter-toggle-label:last-of-type { border-radius: 0 16px 16px 0; }
+.filter-toggle-label:hover { color: #212529; transform: scale(1.02); }
+.filter-toggle-label:active { transform: scale(0.98); }
+.filter-toggle-wrapper input[type="radio"] { display: none; }
+#expense-filter:checked ~ .filter-toggle-track .filter-toggle-slider { left: 0; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 50%, #dc3545 100%); box-shadow: 0 3px 12px rgba(220, 53, 69, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+#income-filter:checked ~ .filter-toggle-track .filter-toggle-slider { left: 50%; background: linear-gradient(135deg, #38b000 0%, #2ea44f 50%, #198754 100%); box-shadow: 0 3px 12px rgba(25, 135, 84, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+.slider-icon { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.butter-icon { position: absolute; width: 24px; height: 24px; transform: translateY(0); transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease; opacity: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+.icon-circle { width: 24px; height: 24px; border-radius: 12px; background: rgba(255,255,255,0.95); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 5px rgba(0,0,0,0.08); }
+.arrow-down, .arrow-up { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; }
+.arrow-down { border-top: 8px solid #dc3545; }
+.arrow-up { border-bottom: 8px solid #198754; }
+#expense-filter:checked ~ .filter-toggle-track .butter-icon.expense-icon { opacity: 1; transform: translateY(0); }
+#income-filter:checked ~ .filter-toggle-track .butter-icon.income-icon { opacity: 1; transform: translateY(0); }
+.label-icon { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; }
+.icon-ring { width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+.minus-line { width: 10px; height: 2px; background: #dc3545; border-radius: 2px; box-shadow: 0 1px 0 rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8); }
+.plus-lines { position: relative; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+.plus-horizontal, .plus-vertical { position: absolute; background: #198754; border-radius: 2px; box-shadow: 0 1px 0 rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8); }
+.plus-horizontal { width: 12px; height: 2px; }
+.plus-vertical { width: 2px; height: 12px; }
+#expense-filter:checked ~ .filter-toggle-track .label-icon.expense-label .icon-ring { background: rgba(220,53,69,0.08); }
+#income-filter:checked ~ .filter-toggle-track .label-icon.income-label .icon-ring { background: rgba(25,135,84,0.08); }
+.filter-toggle-wrapper.active { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8); }
+.filter-toggle-label:active .icon-ring { transform: scale(0.96); }
+.filter-toggle-label:hover .icon-ring { transform: scale(1.02); }
+.filter-toggle-slider::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 100% 50%, rgba(255,255,255,0.4), transparent 60%); opacity: 0.35; border-radius: 17px; z-index: -1; transition: opacity 0.3s ease; }
+.filter-toggle-wrapper:hover .filter-toggle-slider::before { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) { .filter-toggle-slider, .filter-toggle-label, .filter-toggle-wrapper, .slider-icon i { transition: none !important; } }
+.category-chart-filter + canvas,
+.category-chart-filter ~ canvas,
+.category-chart-filter + div canvas { margin-top: 2px !important; }
+#categoryChart { position: relative; z-index: 1; }
+.chart-container { transition: all 0.3s ease; padding-top: 0 !important; }
+.chart-container.loading { pointer-events: none; }
+.chart-container canvas { max-height: none !important; }
+@media (max-width: 576px) {
+  .category-chart-filter { margin-bottom: 15px; }
+  .filter-toggle-wrapper { padding: 2px; }
+  .filter-toggle-label { width: 38px; height: 38px; font-size: 14px; }
+  .slider-icon i { font-size: 10px; }
+}`;
+
+function ensureCategoryFilterStyles() {
+    if (document.getElementById('category-filter-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'category-filter-styles';
+    style.type = 'text/css';
+    try {
+        const meta = document.querySelector('meta[name="csp-nonce"]');
+        if (meta && meta.content) {
+            style.nonce = meta.content;
+        }
+    } catch (e) {
+        console.warn('Unable to set CSP nonce on style tag:', e);
+    }
+    style.appendChild(document.createTextNode(CATEGORY_FILTER_STYLES));
+    document.head.appendChild(style);
+}
+
 // Initialize dashboard charts
 function initDashboardCharts(chartData) {
     // Only proceed if we have chart data
     if (!chartData || Object.keys(chartData).length === 0) {
-        console.log('No chart data available');
+        console.warn('No chart data available - cannot initialize charts');
         return;
     }
+
+    console.log('Initializing dashboard charts with data:', chartData);
 
     // 1. Income vs Expense Chart
     if (chartData.income_expense && document.getElementById('incomeExpenseChart')) {
@@ -38,10 +117,83 @@ function initDashboardCharts(chartData) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    const dataset = data.datasets[0];
+                                    return data.labels.map((label, i) => {
+                                        const value = dataset.data[i];
+                                        const total = dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return {
+                                            text: `${label} (${percentage}%)`,
+                                            fillStyle: dataset.backgroundColor[i],
+                                            strokeStyle: dataset.borderColor ? dataset.borderColor[i] : dataset.backgroundColor[i],
+                                            lineWidth: 0,
+                                            pointStyle: 'circle',
+                                            hidden: chart.getDatasetMeta(0).data[i].hidden,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(33, 37, 41, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        cornerRadius: 12,
+                        padding: 16,
+                        displayColors: true,
+                        titleFont: {
+                            size: 14,
+                            weight: '700'
+                        },
+                        bodyFont: {
+                            size: 13,
+                            weight: '500'
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return [`${label}: ${value}`, `${percentage}% of total`];
+                            }
+                        }
                     }
+                },
+                elements: {
+                    arc: {
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        hoverBorderWidth: 4,
+                        hoverBackgroundColor: function(ctx) {
+                            const color = ctx.element.options.backgroundColor;
+                            return Chart.helpers.color(color).alpha(0.8).rgbString();
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1000,
+                    easing: 'easeOutCubic'
                 }
             }
         });
@@ -71,15 +223,89 @@ function initDashboardCharts(chartData) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 scales: {
+                    x: {
+                        display: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            lineWidth: 1
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            color: '#6c757d'
+                        }
+                    },
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            lineWidth: 1
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            color: '#6c757d',
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
                     }
                 },
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(33, 37, 41, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        cornerRadius: 12,
+                        padding: 16,
+                        displayColors: true,
+                        titleFont: {
+                            size: 14,
+                            weight: '700'
+                        },
+                        bodyFont: {
+                            size: 13,
+                            weight: '500'
+                        }
                     }
+                },
+                elements: {
+                    point: {
+                        radius: 5,
+                        hoverRadius: 8,
+                        borderWidth: 2,
+                        hoverBorderWidth: 3
+                    },
+                    line: {
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: false
+                    }
+                },
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutCubic'
                 }
             }
         });
@@ -98,15 +324,84 @@ function initDashboardCharts(chartData) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(33, 37, 41, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        cornerRadius: 12,
+                        padding: 16,
+                        displayColors: false,
+                        titleFont: {
+                            size: 14,
+                            weight: '700'
+                        },
+                        bodyFont: {
+                            size: 13,
+                            weight: '500'
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                return `Balance: ${value.toLocaleString()}`;
+                            }
+                        }
                     }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            color: '#6c757d',
+                            maxRotation: 45
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            lineWidth: 1
+                        },
+                        ticks: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            color: '#6c757d',
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    bar: {
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        borderWidth: 0,
+                        hoverBorderWidth: 0
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutCubic',
+                    delay: function(context) {
+                        return context.type === 'data' && context.mode === 'default' 
+                            ? context.dataIndex * 100 
+                            : 0;
+                    }
+                },
+                onHover: (event, activeElements, chart) => {
+                    event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
                 }
             }
         });
@@ -255,7 +550,7 @@ function updateCategoryChartInstance(chartData) {
             animation: {
                 animateRotate: true,
                 animateScale: true,
-                duration: 800,
+                duration: 1000,
                 easing: 'easeOutCubic'
             }
         }
@@ -263,18 +558,24 @@ function updateCategoryChartInstance(chartData) {
 }
 
 // Function to create category filter buttons
-// Function to create category filter buttons
 function createCategoryFilter() {
     const categoryChartContainer = document.getElementById('categoryChart').closest('.chart-container');
 
-    // Check if filter already exists
-    if (categoryChartContainer.querySelector('.category-chart-filter')) {
+    // Check if filter already exists either in the chart container (fallback placement)
+    // or in the header toggle container (preferred placement). This prevents duplicates
+    // when charts are re-initialized.
+    const existingHeaderToggle = document.querySelector('#category-toggle-container .category-chart-filter');
+    if (categoryChartContainer.querySelector('.category-chart-filter') || existingHeaderToggle) {
         return;
     }
 
     // Create filter container with enhanced styling
     const filterContainer = document.createElement('div');
     filterContainer.className = 'category-chart-filter d-flex justify-content-center mb-1';
+    // Ensure styles for the toggle are available once
+    ensureCategoryFilterStyles();
+
+    // Re-assign clean HTML for the filter (styles are injected in <head>)
     filterContainer.innerHTML = `
         <div class="filter-toggle-container">
             <div class="filter-toggle-wrapper">
@@ -316,436 +617,22 @@ function createCategoryFilter() {
                 </div>
             </div>
         </div>
-        
-        <style>
-            .category-chart-filter {
-                margin: 0 0 20px 0;
-                padding: 0;
-                position: relative;
-                z-index: 10;
-                display: flex;
-                align-items: center;
-            }
-
-            .filter-toggle-container {
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0;
-                padding: 8px 0;
-            }
-            
-            .filter-toggle-wrapper {
-                position: relative;
-                background: var(--bs-body-bg, #fff);
-                border-radius: 20px;
-                padding: 1px;
-                box-shadow: 
-                    0 4px 20px rgba(0, 0, 0, 0.08),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-                border: 1px solid rgba(0, 0, 0, 0.08);
-                transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                backdrop-filter: blur(10px);
-            }
-            
-            .filter-toggle-wrapper:hover {
-                box-shadow: 
-                    0 6px 25px rgba(0, 0, 0, 0.12),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-                transform: translateY(-1px);
-            }
-            
-            .filter-toggle-track {
-                position: relative;
-                display: flex;
-                border-radius: 17px;
-                overflow: hidden;
-                background: rgba(0, 0, 0, 0.02);
-            }
-
-            .filter-toggle-slider {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 50%;
-                height: 100%;
-                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 50%, #dc3545 100%);
-                border-radius: 17px;
-                transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-                box-shadow: 
-                    0 3px 12px rgba(220, 53, 69, 0.4),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-                z-index: 2;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transform-origin: center;
-            }
-            
-            .slider-icon {
-                position: relative;
-                width: 20px;
-                height: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            /* Butter Icon Styles */
-            .butter-icon {
-                position: absolute;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            }
-
-            .icon-circle {
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.25);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.4);
-                box-shadow: 
-                    0 1px 4px rgba(0, 0, 0, 0.08),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-                transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            }
-
-            .arrow-down, .arrow-up {
-                width: 0;
-                height: 0;
-                transition: all 0.3s ease;
-            }
-
-            .arrow-down {
-                border-left: 2.5px solid transparent;
-                border-right: 2.5px solid transparent;
-                border-top: 4px solid white;
-                filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.2));
-            }
-
-            .arrow-up {
-                border-left: 2.5px solid transparent;
-                border-right: 2.5px solid transparent;
-                border-bottom: 4px solid white;
-                filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.2));
-            }
-
-            .expense-icon {
-                opacity: 1;
-                transform: scale(1) rotate(0deg);
-            }
-
-            .income-icon {
-                opacity: 0;
-                transform: scale(0.7) rotate(-180deg);
-            }
-
-            /* Label Icons */
-            .filter-toggle-label {
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 44px;
-                height: 44px;
-                cursor: pointer;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                z-index: 1;
-                border-radius: 5px;
-                user-select: none;
-            }
-
-            .filter-toggle-label:hover {
-                transform: scale(1.05);
-            }
-
-            .label-icon {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            }
-
-            .icon-ring {
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                border: 1.5px solid rgba(108, 117, 125, 0.3);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                background: rgba(108, 117, 125, 0.05);
-            }
-
-            .filter-toggle-label:hover .icon-ring {
-                border-color: rgba(108, 117, 125, 0.5);
-                background: rgba(108, 117, 125, 0.1);
-                transform: rotate(5deg);
-            }
-
-            .minus-line {
-                width: 6px;
-                height: 1.5px;
-                background: rgba(108, 117, 125, 0.7);
-                border-radius: 1px;
-                transition: all 0.3s ease;
-            }
-
-            .plus-lines {
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .plus-horizontal, .plus-vertical {
-                background: rgba(108, 117, 125, 0.6);
-                border-radius: 1px;
-                position: absolute;
-                transition: all 0.3s ease;
-            }
-
-            .plus-horizontal {
-                width: 8px;
-                height: 2px;
-            }
-
-            .plus-vertical {
-                width: 2px;
-                height: 8px;
-            }
-
-            .filter-toggle-label:hover .minus-line,
-            .filter-toggle-label:hover .plus-horizontal,
-            .filter-toggle-label:hover .plus-vertical {
-                background: rgba(108, 117, 125, 0.8);
-            }
-
-            input[type="radio"] {
-                display: none;
-            }
-
-            /* Default state - Expense selected */
-            #expense-filter:checked ~ .filter-toggle-track .filter-toggle-slider {
-                transform: translateX(0%) scale(1.02);
-                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 50%, #dc3545 100%);
-            }
-
-            #expense-filter:checked ~ .filter-toggle-track .expense-icon {
-                opacity: 1;
-                transform: scale(1) rotate(0deg);
-            }
-
-            #expense-filter:checked ~ .filter-toggle-track .expense-icon .icon-circle {
-                background: rgba(255, 255, 255, 0.3);
-                transform: scale(1) rotate(0deg);
-                box-shadow: 
-                    0 3px 12px rgba(255, 255, 255, 0.2),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            }
-
-            #expense-filter:checked ~ .filter-toggle-track .income-icon {
-                opacity: 0;
-                transform: scale(0.6) rotate(-270deg);
-            }
-
-            /* Income selected state */
-            #income-filter:checked ~ .filter-toggle-track .filter-toggle-slider {
-                transform: translateX(100%) scale(1.02);
-                background: linear-gradient(135deg, #51cf66 0%, #40c057 50%, #28a745 100%);
-                box-shadow: 
-                    0 3px 12px rgba(40, 167, 69, 0.4),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            }
-
-            #income-filter:checked ~ .filter-toggle-track .expense-icon {
-                opacity: 0;
-                transform: scale(0.6) rotate(270deg);
-            }
-
-            #income-filter:checked ~ .filter-toggle-track .income-icon {
-                opacity: 1;
-                transform: scale(1) rotate(0deg);
-            }
-
-            #income-filter:checked ~ .filter-toggle-track .income-icon .icon-circle {
-                background: rgba(255, 255, 255, 0.3);
-                transform: scale(1) rotate(0deg);
-                box-shadow: 
-                    0 3px 12px rgba(255, 255, 255, 0.2),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            }
-
-            /* Hover effects for icons */
-            .butter-icon:hover .icon-circle {
-                transform: scale(1.1) rotate(10deg);
-                background: rgba(255, 255, 255, 0.4);
-            }
-
-            /* Micro animations on state change */
-            .filter-toggle-slider:hover .icon-circle {
-                animation: iconPulse 0.6s cubic-bezier(0.4, 0, 0.6, 1);
-            }
-
-            @keyframes iconPulse {
-                0% { transform: scale(1) rotate(0deg); }
-                50% { transform: scale(1.15) rotate(5deg); }
-                100% { transform: scale(1) rotate(0deg); }
-            }
-   
-            @keyframes smoothSpin {
-                0% { transform: rotate(0deg) scale(1); }
-                50% { transform: rotate(180deg) scale(1.1); }
-                100% { transform: rotate(360deg) scale(1); }
-            }
-            
-            /* Active state micro-animation */
-            .filter-toggle-wrapper.active {
-                transform: scale(0.98);
-            }
-            
-            /* Hover glow effect */
-            .filter-toggle-slider::before {
-                content: '';
-                position: absolute;
-                top: -2px;
-                left: -2px;
-                right: -2px;
-                bottom: -2px;
-                background: inherit;
-                border-radius: 19px;
-                filter: blur(8px);
-                opacity: 0.3;
-                z-index: -1;
-                transition: opacity 0.3s ease;
-            }
-            
-            .filter-toggle-wrapper:hover .filter-toggle-slider::before {
-                opacity: 0.5;
-            }
-            
-            @media (prefers-reduced-motion: reduce) {
-                .filter-toggle-slider,
-                .filter-toggle-label,
-                .filter-toggle-wrapper,
-                .slider-icon i {
-                    transition: none !important;
-                }
-                
-            
-            }
-            
-            /* Optimize chart canvas positioning */
-            .category-chart-filter + canvas,
-            .category-chart-filter ~ canvas,
-            .category-chart-filter + div canvas {
-                margin-top: 2px !important;
-            }
-
-            /* Fix any potential z-index issues */
-            #categoryChart {
-                position: relative;
-                z-index: 1;
-            }
-
-            /* Smooth container transitions */
-            .chart-container {
-                transition: all 0.3s ease;
-                padding-top: 0 !important;
-            }
-
-            .chart-container.loading {
-                pointer-events: none;
-            }
-
-            /* Maximize chart area */
-            .chart-container canvas {
-                max-height: none !important;
-            }
-
-            @media (max-width: 576px) {
-                .category-chart-filter {
-                    margin-bottom: 15px;
-                }
-
-                .filter-toggle-wrapper {
-                    padding: 2px;
-                }
-                
-                .filter-toggle-label {
-                    width: 38px;
-                    height: 38px;
-                    font-size: 14px;
-                }
-                
-                .slider-icon i {
-                    font-size: 10px;
-                }
-            }
-        </style>
     `;
 
-    // Find the exact description element and position toggle inline
-    const chartElement = document.getElementById('categoryChart');
-    const chartContainer = chartElement.closest('.chart-container');
-
-    // Look for all possible description elements
-    const possibleDescriptions = chartContainer.querySelectorAll('p, small, .text-muted, .chart-subtitle');
-    let chartDescription = null;
-
-    // Find the description that contains "Distribution" or "expenses" or similar text
-    for (let elem of possibleDescriptions) {
-        const text = elem.textContent.toLowerCase();
-        if (text.includes('distribution') || text.includes('expenses') || text.includes('income') || text.includes('category')) {
-            chartDescription = elem;
-            break;
-        }
-    }
-
-    // If still not found, try to find by position (usually the first p or small element)
-    if (!chartDescription) {
-        chartDescription = chartContainer.querySelector('p, small');
-    }
-
-    if (chartDescription) {
-        console.log('Found description element:', chartDescription);
-
-        // Store original text and classes
-        const originalText = chartDescription.textContent.trim();
-        const originalClasses = chartDescription.className;
-
-        // Transform the element into a flex container
-        chartDescription.innerHTML = `
-            <span class="description-text" style="flex-grow: 1;">${originalText}</span>
-            <div class="toggle-container-inline" style="flex-shrink: 0; margin-left: 12px;"></div>
-        `;
-
-        // Apply flex styling
-        chartDescription.style.cssText = `
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            margin-bottom: 1rem !important;
-        `;
-
-        // Add the toggle to the inline container
-        const inlineContainer = chartDescription.querySelector('.toggle-container-inline');
-        inlineContainer.appendChild(filterContainer);
-
+    // Find the header toggle container and place the toggle there
+    const toggleContainer = document.getElementById("category-toggle-container");
+    
+    if (toggleContainer) {
+        console.log("Found header toggle container, placing toggle in header");
+        // Ensure only one toggle exists in the header
+        toggleContainer.innerHTML = '';
+        toggleContainer.appendChild(filterContainer);
     } else {
-        console.log('Description not found, using fallback positioning');
+        console.log("Header toggle container not found, using fallback positioning");
         // Fallback: add above chart
-        const fallbackDiv = document.createElement('div');
-        fallbackDiv.style.cssText = 'display: flex; justify-content: flex-end; margin-bottom: 1rem;';
+        const chartElement = document.getElementById("categoryChart");
+        const fallbackDiv = document.createElement("div");
+        fallbackDiv.style.cssText = "display: flex; justify-content: flex-end; margin-bottom: 1rem;";
         fallbackDiv.appendChild(filterContainer);
         chartElement.parentNode.insertBefore(fallbackDiv, chartElement);
     }
@@ -775,15 +662,6 @@ function createCategoryFilter() {
         });
     });
 
-    // Override the updateCategoryChart function to handle loading state
-    const originalUpdateCategoryChart = updateCategoryChart;
-    updateCategoryChart = function() {
-
-        // Call original function
-        const result = originalUpdateCategoryChart.apply(this, arguments);
-
-        return result;
-    };
 }
 // Function to update only the category chart based on its filter
 function updateCategoryChart() {
@@ -957,7 +835,7 @@ function fetchCategoryChartData(accountNumber, dateRange, categoryType) {
                     animation: {
                         animateRotate: true,
                         animateScale: true,
-                        duration: 800,
+                        duration: 1000,
                         easing: 'easeOutCubic'
                     }
                 }
@@ -1097,14 +975,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if we're on the dashboard page by looking for chart containers
     const chartContainers = document.querySelectorAll('.chart-container');
     if (chartContainers.length === 0) {
+        console.log('No chart containers found, not on dashboard page');
         return; // Not on dashboard page, exit early
     }
 
+    console.log(`Found ${chartContainers.length} chart containers on dashboard page`);
+
     // Use the global chart data variable set in the dashboard template
     if (window.chartData) {
+        console.log('Chart data available, initializing charts...');
+        console.log('Chart data keys:', Object.keys(window.chartData));
         initDashboardCharts(window.chartData);
     } else {
-        console.log('No chart data available');
+        console.warn('No chart data available - charts will not be displayed');
     }
 
     // Add event listener to account filter dropdown
@@ -1118,4 +1001,32 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dateFilter) {
         dateFilter.addEventListener('change', updateCharts);
     }
+
+    // Add enhanced chart interactions
+    addChartInteractions();
 });
+
+// Utility function to add enhanced chart interactions
+function addChartInteractions() {
+    // Add resize listener for responsive charts
+    window.addEventListener("resize", debounce(() => {
+        Object.values(chartInstances).forEach(chart => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    }, 250));
+}
+
+// Debounce utility
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}

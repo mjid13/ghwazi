@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initPdfUploadForm();
     
     // Initialize mode switching
-    initModeSwitching();
-    
+    // initModeSwitching();
+
     // Initialize email task status checking
     initEmailTaskStatusChecking();
 });
@@ -150,7 +150,7 @@ function initModeSwitching() {
     const uploadModeLink = document.querySelector('a[href*="?mode=upload"]');
     
     if (!emailModeLink || !uploadModeLink) {
-        console.error('Mode switching links not found');
+        // Mode switching links are optional; quietly skip if not present
         return;
     }
     
@@ -189,7 +189,7 @@ function initEmailTaskStatusChecking() {
  */
 function pollAllEmailTasks() {
     // Send AJAX request to get status of all tasks
-    Ajax.get('/email_processing_status', function(response) {
+    Ajax.get('/email/email_processing_status', function(response) {
         if (response.tasks && Object.keys(response.tasks).length > 0) {
             // Update UI for each task
             for (const [accountNumber, task] of Object.entries(response.tasks)) {
@@ -209,7 +209,7 @@ function pollAllEmailTasks() {
  * @param {string} taskId - The ID of the task to poll
  */
 function pollEmailTaskStatus(taskId) {
-    Ajax.get(`/email_task_status/${taskId}`, function(response) {
+    Ajax.get(`/email/task/${taskId}/status`, function(response) {
         if (response.status && response.status !== 'completed' && response.status !== 'failed') {
             // Update UI
             if (response.account_number) {

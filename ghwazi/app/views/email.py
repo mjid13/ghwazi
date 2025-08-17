@@ -2,7 +2,8 @@ import logging
 import os
 import threading
 import uuid
-from datetime import datetime, time
+from datetime import datetime
+import time
 from threading import Lock
 
 from flask import (Blueprint, current_app, flash, jsonify, redirect,
@@ -645,7 +646,7 @@ def parse_email():
 
     if not account_number:
         flash("Please select an account", "error")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("main.dashboard"))
 
     if source == "email":
         # Parse the email data
@@ -656,7 +657,7 @@ def parse_email():
                 "Failed to parse email content. Make sure it contains valid transaction data.",
                 "error",
             )
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("main.dashboard"))
 
         # Check if the account is different
         if account_number[-4:] not in transaction_data.get("account_number"):
@@ -664,7 +665,7 @@ def parse_email():
                 f'Transaction account number {transaction_data.get("account_number")} does not match selected account {account_number}',
                 "error",
             )
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("main.dashboard"))
 
         # Add user_id and account_number to transaction data
         transaction_data["user_id"] = user_id
@@ -702,12 +703,12 @@ def parse_email():
         # Handle uploaded email file
         if "email_file" not in request.files:
             flash("No file part", "error")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("main.dashboard"))
 
         file = request.files["email_file"]
         if file.filename == "":
             flash("No selected file", "error")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("main.dashboard"))
 
         if file:
             filename = secure_filename(file.filename)
@@ -731,11 +732,11 @@ def parse_email():
             except Exception as e:
                 logger.error(f"Error reading uploaded file: {str(e)}")
                 flash(f"Error reading file: {str(e)}", "error")
-                return redirect(url_for("dashboard"))
+                return redirect(url_for("main.dashboard"))
 
     else:
         flash("Invalid source", "error")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("main.dashboard"))
 
 
 @email_bp.route("/email/task/<task_id>/status")
@@ -772,7 +773,7 @@ def email_task_status(task_id):
         if "first_transaction" in task:
             # Store the transaction in session for the results page
             session["transaction_data"] = task["first_transaction"]
-            response["redirect_url"] = url_for("results")
+            response["redirect_url"] = url_for("main.results")
 
     return jsonify(response)
 
@@ -854,7 +855,7 @@ def fetch_emails():
         if is_ajax:
             return jsonify({"success": False, "message": "Please select an account"})
         flash("Please select an account", "error")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("main.dashboard"))
 
     # Check if the account is already being scraped
     with email_tasks_lock:
@@ -870,7 +871,7 @@ def fetch_emails():
                 "This account is already being scraped. Please wait until it completes.",
                 "error",
             )
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("main.dashboard"))
 
         # Create a unique task ID
     try:
@@ -913,7 +914,7 @@ def fetch_emails():
                     }
                 )
             flash("Failed to initialize email processing task", "error")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("main.dashboard"))
 
         # Start background thread
         try:
@@ -980,7 +981,7 @@ def fetch_emails():
             )
         else:
             # Redirect to email processing status page for non-AJAX requests
-            return redirect(url_for("email_processing_status"))
+            return redirect(url_for("email.email_processing_status"))
 
     except Exception as e:
         logger.error(f"Unexpected error in fetch_emails: {str(e)}")
@@ -995,14 +996,41 @@ def fetch_emails():
 @email_bp.route("/email_processing_status")
 @login_required
 def email_processing_status():
-    """Show email processing status page."""
-    task_id = session.get("email_task_id")
+    """Email processing status endpoint.
+    - If requested via AJAX, return JSON of all tasks for the current user (by account number).
+    - Otherwise, render the HTML status page for the task in session.
+    """
+    user_id = session.get("user_id")
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
+    if is_ajax:
+        tasks = {}
+        with email_tasks_lock:
+            # Build account->task mapping for current user
+            for acc_number, info in scraping_accounts.items():
+                if info.get("user_id") == user_id:
+                    tid = info.get("task_id")
+                    t = email_tasks.get(tid)
+                    if not t:
+                        continue
+                    # Normalize progress to 0..1 for frontend expectation
+                    raw_progress = t.get("progress", 0) or 0
+                    try:
+                        progress = float(raw_progress) / 100.0 if raw_progress > 1 else float(raw_progress)
+                    except Exception:
+                        progress = 0
+                    tasks[acc_number] = {
+                        "status": t.get("status"),
+                        "progress": progress,
+                        "message": t.get("message", ""),
+                    }
+        return jsonify({"tasks": tasks})
+
+    # Fallback: render HTML page for the current task in session
+    task_id = session.get("email_task_id")
     with email_tasks_lock:
         if not task_id or task_id not in email_tasks:
             flash("No email processing task found", "error")
             return redirect(url_for("dashboard"))
-
-        task = email_tasks[task_id].copy()  # Create a copy to avoid holding the lock
-
+        task = email_tasks[task_id].copy()
     return render_template("email/email_processing.html", task_id=task_id, task=task)

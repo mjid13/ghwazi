@@ -21,6 +21,95 @@ db = Database()
 logger = logging.getLogger(__name__)
 counterparty_service = CounterpartyService()
 
+# In-memory registry for background Gmail sync tasks per account
+from threading import Lock, Thread
+import time
+
+_sync_tasks_lock = Lock()
+# Structure: { account_number: { 'status': 'pending'|'running'|'completed'|'error',
+#                                'start_time': float, 'end_time': float|None,
+#                                'message': str|None, 'stats': dict|None, 'user_id': int } }
+_account_sync_tasks = {}
+
+
+def _start_account_sync_background(user_id: int, account_number: str):
+    """Start a background thread to run initial Gmail sync for an account.
+    Prevents concurrent syncs for the same account.
+    """
+    from flask import current_app
+
+    with _sync_tasks_lock:
+        existing = _account_sync_tasks.get(account_number)
+        if existing and existing.get('status') in ('pending', 'running'):
+            # Already running
+            return False
+        _account_sync_tasks[account_number] = {
+            'status': 'pending',
+            'start_time': time.time(),
+            'end_time': None,
+            'message': None,
+            'stats': None,
+            'user_id': user_id,
+        }
+
+    # Capture the real Flask app object to use inside the background thread
+    app = current_app._get_current_object()
+
+    def _job():
+        from ..services.auto_sync_service import EmailSync
+        sync_service = EmailSync()
+        # Ensure Flask application context is available within the background thread
+        with app.app_context():
+            with _sync_tasks_lock:
+                task = _account_sync_tasks.get(account_number)
+                if task:
+                    task['status'] = 'running'
+            try:
+                success, message, stats = sync_service.trigger_initial_sync(user_id, account_number)
+
+                # Auto-categorize transactions after successful sync
+                if success:
+                    try:
+                        categorized_count = counterparty_service.auto_categorize_all_transactions(user_id)
+                        # Update stats to include categorization info
+                        if isinstance(stats, dict):
+                            stats['auto_categorized'] = categorized_count
+                        else:
+                            stats = {'auto_categorized': categorized_count}
+
+                        # Update message to include categorization results
+                        if categorized_count > 0:
+                            message += f" Auto-categorized {categorized_count} transactions."
+
+                        logger.info(
+                            f"Auto-categorized {categorized_count} transactions after sync for account {account_number}")
+                    except Exception as e:
+                        logger.error(f"Error during auto-categorization after sync: {str(e)}")
+                        # Don't fail the entire sync due to categorization errors
+                        if isinstance(stats, dict):
+                            stats['auto_categorize_error'] = str(e)
+                        else:
+                            stats = {'auto_categorize_error': str(e)}
+
+                with _sync_tasks_lock:
+                    task = _account_sync_tasks.get(account_number)
+                    if task is not None:
+                        task['status'] = 'completed' if success else 'error'
+                        task['message'] = message
+                        task['stats'] = stats if isinstance(stats, dict) else {}
+                        task['end_time'] = time.time()
+            except Exception as e:
+                with _sync_tasks_lock:
+                    task = _account_sync_tasks.get(account_number)
+                    if task is not None:
+                        task['status'] = 'error'
+                        task['message'] = str(e)
+                        task['end_time'] = time.time()
+
+    t = Thread(target=_job, daemon=True)
+    t.start()
+    return True
+
 # Helper: validate account number (digits only, length 6–20)
 def _validate_account_number(raw: str) -> tuple[bool, str, str]:
     """
@@ -127,8 +216,6 @@ def add_account():
                         banks=banks,
                     )
 
-
-
             if not bank_name:
                 flash("Please select a valid bank", "error")
                 return render_template(
@@ -145,11 +232,7 @@ def add_account():
                 )
 
             # Before creating, ensure no duplicate account number for this user
-            existing_account = (
-                db_session.query(Account)
-                .filter(Account.user_id == user_id, Account.account_number == account_number)
-                .first()
-            )
+            existing_account = TransactionRepository.existing_account(db_session, user_id, account_number)
             if existing_account:
                 flash("An account with this number already exists.", "error")
                 return render_template(
@@ -167,46 +250,29 @@ def add_account():
                 "currency": currency , # TODO: remove it becouse there in bank table
             }
 
-            # email_config_id = request.form.get("email_config_id")
-            # Add email_config_id if provided
-            # if email_config_id:
-            #     try:
-            #         account_data["email_config_id"] = int(email_config_id)
-            #     except ValueError:
-            #         flash("Invalid email configuration selected", "error")
-            #         return render_template(
-            #             "account/add_account.html",
-            #             email_configs=email_configs,
-            #             banks=banks,
-            #         )
-
             account = TransactionRepository.create_account(db_session, account_data)
             if account:
 
-                # Auto-configure email filters and sync if account was created successfully
+                # Configure email filters synchronously, trigger initial sync in background
                 auto_sync_service = EmailSync()
-                sync_results = auto_sync_service.process_new_account(
+                # filter_success, filter_message = (
+                auto_sync_service.create_sync(
                     user_id,
                     {'account_number': account_data.get('account_number'), 'bank_id': account_data.get('bank_id')}
                 )
-                
-                # Flash success message with sync results
+
+                # Start background sync (non-blocking)
+                _start_account_sync_background(user_id, account_data.get('account_number'))
+
+                # Flash success message
                 success_message = "Account added successfully"
-                if sync_results.get('filters_configured'):
-                    success_message += " and email filters configured"
-                if sync_results.get('sync_triggered'):
-                    stats = sync_results.get('sync_stats', {})
-                    if stats.get('messages_found', 0) > 0:
-                        success_message += f" ({stats['messages_found']} emails found)"
                 
                 flash(success_message, "success")
-                
-                # Show additional info messages if available
-                for message in sync_results.get('messages', []):
-                    if 'Error' not in message:
-                        flash(message, "info")
-                    else:
-                        flash(message, "warning")
+
+                # # Show additional info about filter configuration
+                # if filter_message:
+                #     level = "info" if filter_success else "warning"
+                #     flash(f"Email filters: {filter_message}", level)
                 
             else:
                 flash("Error adding account", "error")
@@ -214,13 +280,10 @@ def add_account():
                     "account/add_account.html", email_configs=email_configs, banks=banks
                 )
 
-            count = counterparty_service.auto_categorize_all_transactions(user_id)
-            flash(f"Auto-categorized {count} transactions", "success")
+            return redirect(url_for("main.dashboard", acc=account_data.get('account_number')))
 
-            return redirect(url_for("main.dashboard"))
-        return render_template(
-            "account/add_account.html", email_configs=email_configs, banks=banks
-        )
+        # For GET requests, render the form
+        return render_template("account/add_account.html", email_configs=email_configs, banks=banks)
     except Exception as e:
         logger.error(f"Error adding account: {str(e)}")
         flash("Error adding account. Please try again.", "error")
@@ -487,12 +550,12 @@ def delete_account(account_id):
 
         if is_ajax:
             return jsonify(
-                {
-                    "success": True,
-                    "message": "Account deleted successfully",
-                    "redirect": url_for("accounts"),
-                }
-            )
+                    {
+                        "success": True,
+                        "message": "Account deleted successfully",
+                        "redirect": url_for("account.accounts"),
+                    }
+                )
 
         flash("Account deleted successfully", "success")
         return redirect(url_for("account.accounts"))
@@ -541,7 +604,7 @@ def account_details(account_number):
                 f"Account {account_number} not found or you do not have permission to view it",
                 "error",
             )
-            return redirect(url_for("accounts"))
+            return redirect(url_for("account.accounts"))
 
         # Apply filters if specified
         filter_params = {}
@@ -647,3 +710,31 @@ def preview_email_filters(bank_id):
     except Exception as e:
         logger.error(f"Error getting email filter preview: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+
+@account_bp.route("/accounts/<account_number>/sync-status", methods=["GET"])
+@login_required
+def account_sync_status(account_number):
+    """Return background Gmail sync status for the given account number for the current user.
+    If no task exists, returns status 'none'.
+    """
+    user_id = session.get("user_id")
+    status = {
+        "status": "none",
+        "message": None,
+        "stats": {},
+        "started_at": None,
+        "ended_at": None,
+    }
+    with _sync_tasks_lock:
+        task = _account_sync_tasks.get(account_number)
+        if task and task.get("user_id") == user_id:
+            status.update({
+                "status": task.get("status", "none"),
+                "message": task.get("message"),
+                "stats": task.get("stats") or {},
+                "started_at": task.get("start_time"),
+                "ended_at": task.get("end_time"),
+            })
+    return jsonify(status)

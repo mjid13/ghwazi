@@ -61,6 +61,7 @@
 
                 <!-- Gmail Sync Settings Form -->
                 <form method="POST" action="{{ url_for('oauth.update_gmail_settings') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <h5 class="mb-3">
                         <i class="bi bi-gear me-2"></i>Sync Settings
                     </h5>
@@ -158,10 +159,12 @@
                         <button type="button" class="btn btn-success" id="sync-now-btn">
                             <i class="bi bi-arrow-repeat me-2"></i>Sync Now
                         </button>
-                        <a href="{{ url_for('oauth.google_disconnect') }}" class="btn btn-outline-danger"
-                           onclick="return confirm('Are you sure you want to disconnect your Google account?')">
+                        <button type="submit" class="btn btn-outline-danger"
+                                formmethod="post"
+                                formaction="{{ url_for('oauth.google_disconnect') }}"
+                                onclick="return confirm('Are you sure you want to disconnect your Google account?')">
                             <i class="bi bi-unlink me-2"></i>Disconnect Account
-                        </a>
+                        </button>
                     </div>
                 </form>
 
@@ -248,7 +251,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     const syncNowBtn = document.getElementById('sync-now-btn');
     const syncResultModal = new bootstrap.Modal(document.getElementById('syncResultModal'));
@@ -258,13 +261,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Disable button and show loading
             syncNowBtn.disabled = true;
             const originalText = syncNowBtn.innerHTML;
-            syncNowBtn.innerHTML = '<i class="bi bi-spinner-border me-2"></i>Syncing...';
+            syncNowBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Starting...';
             
             fetch('{{ url_for("oauth.sync_gmail") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 },
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -272,46 +277,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 syncNowBtn.disabled = false;
                 syncNowBtn.innerHTML = originalText;
                 
-                // Show results
-                let resultHtml = '';
-                if (data.success) {
-                    resultHtml = `
-                        <div class="alert alert-success">
-                            <i class="bi bi-check-circle me-2"></i>
-                            <strong>Sync Completed Successfully!</strong>
-                        </div>
-                        <p>${data.message}</p>
-                    `;
-                    
-                    if (data.stats) {
-                        resultHtml += `
-                            <h6>Sync Statistics:</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Messages Found:</strong> ${data.stats.messages_found || 0}</li>
-                                <li><strong>Messages Processed:</strong> ${data.stats.messages_processed || 0}</li>
-                                <li><strong>Transactions Created:</strong> ${data.stats.transactions_created || 0}</li>
-                                <li><strong>Errors:</strong> ${data.stats.errors || 0}</li>
-                            </ul>
-                        `;
-                    }
-                } else {
-                    resultHtml = `
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>Sync Failed</strong>
-                        </div>
-                        <p>${data.message}</p>
-                    `;
-                }
-                
+                // Show message that background sync has started (or already running)
+                const resultHtml = `
+                    <div class="alert ${data.success ? 'alert-success' : 'alert-danger'}">
+                        <i class="bi ${data.success ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                        <strong>${data.success ? 'Sync Started' : 'Sync Failed to Start'}</strong>
+                    </div>
+                    <p>${data.message || ''}</p>
+                `;
                 document.getElementById('syncResultBody').innerHTML = resultHtml;
                 syncResultModal.show();
                 
-                // Reload page after a delay to show updated status
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-                
+                // Begin polling the status shortly after starting
+                setTimeout(checkSyncStatus, 3000);
             })
             .catch(error => {
                 // Restore button
@@ -322,9 +300,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('syncResultBody').innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        <strong>Sync Failed</strong>
+                        <strong>Sync Failed to Start</strong>
                     </div>
-                    <p>An error occurred while syncing: ${error.message}</p>
+                    <p>An error occurred while starting sync: ${error.message}</p>
                 `;
                 syncResultModal.show();
             });

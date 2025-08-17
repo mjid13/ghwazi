@@ -21,49 +21,107 @@
     border-color: var(--bs-primary);
 }
 
-/* Spinning animation for the scraping icon */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.spin {
-    animation: spin 2s linear infinite;
-    display: inline-block;
-}
-
-/* Chart styles */
+/* Enhanced Chart Styles */
 .chart-container {
     position: relative;
-    height: 300px;
+    height: 350px;
     width: 100%;
     margin-bottom: 1rem;
+    background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.37),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.chart-container canvas:hover {
+    cursor: crosshair;
 }
 
 .chart-card {
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    border-radius: 20px;
+    background: linear-gradient(145deg, 
+        rgba(255, 255, 255, 0.9) 0%, 
+        rgba(255, 255, 255, 0.7) 100%);
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.6s ease-out;
+}
+
+.chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #6f42c1, #e83e8c, #fd7e14);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chart-card:hover::before {
+    opacity: 1;
 }
 
 .chart-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
 }
 
 .chart-title {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 700;
     margin-bottom: 0.5rem;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, #007bff, #6f42c1);
+    border-radius: 2px;
 }
 
 .chart-description {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--bs-secondary-color);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    opacity: 0.8;
 }
 
-/* Chart loading styles */
+/* Dark theme adjustments */
+[data-bs-theme="dark"] .chart-card {
+    background: linear-gradient(145deg, 
+        rgba(44, 62, 80, 0.9) 0%, 
+        rgba(52, 73, 94, 0.7) 100%);
+    color: #ecf0f1;
+}
+
+[data-bs-theme="dark"] .chart-title {
+    color: #ecf0f1;
+}
+
+[data-bs-theme="dark"] .chart-container {
+    background: linear-gradient(145deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Enhanced Chart Loading Styles */
 .chart-container.loading {
-    opacity: 0.6;
+    opacity: 0.7;
+    pointer-events: none;
+    position: relative;
 }
 
 .chart-loading {
@@ -73,34 +131,125 @@
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 10;
-    background-color: rgba(255, 255, 255, 0.5);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.8));
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+}
+
+.chart-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+    animation: spin 1s linear infinite;
+}
+
+.chart-loading::after {
+    content: 'Loading chart data...';
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6c757d;
 }
 
 [data-bs-theme="dark"] .chart-loading {
-    background-color: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(145deg, rgba(44, 62, 80, 0.9), rgba(52, 73, 94, 0.8));
 }
 
+[data-bs-theme="dark"] .chart-loading::after {
+    color: #adb5bd;
+}
+
+/* Enhanced Category Filter Styles */
 .category-chart-filter {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .category-chart-filter .btn-group .btn {
-    min-width: 80px;
-    font-size: 0.875rem;
+    min-width: 90px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 12px !important;
+    margin: 0 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
 }
 
-.chart-container.loading {
-    position: relative;
-    opacity: 0.7;
+.category-chart-filter .btn-group .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
-.chart-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
+.category-chart-filter .btn-group .btn.active {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+}
+
+/* Enhanced animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.spin {
+    animation: spin 2s linear infinite;
+    display: inline-block;
+}
+
+.chart-card:nth-child(1) { animation-delay: 0.1s; }
+.chart-card:nth-child(2) { animation-delay: 0.2s; }
+.chart-card:nth-child(3) { animation-delay: 0.3s; }
+.chart-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Chart Responsiveness */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+        padding: 15px;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+    }
+    
+    .chart-description {
+        font-size: 0.85rem;
+    }
+    
+    .chart-card:hover {
+        transform: translateY(-4px) scale(1.01);
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-container {
+        height: 280px;
+        padding: 12px;
+    }
+    
+    .chart-card {
+        margin-bottom: 20px;
+    }
 }

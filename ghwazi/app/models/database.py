@@ -3,6 +3,7 @@ Database connection and session management for the Bank Email Parser & Account T
 """
 
 import logging
+import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -17,13 +18,31 @@ Base = declarative_base()
 
 
 class Database:
-    """Database connection and session management."""
+    """Database connection and session management.
+
+    This class is implemented as a process-wide singleton. Any call to Database()
+    returns the same instance, ensuring a single Engine/Session registry is used
+    throughout the application lifecycle.
+    """
 
     # Class-level shared engine and session registry to avoid multiple pools per process
     _engine = None
     _session_factory = None
     _Session = None
     _database_url = None
+    _tables_created = False
+
+    # Singleton control
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, database_url=None):
+        # Double-checked locking for thread-safe singleton initialization
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self, database_url=None):
         """
@@ -33,11 +52,25 @@ class Database:
             database_url (str, optional): Database connection URL. If not provided,
                                          uses the URL from settings.
         """
-        self.database_url = database_url or settings.DATABASE_URL
+        # Ensure __init__ logic runs only once for the singleton instance
+        if getattr(self, "_initialized", False):
+            if database_url and database_url != getattr(self, "database_url", None):
+                logger.warning(
+                    "Database singleton already initialized with a different URL. Ignoring new URL: %s",
+                    database_url,
+                )
+            return
+
+        # Normalize database URL and allow override via parameter
+        raw_url = database_url or settings.DATABASE_URL
+        if isinstance(raw_url, str):
+            raw_url = raw_url.replace("postgres://", "postgresql://")
+        self.database_url = raw_url
         # Instance references mirror class-level singletons
         self.engine = Database._engine
         self.session_factory = Database._session_factory
         self.Session = Database._Session
+        self._initialized = True
 
     def connect(self):
         """
@@ -72,7 +105,9 @@ class Database:
                 self.engine = create_engine(self.database_url, pool_pre_ping=True)
 
             # Create session factory
-            self.session_factory = sessionmaker(bind=self.engine)
+            # Use expire_on_commit=False so ORM instances keep loaded attributes after commit.
+            # This prevents DetachedInstanceError in templates when sessions are closed.
+            self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=False)
             self.Session = scoped_session(self.session_factory)
 
             # Persist class-level singletons
@@ -94,6 +129,10 @@ class Database:
         Returns:
             bool: True if tables are created successfully, False otherwise.
         """
+        if Database._tables_created:
+            logger.debug("Tables already initialized, skipping creation.")
+            return True
+
         try:
             # Check if tables exist and have user_id column
             from sqlalchemy import Column, ForeignKey, Integer, inspect
@@ -104,7 +143,7 @@ class Database:
             Base.metadata.create_all(self.engine)
 
             # Initialize email service providers
-            self._initialize_email_providers()
+            # self._initialize_email_providers() # this is now handled by Oauth, no need to do this
 
             # Initialize banks
             self._initialize_banks()
@@ -140,10 +179,10 @@ class Database:
                             connection.execute(
                                 text(
                                     """
-                                INSERT OR IGNORE INTO users (id, username, email, password_hash, created_at, updated_at)
-                                VALUES (1, 'default_user', 'default@example.com', 'pbkdf2:sha256:150000$abc123', 
-                                       CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                            """
+                                    INSERT OR IGNORE INTO users (id, username, email, password_hash, created_at, updated_at)
+                                    VALUES (1, 'default_user', 'default@example.com', 'pbkdf2:sha256:150000$abc123',
+                                            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                                    """
                                 )
                             )
 
@@ -456,11 +495,11 @@ class Database:
                             connection.execute(
                                 text(
                                     """
-                                INSERT INTO email_config_banks (email_config_id, bank_id, created_at)
-                                SELECT id, bank_id, CURRENT_TIMESTAMP
-                                FROM email_configurations
-                                WHERE bank_id IS NOT NULL
-                            """
+                                    INSERT INTO email_config_banks (email_config_id, bank_id, created_at)
+                                    SELECT id, bank_id, CURRENT_TIMESTAMP
+                                    FROM email_configurations
+                                    WHERE bank_id IS NOT NULL
+                                    """
                                 )
                             )
                             connection.commit()
@@ -475,6 +514,7 @@ class Database:
                     logger.error(f"Error creating email_config_banks table: {str(e)}")
 
             logger.info("Database tables created")
+            Database._tables_created = True
             return True
         except Exception as e:
             logger.error(f"Failed to create database tables: {str(e)}")
@@ -696,30 +736,6 @@ class Database:
                     "email_subjects": "Account Transaction",
                     "currency": "OMR",
                 },
-                {
-                    "name": "HSBC",
-                    "email_address": "alerts@hsbc.com",
-                    "email_subjects": "Transaction Alert,Account Activity",
-                    "currency": "USD",
-                },
-                {
-                    "name": "Citibank",
-                    "email_address": "alerts@citibank.com",
-                    "email_subjects": "Transaction Notification,Account Alert",
-                    "currency": "USD",
-                },
-                {
-                    "name": "Bank of America",
-                    "email_address": "alerts@bankofamerica.com",
-                    "email_subjects": "Transaction Alert,Account Activity",
-                    "currency": "USD",
-                },
-                {
-                    "name": "Chase",
-                    "email_address": "no-reply@alertsp.chase.com",
-                    "email_subjects": "Chase Alert,Transaction Notification",
-                    "currency": "USD",
-                },
             ]
 
             # Check if banks already exist
@@ -785,3 +801,9 @@ class Database:
                 cls._Session.remove()
         except Exception as e:
             logger.debug(f"Error removing class-level scoped session: {e}")
+
+
+
+def get_database():
+    """Convenience accessor for the singleton Database instance."""
+    return Database()

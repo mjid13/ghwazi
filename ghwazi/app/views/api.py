@@ -8,12 +8,11 @@ import os
 from datetime import datetime, time
 from threading import Lock
 
-from flask import (Blueprint, Flask, current_app, flash, jsonify, redirect,
-                   render_template, request, session, url_for)
+from flask import (Blueprint, current_app, flash, jsonify, redirect,
+                    request, session, url_for)
 from werkzeug.utils import secure_filename
 
-from ..models import (Account, Category, Database, Transaction,
-                     TransactionRepository)
+from ..models import Account, Database, TransactionRepository
 from ..services.pdf_parser_service import PDFParser
 from ..utils.helpers import allowed_file
 from ..utils.decorators import login_required
@@ -42,14 +41,11 @@ def get_chart_data():
 
         # Import necessary modules for data aggregation
         from datetime import datetime, timedelta
-
-        from ..models.models import (Category, Transaction,
-                                                 TransactionType)
+        from ..models.models import (Category, Transaction, TransactionType)
         from sqlalchemy import case, extract, func
 
         # Calculate date range based on selection
         end_date = datetime.now()
-        start_date = None
 
         if date_range == "2w":  # Last 2 weeks
             start_date = end_date - timedelta(days=14)
@@ -63,17 +59,9 @@ def get_chart_data():
             start_date = end_date - timedelta(days=365)
         elif date_range == "24m":  # Last 24 months
             start_date = end_date - timedelta(days=730)
-        # For 'overall', start_date remains None
+        else:
+            start_date = end_date - timedelta(days=365)
 
-        # Base query for transactions
-        base_query = db_session.query(Transaction).join(Account)
-
-        # Filter by user_id
-        base_query = base_query.filter(Account.user_id == user_id)
-
-        # Filter by account_number if specified
-        if account_number != "all":
-            base_query = base_query.filter(Account.account_number == account_number)
 
         # 1. Income vs. Expense Comparison Chart
         income_expense_query = db_session.query(
@@ -106,8 +94,8 @@ def get_chart_data():
                 Account.account_number == account_number
             )
 
-        # Apply date range filter
-        if start_date:
+        # Apply date range filter - only if not "overall"
+        if date_range != "overall":
             income_expense_query = income_expense_query.filter(
                 Transaction.value_date >= start_date
             )
@@ -128,7 +116,6 @@ def get_chart_data():
         }
 
         # 2. Category Distribution Pie Chart
-        # Get expense transactions with categories
         category_query = (
             db_session.query(
                 Category.name,
@@ -140,7 +127,7 @@ def get_chart_data():
             .filter(
                 Account.user_id == user_id,
                 Transaction.transaction_type == TransactionType.EXPENSE,
-            )
+                )
         )
 
         # Filter by account_number if specified
@@ -148,8 +135,9 @@ def get_chart_data():
             category_query = category_query.filter(
                 Account.account_number == account_number
             )
-        # Apply date range filter
-        if start_date:
+
+        # Apply date range filter - only if not "overall"
+        if date_range != "overall":
             category_query = category_query.filter(Transaction.value_date >= start_date)
 
         category_data = (
@@ -165,23 +153,14 @@ def get_chart_data():
 
         # Use category colors from database, or fallback to defaults
         default_colors = [
-            "#FF6384",
-            "#36A2EB",
-            "#FFCE56",
-            "#4BC0C0",
-            "#9966FF",
-            "#FF9F40",
-            "#8AC249",
-            "#EA5545",
-            "#F46A9B",
-            "#EF9B20",
+            "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF",
+            "#FF9F40", "#8AC249", "#EA5545", "#F46A9B", "#EF9B20",
         ]
         category_colors = []
         for i, cat in enumerate(category_data):
             if cat.color:
                 category_colors.append(cat.color)
             else:
-                # Use default color if category doesn't have one
                 category_colors.append(default_colors[i % len(default_colors)])
 
         chart_data["category_distribution"] = {
@@ -194,9 +173,8 @@ def get_chart_data():
             ],
         }
 
-        # 3. Monthly Transaction Trend Line Chart
-
-        # Query monthly aggregates
+        # 3. Monthly Transaction Trend Line Chart - FIXED
+        # Always use start_date (now guaranteed to exist) for monthly trends
         monthly_query = (
             db_session.query(
                 extract("year", Transaction.value_date).label("year"),
@@ -233,10 +211,6 @@ def get_chart_data():
                 Account.account_number == account_number
             )
 
-        # Apply date range filter
-        if start_date:
-            monthly_query = monthly_query.filter(Transaction.value_date >= start_date)
-
         monthly_data = (
             monthly_query.group_by(
                 extract("year", Transaction.value_date),
@@ -269,6 +243,7 @@ def get_chart_data():
                     "borderColor": "#4CAF50",
                     "backgroundColor": "rgba(76, 175, 80, 0.1)",
                     "fill": True,
+                    "tension": 0.4
                 },
                 {
                     "label": "Expense",
@@ -276,13 +251,12 @@ def get_chart_data():
                     "borderColor": "#F44336",
                     "backgroundColor": "rgba(244, 67, 54, 0.1)",
                     "fill": True,
+                    "tension": 0.4
                 },
             ],
         }
 
         # 4. Account Balance Comparison Chart
-        # For account balance chart, we'll only show the selected account if one is specified
-        # Otherwise, show all accounts
         account_query = db_session.query(Account).filter(Account.user_id == user_id)
 
         if account_number != "all":
@@ -298,7 +272,7 @@ def get_chart_data():
                 {
                     "account_number": account.account_number,
                     "bank_name": account.bank_name,
-                    "balance": float(account.balance),
+                    "balance": float(account.balance or 0),
                     "currency": account.currency,
                 }
             )
@@ -327,13 +301,14 @@ def get_chart_data():
             "currencies": account_currencies,
         }
 
+        logger.info(f"Monthly trend data - labels: {len(months)}, income data: {len(income_values)}, expense data: {len(expense_values)}")
+
         return jsonify(chart_data)
     except Exception as e:
         logger.error(f"Error getting chart data: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
         db.close_session(db_session)
-
 
 @api_bp.route("/get_category_chart_data")
 @login_required

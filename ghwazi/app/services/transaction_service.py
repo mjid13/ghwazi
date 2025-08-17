@@ -9,6 +9,7 @@ from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from .email_service import EmailService
 from .parser_service import TransactionParser
+from ..utils.db_session_manager import database_session
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,6 @@ class TransactionService:
         self.email_service = EmailService()
         self.parser = TransactionParser()
         self.db = Database()
-        self.db.connect()
-        self.db.create_tables()
 
     def process_emails(self, folder: str = "INBOX", unread_only: bool = True) -> int:
         """
@@ -47,9 +46,7 @@ class TransactionService:
 
             # Process each email
             processed_count = 0
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 for email_data in emails:
                     # Parse email
                     transaction_data = self.parser.parse_email(email_data)
@@ -66,8 +63,6 @@ class TransactionService:
 
                 logger.info(f"Processed {processed_count} transactions")
                 return processed_count
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error processing emails: {str(e)}")
             return 0
@@ -80,9 +75,7 @@ class TransactionService:
             List[Dict[str, Any]]: List of account summaries.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 from ..models.models import Account
 
                 # Get all accounts
@@ -98,8 +91,6 @@ class TransactionService:
                         summaries.append(summary)
 
                 return summaries
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error getting account summaries: {str(e)}")
             return []
@@ -118,15 +109,11 @@ class TransactionService:
             Optional[Dict[str, Any]]: Account summary or None if not found.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 summary = TransactionRepository.get_account_summary(
                     session, user_id, account_number
                 )
                 return summary
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(
                 f"Error getting account summary for {account_number}: {str(e)}"

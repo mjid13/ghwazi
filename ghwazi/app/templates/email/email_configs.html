@@ -159,7 +159,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Handle connection test buttons
     const buttons = document.querySelectorAll('.test-connection');

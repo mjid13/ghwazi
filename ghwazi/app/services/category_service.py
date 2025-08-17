@@ -9,6 +9,7 @@ from ..models.category import CategoryRepository
 from ..models.database import Database
 from ..models.models import (Category, CategoryMapping, CategoryType,
                                Transaction)
+from ..utils.db_session_manager import get_session_manager, database_session
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +20,6 @@ class CategoryService:
     def __init__(self):
         """Initialize the category service."""
         self.db = Database()
-        self.db.connect()
-        self.db.create_tables()
 
     # Context manager support
     def __enter__(self):
@@ -55,15 +54,11 @@ class CategoryService:
             Optional[Category]: Created category or None if creation fails.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 category = CategoryRepository.create_category(
                     session, user_id, name, description, color
                 )
                 return category
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error creating category: {str(e)}")
             return None
@@ -79,13 +74,9 @@ class CategoryService:
             List[Category]: List of user's categories.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 categories = CategoryRepository.get_categories(session, user_id)
                 return categories
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error getting categories: {str(e)}")
             return []
@@ -102,15 +93,11 @@ class CategoryService:
             Optional[Category]: Category or None if not found.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 category = CategoryRepository.get_category(
                     session, category_id, user_id
                 )
                 return category
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error getting category: {str(e)}")
             return None
@@ -137,15 +124,11 @@ class CategoryService:
             Optional[Category]: Updated category or None if update fails.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 category = CategoryRepository.update_category(
                     session, category_id, user_id, name, description, color
                 )
                 return category
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error updating category: {str(e)}")
             return None
@@ -162,15 +145,11 @@ class CategoryService:
             bool: True if deletion is successful, False otherwise.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 result = CategoryRepository.delete_category(
                     session, category_id, user_id
                 )
                 return result
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error deleting category: {str(e)}")
             return False
@@ -191,15 +170,11 @@ class CategoryService:
             Optional[CategoryMapping]: Created mapping or None if creation fails.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 mapping = CategoryRepository.create_category_mapping(
                     session, category_id, user_id, mapping_type, pattern
                 )
                 return mapping
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error creating category mapping: {str(e)}")
             return None
@@ -216,15 +191,11 @@ class CategoryService:
             bool: True if deletion is successful, False otherwise.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 result = CategoryRepository.delete_category_mapping(
                     session, mapping_id, user_id
                 )
                 return result
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error deleting category mapping: {str(e)}")
             return False
@@ -243,15 +214,11 @@ class CategoryService:
             List[CategoryMapping]: List of category mappings.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 mappings = CategoryRepository.get_category_mappings(
                     session, category_id, user_id
                 )
                 return mappings
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error getting category mappings: {str(e)}")
             return []
@@ -270,15 +237,11 @@ class CategoryService:
             Optional[Transaction]: Categorized transaction or None if categorization fails.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 transaction = CategoryRepository.auto_categorize_transaction(
                     session, transaction_id, user_id
                 )
                 return transaction
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error auto-categorizing transaction: {str(e)}")
             return None
@@ -298,15 +261,11 @@ class CategoryService:
             Optional[Transaction]: Categorized transaction or None if categorization fails.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 transaction = CategoryRepository.categorize_transaction(
                     session, transaction_id, category_id, user_id
                 )
                 return transaction
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error categorizing transaction: {str(e)}")
             return None
@@ -322,9 +281,7 @@ class CategoryService:
             int: Number of transactions categorized.
         """
         try:
-            session = self.db.get_session()
-
-            try:
+            with database_session() as session:
                 # Get all uncategorized transactions for this user
                 from sqlalchemy import and_
 
@@ -346,8 +303,6 @@ class CategoryService:
                         categorized_count += 1
 
                 return categorized_count
-            finally:
-                self.db.close_session(session)
         except Exception as e:
             logger.error(f"Error auto-categorizing all transactions: {str(e)}")
             return 0

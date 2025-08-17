@@ -192,7 +192,7 @@ CATEGORIES: List[Dict] = [
         "description": "Payroll/WPS salary deposits from employers.",
         "patterns": {
             "counterparty": ["company", "employer", "hr payroll"],
-            "description": ["salary", "wage", "payroll", "wps salary", "earnings", "pay slip", "allowance"],
+            "description": ["salary", "wps salary", "allowance"],
         },
     },
     {

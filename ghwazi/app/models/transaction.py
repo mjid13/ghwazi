@@ -137,6 +137,26 @@ class TransactionRepository:
             return None
 
     @staticmethod
+    def existing_account(session: Session,user_id, account_number):
+        # Check if account already exists for this user
+        existing_account = (
+            session.query(Account)
+            .filter(
+                Account.user_id == user_id,
+                Account.account_number == account_number,
+            )
+            .first()
+        )
+
+        if existing_account:
+            logger.info(
+                f"Account {account_number} already exists for user {user_id}"
+            )
+            return existing_account
+        else:
+            return False
+
+    @staticmethod
     def create_account(
         session: Session, account_data: Dict[str, Any]
     ) -> Optional[Account]:
@@ -157,20 +177,10 @@ class TransactionRepository:
                 return None
 
             # Check if account already exists for this user
-            existing_account = (
-                session.query(Account)
-                .filter(
-                    Account.user_id == user_id,
-                    Account.account_number == account_data["account_number"],
-                )
-                .first()
-            )
-
+            existing_account = TransactionRepository.existing_account(session,user_id,account_data["account_number"])
             if existing_account:
-                logger.info(
-                    f"Account {account_data['account_number']} already exists for user {user_id}"
-                )
                 return existing_account
+
 
             account = Account(
                 user_id=user_id,
@@ -270,7 +280,6 @@ class TransactionRepository:
                 "currency": transaction_data.get("currency", "OMR"),
                 "balance": transaction_data.get("balance", 0.0),
             }
-            logger.error(f'creating account data: {account_data}')
             account = TransactionRepository.create_account(session, account_data)
 
             # Update account branch only if it's null and branch is provided in transaction data
@@ -366,7 +375,7 @@ class TransactionRepository:
                 transaction_type=transaction_type,
                 amount=transaction_data_copy.get("amount", 0.0),
                 currency=transaction_data_copy.get("currency", "OMR"),
-                value_date=transaction_data_copy.get("value_date", None),
+                value_date=transaction_data_copy.get("value_date"),
                 transaction_id=transaction_data_copy.get("transaction_id"),
                 counterparty_id=counterparty_id,  # Set the counterparty relationship
                 transaction_details=transaction_data_copy.get("transaction_details"),
