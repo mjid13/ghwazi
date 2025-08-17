@@ -32,7 +32,7 @@ def create_app(config_class=Config):
     
     # Initialize Redis-backed sessions in production if REDIS_URL is set
     try:
-        redis_url = app.config.get('REDIS_URL') or os.environ.get('REDIS_URL')
+        redis_url = app.config.get('REDIS_URL') or os.environ.get('REDISCLOUD_URL')
         if redis_url and FlaskSession and redis:
             app.config['SESSION_TYPE'] = 'redis'
             app.config['SESSION_REDIS'] = redis.from_url(redis_url)

@@ -61,7 +61,7 @@ class ProductionConfig(Config):
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "/tmp/uploads")
 
     # Redis-backed server-side sessions
-    REDIS_URL = os.environ.get("REDIS_URL")
+    REDIS_URL = os.environ.get("REDISCLOUD_URL")
     SESSION_TYPE = "redis" if REDIS_URL else os.environ.get("SESSION_TYPE", "filesystem")
     SESSION_USE_SIGNER = True
     SESSION_PERMANENT = True
