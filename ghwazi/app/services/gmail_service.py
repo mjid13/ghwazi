@@ -170,7 +170,7 @@ class GmailService:
             # Otherwise, treat as first-time sync and use a reasonable historical window.
             # Determine if this is a first-time sync based on absence of any last_sync_at
             is_first_sync = not bool(gmail_config.last_sync_at)
-            first_window_days = 90
+            first_window_days = 180
             try:
                 # Prefer app config when available
                 from flask import current_app
@@ -213,7 +213,7 @@ class GmailService:
             # Combine query parts
             query = ' '.join(query_parts) if query_parts else 'in:inbox'
             
-            logger.error(f"Gmail search query: {query}")
+            logger.info(f"Gmail search query: {query}")
             
             # Search messages
             response = service.users().messages().list(
@@ -414,6 +414,7 @@ class GmailService:
             Tuple of (success, message, stats)
         """
         db_session = self.db.get_session()
+        gmail_config = None
         
         try:
             # Get OAuth user and Gmail config
@@ -438,9 +439,9 @@ class GmailService:
             db_session.commit()
             
             # Search and process messages
-            messages = self.search_messages(oauth_user, gmail_config, max_results=100)
+            messages = self.search_messages(oauth_user, gmail_config, max_results=200)
 
-            logger.debug(f'thie the search result: {messages}')
+            logger.debug(f'this is the search result: {messages}')
             stats = {
                 'messages_found': len(messages),
                 'messages_processed': 0,
@@ -513,8 +514,21 @@ class GmailService:
             # Commit all transaction changes
             db_session.commit()
             
-            # Update sync completion
-            last_message_id = messages[0]['id'] if messages else None
+            # Update sync completion (use most recent message id by time)
+            last_message_id = None
+            if messages:
+                def _msg_time(m):
+                    try:
+                        if m.get('internal_date'):
+                            return int(m.get('internal_date'))
+                        dt = m.get('date')
+                        if isinstance(dt, datetime):
+                            return int(dt.timestamp() * 1000)
+                    except Exception:
+                        return 0
+                    return 0
+                most_recent = max(messages, key=_msg_time)
+                last_message_id = most_recent.get('id')
             gmail_config.update_sync_status('completed', message_id=last_message_id)
             db_session.commit()
             
@@ -522,12 +536,18 @@ class GmailService:
             
         except Exception as e:
             logger.error(f"Error syncing Gmail messages: {e}")
+            # Rollback DB session to ensure clean state
+            try:
+                db_session.rollback()
+            except Exception:
+                pass
             
             # Update sync error status
             try:
-                gmail_config.update_sync_status('error', error=str(e))
-                db_session.commit()
-            except:
+                if gmail_config:
+                    gmail_config.update_sync_status('error', error=str(e))
+                    db_session.commit()
+            except Exception:
                 pass
             
             return False, f"Sync failed: {str(e)}", {}
