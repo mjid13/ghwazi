@@ -558,3 +558,45 @@ class CounterpartyService:
             logger.info("Closed database connection")
         except Exception as e:
             logger.error(f"Error closing database connection: {str(e)}")
+
+# TODO : unify on a single API style (prefer DI with the class-based service).
+# Module-level singleton and wrapper functions for backward compatibility with module-level calls
+# Some parts of the application import `from ..services import counterparty_service` and expect
+# functions on the module (e.g., counterparty_service.categorize_counterparty(...)).
+# The following provides a thin wrapper over the class-based service to avoid AttributeError.
+try:
+    _service  # type: ignore[name-defined]
+except NameError:  # pragma: no cover - define once
+    _service = CounterpartyService()
+
+
+def get_unique_counterparties(user_id: int, account_number: str = None):
+    return _service.get_unique_counterparties(user_id, account_number)
+
+
+def get_categories(user_id: int):
+    return _service.get_categories(user_id)
+
+
+def get_category(category_id: int, user_id: int):
+    return _service.get_category(category_id, user_id)
+
+
+def create_category_mapping(category_id: int, user_id: int, mapping_type, pattern: str):
+    return _service.create_category_mapping(category_id, user_id, mapping_type, pattern)
+
+
+def delete_category_mapping(mapping_id: int, user_id: int) -> bool:
+    return _service.delete_category_mapping(mapping_id, user_id)
+
+
+def get_category_mappings(category_id: int, user_id: int):
+    return _service.get_category_mappings(category_id, user_id)
+
+
+def categorize_counterparty(user_id: int, counterparty_name: str, description: str, category_id: int) -> bool:
+    return _service.categorize_counterparty(user_id, counterparty_name, description, category_id)
+
+
+def auto_categorize_all_transactions(user_id: int) -> int:
+    return _service.auto_categorize_all_transactions(user_id)

@@ -69,6 +69,8 @@ CATEGORIES: List[Dict] = [
             "description": [
                 "electricity", "water", "sewage", "internet", "fiber", "broadband", "postpaid", "prepaid",
                 "bill", "recharge", "topup", "top-up",
+                # Bill pay aggregators
+                "oifc", "khedmah", "oneic", "bill & pay", "Oman Investment and fin"
             ],
         },
     },
