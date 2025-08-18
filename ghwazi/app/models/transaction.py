@@ -645,9 +645,21 @@ class TransactionRepository:
             # Update transaction fields
             for key, value in transaction_data.items():
                 if key == "transaction_type":
-                    try:
-                        value = TransactionType(value.lower())
-                    except ValueError:
+                    # Accept TransactionType instance or string (name/value), case-insensitive
+                    if isinstance(value, TransactionType):
+                        pass  # already correct
+                    elif isinstance(value, str):
+                        v = value.strip().upper()
+                        try:
+                            # Try by value first (our enum values are uppercase strings)
+                            value = TransactionType(v)
+                        except ValueError:
+                            try:
+                                # Try by name as a fallback
+                                value = TransactionType[v]
+                            except Exception:
+                                value = TransactionType.UNKNOWN
+                    else:
                         value = TransactionType.UNKNOWN
 
                 # Skip fields that have been moved or removed

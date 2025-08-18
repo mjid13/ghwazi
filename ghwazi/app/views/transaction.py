@@ -190,16 +190,18 @@ def edit_transaction(transaction_id):
             category_id = request.form.get("category")
             category_update_scope = request.form.get("category_update_scope", "single")
 
+            # Only include transaction_type if provided by the form to avoid overwriting existing value
+            tx_type = request.form.get("transaction_type")
             transaction_data = {
                 "counterparty_name": counterparty_name,
                 "amount": float(request.form.get("amount", 0.0)),
-                "transaction_type": request.form.get("transaction_type", "unknown"),
                 "value_date": datetime.strptime(
                     request.form.get("date_time"), "%Y-%m-%dT%H:%M"
                 ),
                 "description": request.form.get("description", ""),
                 "transaction_details": request.form.get("transaction_details", ""),
                 "category_id": category_id,
+                **({"transaction_type": tx_type} if tx_type else {}),
             }
             updated_transaction = TransactionRepository.update_transaction(
                 db_session, transaction_id, transaction_data
