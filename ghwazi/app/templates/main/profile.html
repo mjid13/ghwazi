@@ -354,36 +354,36 @@
 <!--            <p class="profile-role">Financial Analyst</p>-->
 <!--        </div>-->
 
-        <!-- Stats Grid -->
-        <div class="stats-grid fade-in-up">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-calendar-check"></i>
-                </div>
-                <div class="stat-value">
-                    {% if user.created_at %}
-                        {{ (moment().utcnow() - user.created_at).days if moment else 'N/A' }}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </div>
-                <div class="stat-label">Days Active</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-shield-check"></i>
-                </div>
-                <div class="stat-value">Secure</div>
-                <div class="stat-label">Account Status</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-graph-up"></i>
-                </div>
-                <div class="stat-value">Active</div>
-                <div class="stat-label">Session Status</div>
-            </div>
-        </div>
+<!--        &lt;!&ndash; Stats Grid &ndash;&gt;-->
+<!--        <div class="stats-grid fade-in-up">-->
+<!--            <div class="stat-card">-->
+<!--                <div class="stat-icon">-->
+<!--                    <i class="bi bi-calendar-check"></i>-->
+<!--                </div>-->
+<!--                <div class="stat-value">-->
+<!--                    {% if user.created_at %}-->
+<!--                        {{ (moment().utcnow() - user.created_at).days if moment else 'N/A' }}-->
+<!--                    {% else %}-->
+<!--                        N/A-->
+<!--                    {% endif %}-->
+<!--                </div>-->
+<!--                <div class="stat-label">Days Active</div>-->
+<!--            </div>-->
+<!--            <div class="stat-card">-->
+<!--                <div class="stat-icon">-->
+<!--                    <i class="bi bi-shield-check"></i>-->
+<!--                </div>-->
+<!--                <div class="stat-value">Secure</div>-->
+<!--                <div class="stat-label">Account Status</div>-->
+<!--            </div>-->
+<!--            <div class="stat-card">-->
+<!--                <div class="stat-icon">-->
+<!--                    <i class="bi bi-graph-up"></i>-->
+<!--                </div>-->
+<!--                <div class="stat-value">Active</div>-->
+<!--                <div class="stat-label">Session Status</div>-->
+<!--            </div>-->
+<!--        </div>-->
 
         <!-- Profile Information -->
         <div class="info-card fade-in-up">
