@@ -231,6 +231,10 @@ const Ajax = {
             return;
         }
         
+        // Create a unique token to prevent out-of-order updates
+        const token = `${Date.now()}:${Math.random()}`;
+        targetElement.dataset.loadToken = token;
+        
         // Show loading indicator in the target element
         const loadingHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         targetElement.innerHTML = loadingHTML;
@@ -239,6 +243,11 @@ const Ajax = {
         this.get(
             url,
             function(data) {
+                // If a newer request has been issued for this target, ignore this response
+                if (targetElement.dataset.loadToken !== token) {
+                    return;
+                }
+                
                 // Update the target element with the response
                 if (typeof data === 'string') {
                     targetElement.innerHTML = data;
@@ -257,6 +266,10 @@ const Ajax = {
                 Ajax.initializeElements(targetElement);
             },
             function(error) {
+                // If a newer request has been issued for this target, ignore this error update
+                if (targetElement.dataset.loadToken !== token) {
+                    return;
+                }
                 // Show error message in the target element
                 targetElement.innerHTML = '<div class="alert alert-danger">Failed to load content. Please try again.</div>';
             }

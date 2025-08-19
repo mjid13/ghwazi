@@ -10,36 +10,45 @@ function initDataTables() {
     // Basic DataTable initialization with common settings
     $('.datatable').DataTable({
         // Pagination settings
-        "pageLength": 25,
-        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+        pagingType: 'simple_numbers', // clean previous/next with numbers
 
         // Responsive design
-        "responsive": true,
+        responsive: true,
 
         // Default sorting (first column, ascending)
-        "order": [[0, "asc"]],
+        order: [[0, 'asc']],
 
-        // Custom language settings
-        "language": {
-            "search": "Search:",
-            "lengthMenu": "Show _MENU_ entries per page",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "Showing 0 to 0 of 0 entries",
-            "infoFiltered": "(filtered from _MAX_ total entries)",
-            "zeroRecords": "No matching records found",
-            "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
+        // Accessibility-friendly language settings
+        language: {
+            search: 'Search:',
+            lengthMenu: 'Show _MENU_ per page',
+            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+            infoEmpty: 'Showing 0 to 0 of 0 entries',
+            infoFiltered: '(filtered from _MAX_ total entries)',
+            zeroRecords: 'No matching records found',
+            paginate: {
+                first: 'First',
+                last: 'Last',
+                next: 'Next',
+                previous: 'Previous'
+            },
+            aria: {
+                paginate: {
+                    first: 'First Page',
+                    previous: 'Previous Page',
+                    next: 'Next Page',
+                    last: 'Last Page'
+                }
             }
         },
 
-        // DOM positioning (layout)
-        "dom": '<"top"lf>rt<"bottom"ip><"clear">',
+        // DOM positioning (Bootstrap-friendly layout with top and bottom controls)
+        dom: '<"row align-items-center g-2 mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6 d-flex justify-content-md-end"f>>t<"row align-items-center g-2 mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7 d-flex justify-content-md-end"p>>',
 
         // Initialize with empty state
-        "stateSave": false
+        stateSave: false
     });
 }
 

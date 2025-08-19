@@ -20,43 +20,67 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Color</th>
+                            <th>Transactions</th>
+                            <th>Total Spent</th>
                             <th>Description</th>
-                            <th>Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for category in categories %}
                         <tr>
-                            <td>{{ category.name }}</td>
                             <td>
-                                {% if category.color %}
-                                    <span class="badge category-badge" style="background-color:{{ category.color if category.color else '#6c757d' }}; color: white;">{{ category.color }}</span>
-
+                                {% set bg = category.color if category.color else '#6c757d' %}
+                                <span class="category-chip">
+                                    <span class="category-dot" style="background-color: {{ bg }};"></span>
+                                    <span class="category-name">{{ category.name }}</span>
+                                </span>
+                            </td>
+                            {% set stat = category_stats.get(category.id) if category_stats else None %}
+                            <td>
+                                {% if stat %}
+                                    <span class="badge bg-secondary">{{ stat.count }}</span>
                                 {% else %}
-                                <span class="text-muted">No color set</span>
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td data-order="{{ stat.total if stat else 0 }}">
+                                {% if stat and stat.total %}
+                                    {{ 'OMR ' ~ ("{:,.3f}".format(stat.total)) }}
+                                {% else %}
+                                    <span class="text-muted">OMR 0.000</span>
                                 {% endif %}
                             </td>
                             <td>{{ category.description or '-' }}</td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="{{ url_for('category.category_mappings', category_id=category.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-link me-1"></i>Mappings
-                                    </a>
-                                    <a href="{{ url_for('category.edit_category', category_id=category.id) }}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil me-1"></i>Edit
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#deleteConfirmModal"
-                                            data-item-type="category"
-                                            data-item-id="{{ category.id }}"
-                                            data-item-name="{{ category.name }}"
-                                            data-delete-url="{{ url_for('category.delete_category', category_id=category.id) }}"
-                                            data-warning-text="This will remove all mappings associated with this category.">
-                                        <i class="bi bi-trash me-1"></i>Delete
-                                    </button>
-                                </div>
+                            <td class="text-end">
+                                <button class="btn btn-link btn-sm p-0 text-secondary" data-bs-toggle="dropdown" title="Actions">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('category.category_mappings', category_id=category.id) }}">
+                                            <i class="bi bi-link me-2"></i>Mappings
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('category.edit_category', category_id=category.id) }}">
+                                            <i class="bi bi-pencil me-2"></i>Edit
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item text-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteConfirmModal"
+                                                data-item-type="category"
+                                                data-item-id="{{ category.id }}"
+                                                data-item-name="{{ category.name }}"
+                                                data-delete-url="{{ url_for('category.delete_category', category_id=category.id) }}"
+                                                data-warning-text="This will remove all mappings associated with this category.">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </button>
+                                    </li>
+                                </ul>
                             </td>
                         </tr>
                         {% endfor %}

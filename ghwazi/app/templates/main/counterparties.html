@@ -54,16 +54,30 @@
                 <table class="table table-hover datatable" id="counterpartiesTable">
                     <thead>
                     <tr>
+                        <th>Current Category</th>
                         <th>Counterparty</th>
                         <th>Description</th>
                         <th>Last Transaction</th>
-                        <th>Current Category</th>
                         <th class="text-end">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for cp in counterparties %}
                     <tr>
+                        <td>
+                            {% if cp.category_id %}
+                                {% set category = categories|selectattr("id", "equalto", cp.category_id)|first %}
+                                {% set bg = category.color if category and category.color else '#6c757d' %}
+                            {% else %}
+                                {% set bg = '#6c757d' %}
+                            {% endif %}
+                            <span class="category-chip">
+                                <span class="category-dot" style="background-color: {{ bg }};"></span>
+                                <span class="category-name">{{ cp.category_name or 'Uncategorized' }}</span>
+                            </span>
+                        </td>
+
+
                         <td>
                             <div class="fw-medium">{{ cp.counterparty_name }}</div>
                         </td>
@@ -102,26 +116,26 @@
                                 <span class="text-muted">No date</span>
                             {% endif %}
                         </td>
-                        <td>
-                            {% if cp.category_name %}
-                            <span class="badge bg-primary">{{ cp.category_name }}</span>
-                            {% else %}
-                            <span class="badge bg-secondary">Uncategorized</span>
-                            {% endif %}
-                        </td>
                         <td class="text-end">
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-primary categorize-btn"
-                                data-bs-toggle="modal"
-                                data-bs-target="#categorizeModal"
-                                data-cp-name="{{ cp.counterparty_name }}"
-                                data-cp-description="{{ cp.description or '' }}"
-                                data-cp-category-id="{{ cp.category_id or '' }}"
-                                data-cp-category-name="{{ cp.category_name or '' }}"
-                            >
-                                <i class="bi bi-tag me-1"></i>Categorize
+                            <button class="btn btn-link btn-sm p-0 text-secondary" data-bs-toggle="dropdown" title="Actions">
+                                <i class="bi bi-three-dots-vertical"></i>
                             </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button
+                                        type="button"
+                                        class="dropdown-item categorize-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#categorizeModal"
+                                        data-cp-name="{{ cp.counterparty_name }}"
+                                        data-cp-description="{{ cp.description or '' }}"
+                                        data-cp-category-id="{{ cp.category_id or '' }}"
+                                        data-cp-category-name="{{ cp.category_name or '' }}"
+                                    >
+                                        <i class="bi bi-tag me-2"></i>Categorize
+                                    </button>
+                                </li>
+                            </ul>
                         </td>
                     </tr>
                     {% endfor %}

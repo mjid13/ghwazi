@@ -192,10 +192,100 @@ function initFilterButtons() {
     // Initialize date range picker
     const dateFromInput = document.getElementById('date-from');
     const dateToInput = document.getElementById('date-to');
+
+    // Auto-apply when date inputs change
+    const handleDateChange = () => {
+        updateDateRangeLabel();
+        applyFilters();
+    };
+    if (dateFromInput) {
+        dateFromInput.addEventListener('change', handleDateChange);
+    }
+    if (dateToInput) {
+        dateToInput.addEventListener('change', handleDateChange);
+    }
     
     // Initialize search text input
     const searchTextInput = document.getElementById('search-text');
     const searchButton = document.getElementById('search-button');
+    const searchClearBtn = document.getElementById('search-clear');
+    const dateClearBtn = document.getElementById('date-clear');
+    
+    // Auto-apply search while typing (debounced) and toggle clear button
+    if (searchTextInput) {
+        let searchDebounceTimer = null;
+        const triggerSearchDebounced = () => {
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                applyFilters();
+            }, 300);
+        };
+        searchTextInput.addEventListener('input', () => {
+            if (searchClearBtn) searchClearBtn.style.display = searchTextInput.value ? '' : 'none';
+            triggerSearchDebounced();
+        });
+        // Initialize visibility
+        if (searchClearBtn) searchClearBtn.style.display = searchTextInput.value ? '' : 'none';
+    }
+
+    // Toggle date clear button visibility
+    const updateDateClear = () => {
+        if (!dateClearBtn) return;
+        const hasAnyDate = (dateFromInput && dateFromInput.value) || (dateToInput && dateToInput.value);
+        dateClearBtn.style.display = hasAnyDate ? '' : 'none';
+    };
+
+    // Update date range label summary on the button
+    const updateDateRangeLabel = () => {
+        const labelEl = document.getElementById('dateRangeLabel');
+        if (!labelEl) return;
+        const from = dateFromInput ? dateFromInput.value : '';
+        const to = dateToInput ? dateToInput.value : '';
+        let label = 'Overall';
+        if (from && to) {
+            label = `${from} — ${to}`;
+        } else if (from) {
+            label = `From ${from}`;
+        } else if (to) {
+            label = `Until ${to}`;
+        }
+        labelEl.textContent = label;
+    };
+
+    updateDateClear();
+    updateDateRangeLabel();
+
+    // Clear button behaviors
+    if (searchClearBtn && searchTextInput) {
+        searchClearBtn.addEventListener('click', () => {
+            searchTextInput.value = '';
+            searchClearBtn.style.display = 'none';
+            applyFilters();
+        });
+    }
+    if (dateClearBtn) {
+        dateClearBtn.addEventListener('click', () => {
+            if (dateFromInput) dateFromInput.value = '';
+            if (dateToInput) dateToInput.value = '';
+            updateDateClear();
+            updateDateRangeLabel();
+            applyFilters();
+        });
+    }
+
+    // Keep date clear up to date on change
+    if (dateFromInput) dateFromInput.addEventListener('input', () => { updateDateClear(); updateDateRangeLabel(); });
+    if (dateToInput) dateToInput.addEventListener('input', () => { updateDateClear(); updateDateRangeLabel(); });
+
+    // Close dropdown (Done)
+    const dateCloseBtn = document.getElementById('dateCloseDropdown');
+    const dateToggleBtn = document.getElementById('dateRangeToggle');
+    if (dateCloseBtn && dateToggleBtn && typeof bootstrap !== 'undefined') {
+        dateCloseBtn.addEventListener('click', () => {
+            const dd = bootstrap.Dropdown.getInstance(dateToggleBtn) || new bootstrap.Dropdown(dateToggleBtn);
+            dd.hide();
+        });
+    }
     
     // Initialize apply and clear filter buttons
     const applyFiltersButton = document.getElementById('apply-filters');
@@ -206,6 +296,17 @@ function initFilterButtons() {
     
     // Set initial values from URL parameters
     setInitialFilterValues();
+
+    // Refresh clear buttons after populating from URL
+    if (searchTextInput && searchClearBtn) {
+        searchClearBtn.style.display = searchTextInput.value ? '' : 'none';
+    }
+    if (typeof updateDateClear === 'function') {
+        updateDateClear();
+    }
+    if (typeof updateDateRangeLabel === 'function') {
+        updateDateRangeLabel();
+    }
     
     // Add event listener to apply filters button
     if (applyFiltersButton) {
@@ -235,6 +336,57 @@ function initFilterButtons() {
                 event.preventDefault();
                 applyFilters();
             }
+        });
+    }
+
+    // Quick type chips (toggle active and set select value)
+    const typeChips = document.querySelectorAll('.type-chip');
+    if (typeChips && transactionTypeSelect) {
+        typeChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                // Toggle active state
+                typeChips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                // Update hidden select to keep logic consistent
+                transactionTypeSelect.value = chip.dataset.value || '';
+                applyFilters();
+            });
+        });
+
+        // Reflect initial state from URL onto chips
+        const url = new URL(window.location.href);
+        const currentType = url.searchParams.get('filter') || '';
+        let matched = false;
+        typeChips.forEach(chip => {
+            if ((chip.dataset.value || '') === currentType) {
+                chip.classList.add('active');
+                matched = true;
+            } else {
+                chip.classList.remove('active');
+            }
+        });
+        if (!matched) {
+            const allChip = document.querySelector('.type-chip[data-value=""]');
+            if (allChip) allChip.classList.add('active');
+        }
+    }
+
+    // Date preset buttons (30d, 3m, 6m, 1y)
+    const presetButtons = document.querySelectorAll('.preset-range');
+    if (presetButtons && dateFromInput && dateToInput) {
+        presetButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const days = parseInt(btn.dataset.range, 10) || 0;
+                const today = new Date();
+                const from = new Date();
+                from.setDate(today.getDate() - days + 1);
+                const fmt = (d) => d.toISOString().split('T')[0];
+                dateToInput.value = fmt(today);
+                dateFromInput.value = fmt(from);
+                updateDateClear();
+                updateDateRangeLabel();
+                applyFilters();
+            });
         });
     }
     
@@ -354,6 +506,16 @@ function initFilterButtons() {
         if (dateFromInput) dateFromInput.value = '';
         if (dateToInput) dateToInput.value = '';
         if (searchTextInput) searchTextInput.value = '';
+        // Reflect in UI helpers
+        if (typeof updateDateClear === 'function') updateDateClear();
+        if (typeof updateDateRangeLabel === 'function') updateDateRangeLabel();
+        // Reset chips UI to 'All'
+        const typeChipsReset = document.querySelectorAll('.type-chip');
+        if (typeChipsReset && typeChipsReset.length) {
+            typeChipsReset.forEach(c => c.classList.remove('active'));
+            const allChip = document.querySelector('.type-chip[data-value=""]');
+            if (allChip) allChip.classList.add('active');
+        }
         
         // Get the current URL and remove filter parameters
         const url = new URL(window.location.href);

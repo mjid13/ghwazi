@@ -3,12 +3,14 @@ category views for the Flask application.
 """
 
 import logging
+from sqlalchemy import func
 
 from flask import (Blueprint, flash, jsonify, redirect, render_template,
                    request, session, url_for)
 
 from ..models import (Category, CategoryMapping, CategoryType,
                 EmailManuConfigs)
+from ..models.models import Transaction, Account, TransactionType
 from ..models.database import Database
 from ..models.transaction import TransactionRepository
 from ..models.user import User
@@ -37,12 +39,31 @@ def categories():
         categories = (
             db_session.query(Category).filter(Category.user_id == user_id).all()
         )
-        return render_template("category/categories.html", categories=categories)
+        # Aggregate transactions per category for this user (expenses only)
+        agg_rows = (
+            db_session.query(
+                Transaction.category_id.label('cat_id'),
+                func.count(Transaction.id).label('tx_count'),
+                func.coalesce(func.sum(Transaction.amount), 0).label('sum_amount')
+            )
+            .join(Account, Transaction.account)
+            .filter(Account.user_id == user_id, Transaction.category_id != None,
+                    Transaction.transaction_type.in_([TransactionType.EXPENSE, TransactionType.INCOME])
+                    )
+            .group_by(Transaction.category_id)
+            .all()
+        )
+        stats = {row.cat_id: {'count': int(row.tx_count or 0), 'total': float(row.sum_amount or 0.0)} for row in agg_rows}
+        return render_template("category/categories.html", categories=categories, category_stats=stats)
 
     except Exception as e:
         logger.error(f"Error loading categories: {str(e)}")
         flash("Error loading categories", "error")
-        return render_template("category/categories.html", categories=[])
+        return render_template(
+            "category/categories.html",
+            categories=[],
+            category_stats={},
+        )
     finally:
         db.close_session(db_session)
 

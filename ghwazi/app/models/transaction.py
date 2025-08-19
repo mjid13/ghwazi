@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import String
+from sqlalchemy import String, or_, cast
 from sqlalchemy.orm import Session
 
 from .models import (Account, Counterparty, EmailManuConfigs, EmailMetadata,
@@ -884,15 +884,17 @@ class TransactionRepository:
             # Apply search text filter if provided
             if search_text and search_text.strip():
                 search_pattern = f"%{search_text.strip()}%"
+                # Ensure we can search across the related Counterparty name as well
+                query = query.outerjoin(Counterparty, Transaction.counterparty_id == Counterparty.id)
                 query = query.filter(
-                    # Search in counterparty name
-                    (Transaction.counterparty_name.ilike(search_pattern))
-                    |
-                    # Search in transaction details (description)
-                    (Transaction.transaction_details.ilike(search_pattern))
-                    |
-                    # Search in amount (convert to string for comparison)
-                    (Transaction.amount.cast(String).ilike(search_pattern))
+                    or_(
+                        # Search in counterparty name (related table)
+                        Counterparty.name.ilike(search_pattern),
+                        # Search in transaction details (description)
+                        Transaction.transaction_details.ilike(search_pattern),
+                        # Search in amount (convert to string for comparison)
+                        cast(Transaction.amount, String).ilike(search_pattern)
+                    )
                 )
 
             total = query.count()

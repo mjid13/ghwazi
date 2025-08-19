@@ -130,7 +130,7 @@ def export_transactions(account_number):
                         if transaction.category
                         else "Uncategorized"
                     ),
-                    transaction.counterparty_name or "",
+                    (transaction.counterparty.name if transaction.counterparty else ""),
                 ]
             )
 

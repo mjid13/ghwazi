@@ -111,33 +111,44 @@
         </div>
     <div class="col-12">
         <!-- Account Selection for Charts -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="mb-3"><i class="bi bi-funnel me-2"></i>Chart Filters</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="chart_account_filter" class="form-label">Filter by Account</label>
-                            <select class="form-select" id="chart_account_filter">
-                                <option value="all" selected>All Accounts</option>
-                                {% for account in accounts %}
-                                <option value="{{ account.account_number }}">{{ account.bank_name }} (•••• {{ account.account_number[-4:] }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+        <div class="card mb-4 filters-card">
+            <div class="card-body py-3">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="badge bg-primary-subtle text-primary p-2 rounded-3 d-flex align-items-center">
+                        <i class="bi bi-funnel-fill me-1"></i>
+                        Filters
+                    </span>
+                    <div class="ms-auto d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary d-inline d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardFilters" aria-expanded="true" aria-controls="dashboardFilters">
+                            <i class="bi bi-sliders"></i>
+                            Show/Hide
+                        </button>
+                        <button class="btn btn-sm btn-link text-danger" id="clearChartFilters" type="button">
+<!--                            <i class="bi bi-x-circle"></i>-->
+                            Clear
+                        </button>
                     </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="chart_date_filter" class="form-label">Filter by Date Range</label>
-                            <select class="form-select" id="chart_date_filter">
-                                <option value="overall" selected>Overall</option>
-                                <option value="2w">Last 2 Weeks</option>
-                                <option value="1m">Last Month</option>
-                                <option value="3m">Last 3 Months</option>
-                                <option value="6m">Last 6 Months</option>
-                                <option value="12m">Last 12 Months</option>
-                                <option value="24m">Last 24 Months</option>
-                            </select>
+                </div>
+                <div id="dashboardFilters" class="collapse show d-md-block mt-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12">
+                            <div class="quick-range d-flex flex-wrap gap-2 overflow-auto pt-1 mb-2" aria-label="Account filter">
+                                <button type="button" class="btn btn-sm btn-primary quick-account-btn active" data-account="all">All Accounts</button>
+                                {% for account in accounts %}
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-account-btn" data-account="{{ account.account_number }}">{{ account.bank_name }} (•••• {{ account.account_number[-4:] }})</button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="quick-range d-flex flex-wrap gap-2 overflow-auto pt-1" aria-label="Date range filter">
+                                <button type="button" class="btn btn-sm btn-primary quick-range-btn active" data-range="overall">Overall</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="2w">2 Weeks</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="1m">1 Month</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="3m">3 Months</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="6m">6 Months</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="12m">12 Months</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="24m">24 Months</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -249,4 +260,79 @@
 
 <!-- Now load charts.js which will see window.chartData populated -->
 <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script nonce="{{ csp_nonce() }}">
+// Button-only filters: manage active state and trigger chart updates
+// Depends on updateCharts() from charts.js and .quick-account-btn / .quick-range-btn markup
+
+document.addEventListener('DOMContentLoaded', function() {
+  const accountButtons = document.querySelectorAll('.quick-account-btn');
+  const rangeButtons = document.querySelectorAll('.quick-range-btn');
+  const clearBtn = document.getElementById('clearChartFilters');
+
+  function setActive(group, targetBtn) {
+    group.forEach(btn => {
+      const isActive = btn === targetBtn;
+      btn.classList.toggle('active', isActive);
+      btn.classList.toggle('btn-primary', isActive);
+      btn.classList.toggle('btn-outline-primary', !isActive);
+    });
+  }
+
+  function getActiveValue(group, dataKey) {
+    const active = Array.from(group).find(b => b.classList.contains('active'));
+    return active ? active.dataset[dataKey] : null;
+  }
+
+  // Account buttons
+  accountButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (this.classList.contains('active')) {
+        this.classList.add('pulse');
+        setTimeout(() => this.classList.remove('pulse'), 300);
+        return;
+      }
+      setActive(accountButtons, this);
+      if (typeof updateCharts === 'function') updateCharts();
+    });
+  });
+
+  // Date range buttons
+  rangeButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (this.classList.contains('active')) {
+        this.classList.add('pulse');
+        setTimeout(() => this.classList.remove('pulse'), 300);
+        return;
+      }
+      setActive(rangeButtons, this);
+      if (typeof updateCharts === 'function') updateCharts();
+    });
+  });
+
+  // Clear button resets to defaults
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      const currentAccount = getActiveValue(accountButtons, 'account');
+      const currentRange = getActiveValue(rangeButtons, 'range');
+      let changed = false;
+
+      if (currentAccount !== 'all') {
+        const btnAll = Array.from(accountButtons).find(b => b.dataset.account === 'all');
+        if (btnAll) { setActive(accountButtons, btnAll); changed = true; }
+      }
+      if (currentRange !== 'overall') {
+        const btnOverall = Array.from(rangeButtons).find(b => b.dataset.range === 'overall');
+        if (btnOverall) { setActive(rangeButtons, btnOverall); changed = true; }
+      }
+
+      if (changed) {
+        if (typeof updateCharts === 'function') updateCharts();
+      } else {
+        clearBtn.classList.add('disabled');
+        setTimeout(() => clearBtn.classList.remove('disabled'), 300);
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

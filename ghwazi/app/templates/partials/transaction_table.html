@@ -4,12 +4,10 @@
             <thead class="bg-light">
                 <tr>
                     <th class="px-4">Date</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Description</th>
+                    <th class="text-end">Amount</th>
                     <th>Category</th>
                     <th>Sender/Receiver</th>
-                    <th></th>
+                    <th class="text-end px-4">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -27,43 +25,34 @@
                                 N/A
                             {% endif %}
                         </td>
-                        <td>
-                            {% if transaction.transaction_type == 'INCOME' %}
-                                <span class="badge bg-success-subtle text-success px-3 py-2">
-                                    <i class="bi bi-arrow-up-circle me-1"></i>Income
-                                </span>
-                            {% elif transaction.transaction_type == 'EXPENSE' %}
-                                <span class="badge bg-danger-subtle text-danger px-3 py-2">
-                                    <i class="bi bi-arrow-down-circle me-1"></i>Expense
-                                </span>
-                            {% else %}
-                                <span class="badge bg-info-subtle text-info px-3 py-2">
-                                    <i class="bi bi-arrow-left-right me-1"></i>Transfer
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="{{ 'text-success' if transaction.transaction_type == 'INCOME' else 'text-danger' if transaction.transaction_type == 'EXPENSE' else '' }}">
+                        <td class="amount-cell text-end">
+                            <span class="amount-chip {% if transaction.transaction_type == 'INCOME' %}amount-positive{% elif transaction.transaction_type == 'EXPENSE' %}amount-negative{% else %}amount-neutral{% endif %}">
                                 {% if transaction.transaction_type == 'INCOME' %}
-                                    +{{ "{:,.3f}".format(transaction.amount) }} {{ transaction.currency }}
+                                    <i class="bi bi-arrow-down-circle me-1 text-success"></i>
+                                    +{{ "{:,.3f}".format(transaction.amount) }} <small class="text-body-secondary">{{ transaction.currency }}</small>
                                 {% elif transaction.transaction_type == 'EXPENSE' %}
-                                -{{ "{:,.3f}".format(transaction.amount) }} {{ transaction.currency }}
+                                    <i class="bi bi-arrow-up-circle me-1 text-danger"></i>
+                                    -{{ "{:,.3f}".format(transaction.amount) }} <small class="text-body-secondary">{{ transaction.currency }}</small>
                                 {% else %}
-                                    {{ "{:,.3f}".format(transaction.amount) }} {{ transaction.currency }}
+                                    <i class="bi bi-arrow-left-right me-1 text-muted"></i>
+                                    {{ "{:,.3f}".format(transaction.amount) }} <small class="text-body-secondary">{{ transaction.currency }}</small>
                                 {% endif %}
                             </span>
                         </td>
-                        <td>
-                            <div class="text-truncate" style="max-width: 300px;">
-                                {{ transaction.transaction_details or 'No description' }}
-                            </div>
-                        </td>
+
                         <td>
                             <div class="category-display" data-transaction-id="{{ transaction.id }}">
                                 {% if transaction.category %}
-                                    <span class="badge category-badge" style="background-color:{{ transaction.category.color if transaction.category.color else '#6c757d' }}; color: white;">{{ transaction.category.name }}</span>
+                                    {% set bg = transaction.category.color if transaction.category.color else '#6c757d' %}
+                                    <span class="category-chip">
+                                        <span class="category-dot" style="background-color: {{ bg }};"></span>
+                                        <span class="category-name">{{ transaction.category.name }}</span>
+                                    </span>
                                 {% else %}
-                                    <span class="badge bg-secondary category-badge">Uncategorized</span>
+                                    <span class="category-chip">
+                                        <span class="category-dot" style="background-color: #6c757d;"></span>
+                                        <span class="category-name">Uncategorized</span>
+                                    </span>
                                 {% endif %}
                                 <button class="btn btn-sm btn-link edit-category-btn p-0 ms-1" title="Edit Category">
                                     <i class="bi bi-pencil-square"></i>
@@ -91,13 +80,29 @@
                                 </form>
                             </div>
                         </td>
-                        {% if transaction.transaction_type == 'INCOME' %}
-                            <td class="text-success">{{ transaction.counterparty.name if transaction.counterparty else 'N/A' }}</td>
+                       {% if transaction.transaction_type == 'INCOME' %}
+                            <td class="text-success">
+                                <div>{{ transaction.counterparty.name if transaction.counterparty else 'N/A' }}</div>
+                                {% if transaction.transaction_details %}
+                                    <div class="text-muted small">{{ transaction.transaction_details }}</div>
+                                {% endif %}
+                            </td>
                         {% elif transaction.transaction_type == 'EXPENSE' %}
-                            <td class="text-danger">{{ transaction.counterparty.name if transaction.counterparty else 'N/A' }}</td>
+                            <td class="text-danger">
+                                <div>{{ transaction.counterparty.name if transaction.counterparty else 'N/A' }}</div>
+                                {% if transaction.transaction_details %}
+                                    <div class="text-muted small">{{ transaction.transaction_details }}</div>
+                                {% endif %}
+                            </td>
                         {% else %}
-                            <td class="text-danger">{{ transaction.counterparty.name if transaction.counterparty else 'N/A' }}</td>
+                            <td class="text-danger">
+                                <div>{{ transaction.counterparty.name if transaction.counterparty else 'N/A' }}</div>
+                                {% if transaction.transaction_details %}
+                                    <div class="text-muted small">{{ transaction.transaction_details }}</div>
+                                {% endif %}
+                            </td>
                         {% endif %}
+
                         <td class="text-end px-4">
                             <button class="btn btn-link btn-sm p-0" data-bs-toggle="dropdown">
                                 <i class="bi bi-three-dots-vertical"></i>
@@ -124,16 +129,39 @@
         </table>
     </div>
 
-{% if pagination and pagination.pages > 1 %}
+{% if pagination %}
 <div class="mt-4">
-    <nav aria-label="Transaction pagination">
+    <div class="row align-items-center g-2">
+        <div class="col-md-6">
+            {% set start_item = (pagination.current_page - 1) * pagination.per_page + 1 if pagination.total > 0 else 0 %}
+            {% set end_item = [pagination.total, pagination.current_page * pagination.per_page]|min %}
+            <p class="mb-2 mb-md-0 text-muted small">
+                Showing {{ start_item }} - {{ end_item }} of {{ pagination.total }} transactions
+            </p>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="per_page" class="form-label mb-0 small text-muted">Rows per page</label>
+                <select name="per_page" id="per_page" class="form-select form-select-sm per-page-selector" onchange="this.form.submit()">
+                    {% for opt in [25, 50, 100, 200] %}
+                        <option value="{{ opt }}" {% if pagination.per_page == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="page" value="1">
+            </form>
+        </div>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Transaction pagination" class="mt-2">
         <ul class="pagination justify-content-center">
             <!-- Previous button -->
             <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
                 <a class="page-link"
-                   href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.current_page-1) }}"
+                   href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.current_page-1, per_page=pagination.per_page) }}"
                    aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
+                    <span class="visually-hidden">Previous</span>
                 </a>
             </li>
 
@@ -145,7 +173,7 @@
             {% if start_page > 1 %}
                 <li class="page-item">
                     <a class="page-link"
-                       href="{{ url_for('account.account_details', account_number=account.account_number, page=1) }}">
+                       href="{{ url_for('account.account_details', account_number=account.account_number, page=1, per_page=pagination.per_page) }}">
                         1
                     </a>
                 </li>
@@ -163,7 +191,7 @@
                 {% else %}
                     <li class="page-item">
                         <a class="page-link"
-                           href="{{ url_for('account.account_details', account_number=account.account_number, page=page_num) }}">
+                           href="{{ url_for('account.account_details', account_number=account.account_number, page=page_num, per_page=pagination.per_page) }}">
                             {{ page_num }}
                         </a>
                     </li>
@@ -178,27 +206,24 @@
                 {% endif %}
                 <li class="page-item">
                     <a class="page-link"
-                       href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.pages) }}">
+                       href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.pages, per_page=pagination.per_page) }}">
                         {{ pagination.pages }}
                     </a>
                 </li>
             {% endif %}
 
-
             <!-- Next button -->
             <li class="page-item {% if pagination.current_page == pagination.pages %}disabled{% endif %}">
                 <a class="page-link"
-                   href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.current_page+1) }}"
+                   href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.current_page+1, per_page=pagination.per_page) }}"
                    aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
+                    <span class="visually-hidden">Next</span>
                 </a>
             </li>
         </ul>
     </nav>
-    <p class="text-center text-muted">
-        Showing page {{ pagination.current_page }} of {{ pagination.pages }}
-        ({{ pagination.total }} total transactions)
-    </p>
+    {% endif %}
 </div>
 {% endif %}
 {% else %}
@@ -206,15 +231,8 @@
         <div class="mb-4">
             <i class="bi bi-receipt display-1 text-muted"></i>
         </div>
-        <h4>No Transactions Yet</h4>
-        <p class="text-body-secondary mb-4">Start by processing your bank emails or adding transactions manually.</p>
-        <div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
-                <i class="bi bi-plus-circle me-2"></i>Add Transaction
-            </button>
-            <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary">
-                <i class="bi bi-envelope me-2"></i>Process Emails
-            </a>
-        </div>
+        <h4>No Transactions Found</h4>
+        <p class="text-body-secondary mb-4">Start by processing your bank account</p>
+
     </div>
 {% endif %}

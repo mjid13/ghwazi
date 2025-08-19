@@ -893,13 +893,18 @@ function showErrorForContainer(container, message) {
 
 // Function to get current filter values
 function getFilterValues() {
-    const accountFilter = document.getElementById('chart_account_filter');
-    const dateFilter = document.getElementById('chart_date_filter');
+    // Prefer new quick buttons; fallback to defaults
+    const activeAccountBtn = document.querySelector('.quick-account-btn.active');
+    const activeRangeBtn = document.querySelector('.quick-range-btn.active');
 
-    return {
-        accountNumber: accountFilter ? accountFilter.value : 'all',
-        dateRange: dateFilter ? dateFilter.value : 'overall'
-    };
+    const accountNumber = activeAccountBtn && activeAccountBtn.dataset && activeAccountBtn.dataset.account
+        ? activeAccountBtn.dataset.account
+        : 'all';
+    const dateRange = activeRangeBtn && activeRangeBtn.dataset && activeRangeBtn.dataset.range
+        ? activeRangeBtn.dataset.range
+        : 'overall';
+
+    return { accountNumber, dateRange };
 }
 
 // Function to fetch chart data based on filters
