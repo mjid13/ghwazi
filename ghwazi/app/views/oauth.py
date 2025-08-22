@@ -236,10 +236,9 @@ def sync_gmail():
         # Ensure Gmail integration is enabled
         email_config = oauth_service.get_email_config(user_id)
         if not email_config or not getattr(email_config, 'enabled', False):
-            return jsonify({
-                'success': False,
-                'message': 'Gmail integration is not enabled.'
-            })
+            success_message = f'Your Gmail integration is not enabled.'
+            flash(success_message, "error")
+            return redirect(url_for("main.dashboard"))
 
         # Import here to avoid circular imports at module load time
         from .account import _start_account_sync_background

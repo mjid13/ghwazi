@@ -18,6 +18,7 @@ from .config.base import Config
 from .extensions import db, migrate, limiter, csrf
 from .utils.safe_session_interface import SafeCookieSessionInterface
 from flask_wtf.csrf import CSRFError, generate_csrf
+from .utils.template_filters import format_currency_rtl, format_account_number_rtl
 
 # Optional Redis session support
 try:
@@ -32,6 +33,8 @@ def create_app(config_class=Config):
     """Create and configure the Flask application."""
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.jinja_env.filters['format_currency_rtl'] = format_currency_rtl
+    app.jinja_env.filters['account_number_rtl'] = format_account_number_rtl
 
     # Initialize session management
     _initialize_session_management(app)

@@ -143,18 +143,13 @@
 <!--                    </li>-->
                     {% endif %}
                     
-                    <!-- Theme Toggle -->
-                    <li class="nav-item">
-                        <button class="btn btn-link nav-link" id="theme-toggle">
-                            <i class="bi bi-moon-stars"></i>
-                        </button>
-                    </li>
+
                                     <!-- Language Switcher -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-translate"></i> {{ _('Language') }}
+                            <i class="bi bi-translate"></i>
                             {% if languages and current_locale and current_locale in languages %}
-                                <small class="text-muted">({{ languages[current_locale]['name'] }})</small>
+                                <small class="text-muted">{{ languages[current_locale]['name'] }}</small>
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -175,6 +170,12 @@
                                 <li><a class="dropdown-item" href="{{ url_for('session.set_language') }}?lang=ar">العربية</a></li>
                             {% endif %}
                         </ul>
+                    </li>
+                    <!-- Theme Toggle -->
+                    <li class="nav-item">
+                        <button class="btn btn-link nav-link" id="theme-toggle">
+                            <i class="bi bi-moon-stars"></i>
+                        </button>
                     </li>
                 </ul>
             </div>

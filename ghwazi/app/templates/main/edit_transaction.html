@@ -9,7 +9,7 @@
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ url_for('account.accounts') }}" class="text-decoration-none">{{ _("Accounts") }}</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('account.account_details', account_number=transaction.account.account_number) }}" class="text-decoration-none">•••• {{ transaction.account.account_number[-4:]  }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('account.account_details', account_number=transaction.account.account_number) }}" class="text-decoration-none">{{ transaction.account.account_number|account_number_rtl }}</a></li>
                     <li class="breadcrumb-item active">{{ _("Edit Transaction") }}</li>
                 </ol>
             </nav>

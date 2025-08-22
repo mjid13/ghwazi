@@ -19,7 +19,45 @@ def format_currency_rtl(amount, currency='USD'):
             return f"{currency} {formatted_amount}"
     except:
         return f"{amount:,.3f} {currency}"
+def format_account_number_rtl(account_number, mask_chars=4, mask_symbol='•'):
+    """Format account numbers for RTL display with proper masking."""
+    if not account_number:
+        return ""
 
+    account_str = str(account_number)
+
+    try:
+        from flask_babel import get_locale
+        locale = get_locale()
+        is_rtl = locale and str(locale).startswith('ar')
+
+        if is_rtl:
+            # For RTL, show mask symbols followed by last 4 digits
+            if len(account_str) > mask_chars:
+                masked_part = mask_symbol * mask_chars
+                visible_part = account_str[-mask_chars:]
+                # In RTL, we want: ••••1234 (mask symbols on the right, digits on the left)
+                return f"{masked_part} {visible_part}"
+            else:
+                return account_str
+        else:
+            # For LTR, show mask symbols followed by last 4 digits
+            if len(account_str) > mask_chars:
+                masked_part = mask_symbol * mask_chars
+                visible_part = account_str[-mask_chars:]
+                return f"{masked_part}{visible_part}"
+            else:
+                return account_str
+
+    except Exception:
+        # Fallback formatting
+        if len(account_str) > mask_chars:
+            masked_part = mask_symbol * mask_chars
+            visible_part = account_str[-mask_chars:]
+            return f"{masked_part}{visible_part}"
+        else:
+            return account_str
+        
 def format_number_rtl(number):
     """Format numbers for RTL languages with proper locale."""
     try:
@@ -32,10 +70,63 @@ def format_number_rtl(number):
     except:
         return str(number)
 
+
+def format_account_number_rtl(account_number, mask_chars=4, mask_symbol='•'):
+    """Format account numbers for RTL display with proper masking."""
+    if not account_number:
+        return ""
+
+    account_str = str(account_number)
+
+    try:
+        from flask_babel import get_locale
+        locale = get_locale()
+        is_rtl = locale and str(locale).startswith('ar')
+
+        if is_rtl:
+            # For RTL, show mask symbols followed by last 4 digits with proper spacing
+            if len(account_str) > mask_chars:
+                masked_part = mask_symbol * mask_chars
+                visible_part = account_str[-mask_chars:]
+                # In RTL, we want: ••••1234 (mask symbols on the right, digits on the left)
+                return f"{masked_part} {visible_part}"
+            else:
+                return account_str
+        else:
+            # For LTR, show mask symbols followed by last 4 digits
+            if len(account_str) > mask_chars:
+                masked_part = mask_symbol * mask_chars
+                visible_part = account_str[-mask_chars:]
+                return f"{masked_part}{visible_part}"
+            else:
+                return account_str
+
+    except Exception:
+        # Fallback formatting
+        if len(account_str) > mask_chars:
+            masked_part = mask_symbol * mask_chars
+            visible_part = account_str[-mask_chars:]
+            return f"{masked_part}{visible_part}"
+        else:
+            return account_str
+
+
 def register_template_filters(app):
     """Register custom template filters."""
     app.jinja_env.filters['currency_rtl'] = format_currency_rtl
     app.jinja_env.filters['number_rtl'] = format_number_rtl
+    app.jinja_env.filters['format_account_number_rtl'] = format_account_number_rtl
+
+    @app.template_filter('account_number_rtl')
+    def account_number_rtl_filter(account_number, mask_chars=4, mask_symbol='•'):
+        """
+        Filter to format account numbers for RTL display with proper masking.
+
+        Usage in template: {{ account.account_number|account_number_rtl }}
+        Usage with custom mask: {{ account.account_number|account_number_rtl(6, '*') }}
+        """
+        return format_account_number_rtl(account_number, mask_chars, mask_symbol)
+
 
 def register_template_globals(app):
     """Register template globals."""

@@ -6,28 +6,28 @@
 <div class="row g-4">
     <div class="col-12">
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
+            <ol class="breadcrumb {% if text_direction == 'rtl' %} flex-row-reverse{% endif %}">
                 <li class="breadcrumb-item"><a href="{{ url_for('account.accounts') }}" class="text-decoration-none"><i class="bi bi-bank me-1"></i>{{ _('Accounts') }}</a></li>
                 <li class="breadcrumb-item active" aria-current="page">•••• {{ account.account_number[-4:] }}</li>
             </ol>
         </nav>
 
-        <div class="card account-overview mb-4{% if text_direction == 'rtl' %} text-end{% endif %}">
+        <div class="card account-overview mb-4">
             <div class="card-body p-4">
                 <div class="row g-4">
                     <div class="col-md-8">
-                        <div class="d-flex justify-content-between align-items-start{% if text_direction == 'rtl' %} flex-row-reverse{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <span class="badge bg-primary-subtle text-primary mb-2">{{ account.bank_name }}</span>
                                 <h2 class="h3 mb-1">•••• {{ account.account_number[-4:] }}</h2>
                                 <p class="text-body-secondary mb-3">{{ _('Last updated') }}: {% if account.updated_at %}<span dir="ltr">{{ account.updated_at.strftime('%b %d, %Y at %H:%M') }}</span>{% else %}{{ _('N/A') }}{% endif %}</p>
 
                                 <div class="balance-section">
+                                    <p class="text-body-secondary mb-0">{{ _('Current Balance') }}</p>
                                     <h3 class="h4 mb-0 d-flex align-items-center" dir="ltr">
                                         <span class="me-2">{{ "{:,.3f}".format(account.balance) }}</span>
                                         <small class="text-body-secondary">{{ account.currency }}</small>
                                     </h3>
-                                    <p class="text-body-secondary mb-0">{{ _('Current Balance') }}</p>
                                 </div>
                             </div>
 

@@ -52,43 +52,9 @@
     text-align: right;
 }
 
-/* Override general d-flex for specific layouts */
-[dir="rtl"] .d-flex {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .justify-content-between {
-    flex-direction: row-reverse;
-}
-
-/* Exception: keep some elements in original order */
-[dir="rtl"] .d-flex.flex-column {
-    flex-direction: column;
-}
-
-[dir="rtl"] .d-flex.align-items-center:not(.justify-content-between) {
-    flex-direction: row-reverse;
-}
-
 /* Keep badge groups in LTR for better readability */
-[dir="rtl"] .d-flex .badge + .badge {
+[dir="rtl"] .badge + .badge {
     direction: ltr;
-}
-
-/* Form row exception */
-[dir="rtl"] .row.g-3 .d-flex,
-[dir="rtl"] .row.g-2 .d-flex {
-    flex-direction: row-reverse;
-}
-
-/* Navbar flex items */
-[dir="rtl"] .navbar .d-flex {
-    flex-direction: row-reverse;
-}
-
-/* Keep dropdown items in proper order */
-[dir="rtl"] .dropdown-menu .d-flex {
-    flex-direction: row-reverse;
 }
 
 /* Form Controls */
@@ -155,6 +121,8 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     direction: ltr;
     unicode-bidi: embed;
+  text-align: left;
+
 }
 
 /* Chart containers */
@@ -179,82 +147,64 @@
     flex-direction: row-reverse;
 }
 
-/* Quick range buttons */
-[dir="rtl"] .quick-range {
-    flex-direction: row-reverse;
-}
-
-/* Filter cards */
-[dir="rtl"] .filters-card .d-flex {
-    flex-direction: row-reverse;
-}
-
-/* Card specific flex layouts for RTL */
-[dir="rtl"] .card-header .d-flex.justify-content-between {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .card-body .d-flex.justify-content-between {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .card-footer .d-flex.justify-content-between {
-    flex-direction: row-reverse;
-}
-
-/* Account card items RTL */
+/* Card specific flex layouts for RTL - only for justify-content-between */
+[dir="rtl"] .card-header .d-flex.justify-content-between,
+[dir="rtl"] .card-body .d-flex.justify-content-between,
+[dir="rtl"] .card-footer .d-flex.justify-content-between,
 [dir="rtl"] .account-item .d-flex.justify-content-between {
     flex-direction: row-reverse;
 }
 
 [dir="rtl"] .account-item h5 {
     text-align: right;
+    justify-content: flex-start;
 }
 
 [dir="rtl"] .account-item p {
     text-align: right;
 }
 
-[dir="rtl"] .account-item small {
-    text-align: right;
-}
+/*[dir="rtl"] .account-item small {*/
+/*    text-align: right;*/
+/*}*/
 
-/* Welcome section card RTL */
-[dir="rtl"] .welcome-section h1 {
-    text-align: right;
-}
-
-[dir="rtl"] .welcome-section p {
-    text-align: right;
-}
-
-[dir="rtl"] .welcome-section .d-flex {
-    flex-direction: row-reverse;
-}
-
-/* Chart card RTL */
-[dir="rtl"] .chart-card .card-header .d-flex {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .chart-title {
-    text-align: right;
-}
-
-[dir="rtl"] .chart-description {
-    text-align: right;
-}
-
-/* Quick range buttons RTL */
-[dir="rtl"] .quick-range {
-    flex-direction: row-reverse;
-}
 
 [dir="rtl"] .quick-account-btn,
 [dir="rtl"] .quick-range-btn {
     text-align: center;
 }
 
+/* Account card h5 flex fix for RTL */
+[dir="rtl"] .account-item h5.d-flex {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .account-item .bi-bank2 {
+    margin-left: 0.5rem;
+    margin-right: 0;
+    order: 2;
+}
+
+/* Transaction summary RTL fixes */
+[dir="rtl"] .transaction-summary .d-flex {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .transaction-summary .currency-amount {
+    direction: ltr;
+    text-align: right;
+}
+
+[dir="rtl"] .transaction-summary small,
+[dir="rtl"] .transaction-summary strong {
+    text-align: right;
+}
+
+/* Success/Error card content RTL */
+[dir="rtl"] .bg-success-subtle > div > div,
+[dir="rtl"] .bg-danger-subtle > div > div {
+    text-align: right;
+}
 /* Category header toggle RTL */
 [dir="rtl"] .category-header-toggle {
     order: -1;
@@ -266,20 +216,7 @@
     direction: ltr;
 }
 
-/* Card list items RTL */
-[dir="rtl"] .card .list-group-item {
-    text-align: right;
-}
-
-[dir="rtl"] .list-group-item .d-flex {
-    flex-direction: row-reverse;
-}
-
 /* Account list specific RTL */
-[dir="rtl"] .account-list .account-item {
-    direction: rtl;
-}
-
 [dir="rtl"] .account-list .badge {
     direction: ltr;
 }
@@ -289,82 +226,26 @@
     text-align: center;
 }
 
-/* Additional card content RTL */
-[dir="rtl"] .card .alert {
-    text-align: right;
-}
-
-[dir="rtl"] .card .alert .d-flex {
-    flex-direction: row-reverse;
-}
-
 /* Card with forms RTL */
-[dir="rtl"] .card .form-group label {
-    text-align: right;
-}
-
 [dir="rtl"] .card .form-floating label {
     text-align: right;
+    transform-origin: right bottom;
 }
 
 /* Card navigation RTL */
-[dir="rtl"] .card .nav-tabs {
+[dir="rtl"] .nav-tabs,
+[dir="rtl"] .nav-pills {
     flex-direction: row-reverse;
 }
 
-[dir="rtl"] .card .nav-pills {
-    flex-direction: row-reverse;
-}
-
-/* Card action buttons RTL */
-[dir="rtl"] .card .btn-group {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .card .btn-toolbar {
-    flex-direction: row-reverse;
-}
-
-/* Card image caption RTL */
-[dir="rtl"] .card-img-overlay {
-    text-align: right;
-}
-
-/* Stats cards RTL */
-[dir="rtl"] .stats-card .d-flex {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .stats-card h3,
-[dir="rtl"] .stats-card h4,
-[dir="rtl"] .stats-card h5 {
-    text-align: right;
-}
-
-/* Transaction card specific RTL */
-[dir="rtl"] .transaction-card .d-flex {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .transaction-card .badge {
-    direction: ltr;
-}
-
-/* Account balance card RTL */
-[dir="rtl"] .balance-card .d-flex {
-    flex-direction: row-reverse;
-}
-
+/* Transaction and balance card badges RTL */
+[dir="rtl"] .transaction-card .badge,
 [dir="rtl"] .balance-card .currency-display {
     direction: ltr;
     text-align: center;
 }
 
 /* Account summary card RTL */
-[dir="rtl"] .account-summary-card .d-flex.justify-content-between {
-    flex-direction: row-reverse;
-}
-
 [dir="rtl"] .account-summary-card .text-end {
     text-align: left !important;
 }
@@ -373,46 +254,11 @@
     text-align: right !important;
 }
 
-[dir="rtl"] .account-summary-card h3,
-[dir="rtl"] .account-summary-card h4,
-[dir="rtl"] .account-summary-card h5 {
-    text-align: right;
-}
-
 [dir="rtl"] .account-summary-card .badge {
     direction: ltr;
 }
 
-/* Transaction summary within cards RTL */
-[dir="rtl"] .transaction-summary .d-flex {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .transaction-summary small,
-[dir="rtl"] .transaction-summary strong {
-    text-align: right;
-}
-
-/* Login/Auth card specific RTL */
-[dir="rtl"] .container .text-center h1,
-[dir="rtl"] .container .text-center p {
-    text-align: center;
-}
-
-[dir="rtl"] .card .form-floating label {
-    text-align: right;
-    transform-origin: right bottom;
-}
-
-[dir="rtl"] .card .d-grid button {
-    text-align: center;
-}
-
 /* Account details card RTL */
-[dir="rtl"] .account-details-card .d-flex {
-    flex-direction: row-reverse;
-}
-
 [dir="rtl"] .account-details-card .text-end {
     text-align: left !important;
 }
@@ -423,13 +269,6 @@
 [dir="rtl"] .bg-warning-subtle,
 [dir="rtl"] .bg-info-subtle {
     text-align: right;
-}
-
-[dir="rtl"] .bg-success-subtle .d-flex,
-[dir="rtl"] .bg-danger-subtle .d-flex,
-[dir="rtl"] .bg-warning-subtle .d-flex,
-[dir="rtl"] .bg-info-subtle .d-flex {
-    flex-direction: row-reverse;
 }
 
 /* Arabic font support */
@@ -526,14 +365,6 @@ body {
     direction: rtl;
 }
 
-/* Chart filter toggle RTL */
-[dir="rtl"] .category-chart-filter {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .filter-toggle-container {
-    flex-direction: row-reverse;
-}
 
 /* DataTable language dropdown RTL */
 [dir="rtl"] .dataTables_length {
@@ -639,10 +470,6 @@ body {
     flex-direction: row-reverse;
 }
 
-[dir="rtl"] .btn-group-vertical {
-    flex-direction: column;
-}
-
 /* Toast RTL */
 [dir="rtl"] .toast {
     text-align: right;
@@ -672,14 +499,6 @@ body {
     transform: rotate(270deg);
 }
 
-/* Tab RTL */
-[dir="rtl"] .nav-tabs {
-    flex-direction: row-reverse;
-}
-
-[dir="rtl"] .nav-pills {
-    flex-direction: row-reverse;
-}
 
 /* Responsive utilities for RTL */
 @media (max-width: 768px) {
