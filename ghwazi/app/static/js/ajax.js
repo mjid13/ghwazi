@@ -101,7 +101,7 @@ const Ajax = {
                     errorCallback(error);
                 } else {
                     // Default error handling
-                    Ajax.showNotification('An error occurred. Please try again.', 'error');
+                    Ajax.showNotification(_('An error occurred. Please try again.'), _('error'));
                 }
             });
     },
@@ -160,7 +160,7 @@ const Ajax = {
                     spinner.classList.remove('d-none');
                 } else {
                     submitBtn.dataset.originalText = submitBtn.innerHTML;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + _('Processing...');
                 }
                 submitBtn.disabled = true;
             }
@@ -211,7 +211,7 @@ const Ajax = {
                         errorCallback(error);
                     } else {
                         // Default error handling
-                        Ajax.showNotification('An error occurred. Please try again.', 'error');
+                        Ajax.showNotification(_('An error occurred. Please try again.'), _('error'));
                     }
                 }
             );
@@ -236,7 +236,7 @@ const Ajax = {
         targetElement.dataset.loadToken = token;
         
         // Show loading indicator in the target element
-        const loadingHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        const loadingHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">' + _('Loading...') + '</span></div></div>';
         targetElement.innerHTML = loadingHTML;
         
         // Send the AJAX request
@@ -271,7 +271,7 @@ const Ajax = {
                     return;
                 }
                 // Show error message in the target element
-                targetElement.innerHTML = '<div class="alert alert-danger">Failed to load content. Please try again.</div>';
+                targetElement.innerHTML = '<div class="alert alert-danger">' + _('Failed to load content. Please try again.') + '</div>';
             }
         );
     },
@@ -297,7 +297,7 @@ const Ajax = {
         notification.role = 'alert';
         notification.innerHTML = `
             ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="" + _('Close') + ""></button>
         `;
         
         // Add the notification to the flash-messages container

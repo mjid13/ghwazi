@@ -48,7 +48,7 @@ CATEGORIES: List[Dict] = [
                 # Common chains present in Oman
                 "mcdonald", "kfc", "burger king", "subway", "pizza hut", "domino", "hardees", "papa john",
                 "shaway", "shawarma", "doner", "karak", "café", "cafe", "starbucks", "costa", "gloria jean",
-                "dunkin", "55 cafe", "restaurant", "rest.", "coffee", "kuku", "burger", "pizza", "FOOD"
+                "dunkin", "55 cafe", "restaurant", "rest.", "coffee", "kuku", "burger", "pizza", "FOOD", "tea"
             ],
             "description": ["fast food", "delivery", "takeaway", "pizza", "dining", "burger", "snack"],
         },
@@ -104,7 +104,7 @@ CATEGORIES: List[Dict] = [
         "description": "Cinemas, restaurants, cafés, leisure.",
         "patterns": {
             "counterparty": [
-                "vox cinemas", "vox", "cinepolis", "wow cinemas", "tea"
+                "vox cinemas", "vox", "cinepolis", "wow cinemas"
             ],
             "description": ["cinema", "movie", "tickets", "leisure", "entertainment"],
         },

@@ -3,11 +3,11 @@
         <table class="table table-hover mb-0">
             <thead class="bg-light">
                 <tr>
-                    <th class="px-4">Date</th>
-                    <th class="text-end">Amount</th>
-                    <th>Category</th>
-                    <th>Sender/Receiver</th>
-                    <th class="text-end px-4">Actions</th>
+                    <th class="px-4">{{ _("Date") }}</th>
+                    <th class="text-end">{{ _("Amount") }}</th>
+                    <th>{{ _("Category") }}</th>
+                    <th>{{ _("Sender/Receiver") }}</th>
+                    <th class="text-end px-4">{{ _("Actions") }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -16,7 +16,7 @@
                         <td class="px-4">
                             {% if transaction.date_time %}
                                 <div class="d-flex align-items-center">
-                                    <div class="transaction-date">
+                                    <div class="transaction-date" dir="ltr">
                                         <strong class="d-block">{{ transaction.date_time.strftime('%y/%b/%d') }}</strong>
                                         <small class="text-body-secondary">{{ transaction.date_time.strftime('%H:%M') }}</small>
                                     </div>
@@ -26,7 +26,7 @@
                             {% endif %}
                         </td>
                         <td class="amount-cell text-end">
-                            <span class="amount-chip {% if transaction.transaction_type == 'INCOME' %}amount-positive{% elif transaction.transaction_type == 'EXPENSE' %}amount-negative{% else %}amount-neutral{% endif %}">
+                            <span class="amount-chip {% if transaction.transaction_type == 'INCOME' %}amount-positive{% elif transaction.transaction_type == 'EXPENSE' %}amount-negative{% else %}amount-neutral{% endif %}" dir="ltr">
                                 {% if transaction.transaction_type == 'INCOME' %}
                                     <i class="bi bi-arrow-down-circle me-1 text-success"></i>
                                     +{{ "{:,.3f}".format(transaction.amount) }} <small class="text-body-secondary">{{ transaction.currency }}</small>
@@ -51,7 +51,7 @@
                                 {% else %}
                                     <span class="category-chip">
                                         <span class="category-dot" style="background-color: #6c757d;"></span>
-                                        <span class="category-name">Uncategorized</span>
+                                        <span class="category-name">{{ _("Uncategorized") }}</span>
                                     </span>
                                 {% endif %}
                                 <button class="btn btn-sm btn-link edit-category-btn p-0 ms-1" title="Edit Category">
@@ -63,7 +63,7 @@
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="input-group input-group-sm">
                                         <select name="category_id" class="form-select form-select-sm category-select">
-                                            <option value="">Uncategorized</option>
+                                            <option value="">{{ _("Uncategorized") }}</option>
                                             {% for category in categories %}
                                                 <option value="{{ category.id }}" {% if transaction.category and transaction.category.id == category.id %}selected{% endif %}>
                                                     {{ category.name }}
@@ -110,14 +110,14 @@
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="dropdown-item" href="{{ url_for('transaction.edit_transaction', transaction_id=transaction.id) }}">
-                                        <i class="bi bi-pencil me-2"></i>Edit
+                                        <i class="bi bi-pencil me-2"></i>{{ _("Edit") }}
                                     </a>
                                 </li>
                                 <li>
                                     <form action="{{ url_for('transaction.delete_transaction', transaction_id=transaction.id) }}" method="post" class="d-inline">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="dropdown-item text-danger">
-                                            <i class="bi bi-trash me-2"></i>Delete
+                                            <i class="bi bi-trash me-2"></i>{{ _("Delete") }}
                                         </button>
                                     </form>
                                 </li>
@@ -136,12 +136,12 @@
             {% set start_item = (pagination.current_page - 1) * pagination.per_page + 1 if pagination.total > 0 else 0 %}
             {% set end_item = [pagination.total, pagination.current_page * pagination.per_page]|min %}
             <p class="mb-2 mb-md-0 text-muted small">
-                Showing {{ start_item }} - {{ end_item }} of {{ pagination.total }} transactions
+                {{ _("Showing %(start)d - %(end)d of %(total)d transactions", start=start_item, end=end_item, total=pagination.total) }}
             </p>
         </div>
         <div class="col-md-6 d-flex justify-content-md-end">
             <form method="get" class="d-flex align-items-center gap-2">
-                <label for="per_page" class="form-label mb-0 small text-muted">Rows per page</label>
+                <label for="per_page" class="form-label mb-0 small text-muted">{{ _("Rows per page") }}</label>
                 <select name="per_page" id="per_page" class="form-select form-select-sm per-page-selector" onchange="this.form.submit()">
                     {% for opt in [25, 50, 100, 200] %}
                         <option value="{{ opt }}" {% if pagination.per_page == opt %}selected{% endif %}>{{ opt }}</option>
@@ -161,7 +161,7 @@
                    href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.current_page-1, per_page=pagination.per_page) }}"
                    aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
-                    <span class="visually-hidden">Previous</span>
+                    <span class="visually-hidden">{{ _("Previous") }}</span>
                 </a>
             </li>
 
@@ -218,7 +218,7 @@
                    href="{{ url_for('account.account_details', account_number=account.account_number, page=pagination.current_page+1, per_page=pagination.per_page) }}"
                    aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
-                    <span class="visually-hidden">Next</span>
+                    <span class="visually-hidden">{{ _("Next") }}</span>
                 </a>
             </li>
         </ul>
@@ -231,8 +231,8 @@
         <div class="mb-4">
             <i class="bi bi-receipt display-1 text-muted"></i>
         </div>
-        <h4>No Transactions Found</h4>
-        <p class="text-body-secondary mb-4">Start by processing your bank account</p>
+        <h4>{{ _("No Transactions Found") }}</h4>
+        <p class="text-body-secondary mb-4">{{ _("Start by processing your bank account") }}</p>
 
     </div>
 {% endif %}

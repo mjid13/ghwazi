@@ -481,12 +481,12 @@ export class Validator {
     for (const rule of rules) {
       if (typeof rule === 'function') {
         if (!rule(value)) {
-          errors.push('Validation failed');
+          errors.push(_('Validation failed'));
         }
       } else if (typeof rule === 'object') {
         const { validator, message } = rule;
         if (typeof validator === 'function' && !validator(value)) {
-          errors.push(message || 'Validation failed');
+          errors.push(message || _('Validation failed'));
         }
       }
     }

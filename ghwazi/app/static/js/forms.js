@@ -21,7 +21,7 @@ function initFormValidation() {
                     } else {
                         // If no spinner exists, add loading text
                         submitBtn.dataset.originalText = submitBtn.innerHTML;
-                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + _('Processing...');
                     }
                     submitBtn.disabled = true;
                 }

@@ -1,7 +1,10 @@
 /**
- * Chart initialization and configuration
+ * Chart initialization and configuration with RTL support
  * Requires Chart.js to be loaded
  */
+
+// RTL configuration for charts
+const isRTL = document.documentElement.getAttribute('dir') === 'rtl';
 
 // Store chart instances so we can destroy and recreate them
 let chartInstances = {
@@ -121,6 +124,7 @@ function initDashboardCharts(chartData) {
                 plugins: {
                     legend: {
                         position: 'bottom',
+                        rtl: isRTL,
                         labels: {
                             usePointStyle: true,
                             pointStyle: 'circle',
@@ -230,6 +234,7 @@ function initDashboardCharts(chartData) {
                 scales: {
                     x: {
                         display: true,
+                        reverse: isRTL,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)',
                             lineWidth: 1
@@ -263,6 +268,7 @@ function initDashboardCharts(chartData) {
                 plugins: {
                     legend: {
                         position: 'bottom',
+                        rtl: isRTL,
                         labels: {
                             usePointStyle: true,
                             pointStyle: 'circle',
@@ -457,6 +463,7 @@ function updateCategoryChartInstance(chartData) {
                     align: 'center',
                     maxWidth: 400,
                     fullSize: true,
+                    rtl: isRTL,
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
@@ -742,6 +749,7 @@ function fetchCategoryChartData(accountNumber, dateRange, categoryType) {
                             align: 'center',
                             maxWidth: 400,
                             fullSize: true,
+                            rtl: isRTL,
                             labels: {
                                 usePointStyle: true,
                                 pointStyle: 'circle',
@@ -844,7 +852,7 @@ function fetchCategoryChartData(accountNumber, dateRange, categoryType) {
         .catch(error => {
             console.error('Error fetching category chart data:', error);
             hideLoadingForContainer(categoryChartContainer);
-            showErrorForContainer(categoryChartContainer, 'Error loading category data. Please try again.');
+            showErrorForContainer(categoryChartContainer, _('Error loading category data. Please try again.'));
         })
         .finally(() => {
             pendingRequests.categoryChart = false;
@@ -863,7 +871,7 @@ function showLoadingForContainer(container) {
 
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'chart-loading';
-    loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+    loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">' + _('Loading...') + '</span></div>';
     container.appendChild(loadingDiv);
 }
 
@@ -951,7 +959,7 @@ function fetchChartData(accountNumber, dateRange) {
             // Show error message
             const errorMessage = document.createElement('div');
             errorMessage.className = 'alert alert-danger';
-            errorMessage.textContent = 'Error loading chart data. Please try again.';
+            errorMessage.textContent = _('Error loading chart data. Please try again.');
             const firstContainer = document.querySelector('.chart-container');
             if (firstContainer) {
                 firstContainer.parentNode.insertBefore(errorMessage, firstContainer);

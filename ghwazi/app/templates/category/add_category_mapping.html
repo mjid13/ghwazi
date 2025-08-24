@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Add Category Mapping - Money Tracker{% endblock %}
+{% block title %}{{ _("Add Category Mapping") }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,52 +8,52 @@
         <div class="col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-header bg-transparent">
-                    <h1 class="h3 mb-0">Add Mapping for "{{ category.name }}"</h1>
+                    <h1 class="h3 mb-0">{{ _("Add Mapping for \"%(name)s\"", name=category.name) }}</h1>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info mb-4">
-                        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>How Mappings Work</h5>
-                        <p class="mb-0">Mappings automatically categorize transactions based on patterns in the counterparty name or transaction description. When a new transaction matches a pattern, it will be automatically assigned to this category.</p>
+                        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>{{ _("How Mappings Work") }}</h5>
+                        <p class="mb-0">{{ _("Mappings automatically categorize transactions based on patterns in the counterparty name or transaction description. When a new transaction matches a pattern, it will be automatically assigned to this category.") }}</p>
                     </div>
 
                     <form action="{{ url_for('category.add_category_mapping', category_id=category.id) }}" method="post" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         <div class="mb-3">
-                            <label for="mapping_type" class="form-label">Mapping Type</label>
+                            <label for="mapping_type" class="form-label">{{ _("Mapping Type") }}</label>
                             <select class="form-select" id="mapping_type" name="mapping_type" required>
-                                <option value="">Select a type</option>
-                                <option value="COUNTERPARTY">Counterparty Name</option>
-                                <option value="DESCRIPTION">Transaction Description</option>
+                                <option value="">{{ _("Select a type") }}</option>
+                                <option value="COUNTERPARTY">{{ _("Counterparty Name") }}</option>
+                                <option value="DESCRIPTION">{{ _("Transaction Description") }}</option>
                             </select>
                             <div class="invalid-feedback">
-                                Please select a mapping type.
+                                {{ _("Please select a mapping type.") }}
                             </div>
                             <div class="form-text">
                                 <ul class="mb-0 ps-3">
-                                    <li><strong>Counterparty Name</strong>: Match the name of the person or business you're transacting with</li>
-                                    <li><strong>Transaction Description</strong>: Match the description of the transaction</li>
+                                    <li><strong>{{ _("Counterparty Name") }}</strong>: {{ _("Match the name of the person or business you're transacting with") }}</li>
+                                    <li><strong>{{ _("Transaction Description") }}</strong>: {{ _("Match the description of the transaction") }}</li>
                                 </ul>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="pattern" class="form-label">Pattern</label>
+                            <label for="pattern" class="form-label">{{ _("Pattern") }}</label>
                             <input type="text" class="form-control" id="pattern" name="pattern" required>
                             <div class="invalid-feedback">
-                                Please provide a pattern.
+                                {{ _("Please provide a pattern.") }}
                             </div>
                             <div class="form-text">
-                                Enter the text to match. Transactions containing this text will be categorized automatically.
+                                {{ _("Enter the text to match. Transactions containing this text will be categorized automatically.") }}
                             </div>
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{{ url_for('category.category_mappings', category_id=category.id) }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                                <i class="bi bi-arrow-left me-2"></i>{{ _("Cancel") }}
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check2 me-2"></i>Save Mapping
+                                <i class="bi bi-check2 me-2"></i>{{ _("Save Mapping") }}
                             </button>
                         </div>
                     </form>

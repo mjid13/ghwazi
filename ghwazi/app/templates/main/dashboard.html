@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Dashboard - Money Tracker{% endblock %}
+{% block title %}{{ _('Dashboard') }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="row g-4">
@@ -12,49 +12,50 @@
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('main.profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('email.email_configs') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.profile') }}"><i class="bi bi-person me-2"></i>{{ _('Profile') }}</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('email.email_configs') }}"><i class="bi bi-gear me-2"></i>{{ _('Settings') }}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>{{ _('Logout') }}</a></li>
                     </ul>
                 </div>
             </div>
-            <h1 class="display-5 fw-bold mb-3">Welcome back, {{ session.username }}! 👋</h1>
-            <p class="lead mb-4">Track your finances and your transactions all in one place.</p>
-            <div class="d-flex flex-wrap gap-2">
+            <h1 class="display-5 fw-bold mb-3">{{ _('Welcome back, %(username)s! 👋', username=session.username) }}</h1>
+            <p class="lead mb-4">{{ _('Track your finances and your transactions all in one place.') }}</p>
+            <div class="d-flex flex-wrap gap-2 ">
                 <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Add Bank Account
+                    <i class="bi bi-plus-circle me-2"></i>{{ _('Add Bank Account') }}
                 </a>
                 <a href="{{ url_for('account.accounts') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-bank me-2"></i>View All Accounts
+                    <i class="bi bi-bank me-2"></i>{{ _('View All Accounts') }}
                 </a>
                 <a href="{{ url_for('category.categories') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-tags me-2"></i>Categories
+                    <i class="bi bi-tags me-2"></i>{{ _('Categories') }}
                 </a>
                 <a href="{{ url_for('main.counterparties') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-people me-2"></i>Counterparties
+                    <i class="bi bi-people me-2"></i>{{ _('Counterparties') }}
                 </a>
                 <form method="post" action="{{ url_for('category.auto_categorize') }}" style="display:inline;" class="auto-categorize-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-warning auto-categorize-btn">
-                        <i class="bi bi-magic me-2"></i>Auto-Categorize
+                        <i class="bi bi-magic me-2"></i>{{ _('Auto-Categorize') }}
                     </button>
                 </form>
                 <form method="post" action="{{ url_for('oauth.sync_gmail') }}" style="display:inline;" class="sync-gmail-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-warning">
-                        <i class="bi bi-arrow-repeat me-2"></i>Sync Gmail
+                        <i class="bi bi-arrow-repeat me-2"></i>{{ _('Sync Gmail') }}
                     </button>
                 </form>
+
             </div>
         </div>
     </div>
     <div class="col-md-12">
         <div class="card h-100">
             <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center">
-                <h3 class="h4 mb-0">Your Bank Accounts</h3>
+                <h3 class="h4 mb-0">{{ _('Your Bank Accounts') }}</h3>
                 <a href="{{ url_for('account.add_account') }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus"></i> Add
+                    <i class="bi bi-plus"></i> {{ _('Add') }}
                 </a>
             </div>
             <div class="card-body">
@@ -65,21 +66,20 @@
                        class="account-item d-block text-decoration-none mb-1 p-3 rounded-3 border {% if loop.last %}mb-0{% endif %}"
                        data-account-number="{{ account.account_number }}"
                        style="transition: all 0.2s ease;">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
+                        <div class="d-flex justify-content-between align-items-start{% if text_direction == 'rtl' %} flex-row-reverse{% endif %}">                            <div>
                                 <h5 class="mb-1 d-flex align-items-center">
                                     <i class="bi bi-bank2 me-2"></i>
-                                    •••• {{account.account_number[-4:] }}
+                                    {{ account.account_number|account_number_rtl }}
                                     {% if account.account_number in scraping_account_numbers %}
                                     <span class="badge bg-warning text-dark ms-2">
-                                        <i class="bi bi-arrow-repeat me-1 spin"></i>Scraping
+                                        <i class="bi bi-arrow-repeat me-1 spin"></i>{{ _('Scraping') }}
                                     </span>
                                     {% endif %}
                                     <span class="badge bg-info-subtle text-info ms-2 d-none account-sync-badge" data-account-number="{{ account.account_number }}">
-                                        <i class="bi bi-arrow-repeat me-1 spin"></i>Syncing
+                                        <i class="bi bi-arrow-repeat me-1 spin"></i>{{ _('Syncing') }}
                                     </span>
                                 </h5>
-                                <p class="mb-1 text-body-secondary">Holder: {{ account.account_holder }}</p>
+                                <p class="mb-1 text-body-secondary">{{ _('Holder') }}: {{ account.account_holder }}</p>
                                 <small class="text-body-secondary">{{ account.bank_name }}</small>
                             </div>
                             <span class="badge bg-primary bg-opacity-10 text-primary p-3 rounded-3">
@@ -92,9 +92,9 @@
                 {% else %}
                 <div class="text-center py-4">
                     <i class="bi bi-bank2 display-4 text-muted"></i>
-                    <p class="mt-3 mb-4">You don't have any bank accounts yet.</p>
+                    <p class="mt-3 mb-4">{{ _("You don't have any bank accounts yet.") }}</p>
                     <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Add Your First Account
+                        <i class="bi bi-plus-circle me-2"></i>{{ _('Add Your First Account') }}
                     </a>
                 </div>
                 {% endif %}
@@ -106,7 +106,7 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="text-primary mb-0">
-                <i class="bi bi-graph-up me-2"></i>Overview Charts
+                <i class="bi bi-graph-up me-2"></i>{{ _('Overview Charts') }}
             </h4>
         </div>
     <div class="col-12">
@@ -116,16 +116,16 @@
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <span class="badge bg-primary-subtle text-primary p-2 rounded-3 d-flex align-items-center">
                         <i class="bi bi-funnel-fill me-1"></i>
-                        Filters
+                        {{ _('Filters') }}
                     </span>
-                    <div class="ms-auto d-flex align-items-center gap-2">
+                    <div class="me-auto d-flex align-items-center gap-2">
                         <button class="btn btn-sm btn-outline-secondary d-inline d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardFilters" aria-expanded="true" aria-controls="dashboardFilters">
                             <i class="bi bi-sliders"></i>
-                            Show/Hide
+                            {{ _('Show/Hide') }}
                         </button>
                         <button class="btn btn-sm btn-link text-danger" id="clearChartFilters" type="button">
 <!--                            <i class="bi bi-x-circle"></i>-->
-                            Clear
+                            {{ _('Clear') }}
                         </button>
                     </div>
                 </div>
@@ -133,21 +133,21 @@
                     <div class="row g-3 align-items-end">
                         <div class="col-12">
                             <div class="quick-range d-flex flex-wrap gap-2 overflow-auto pt-1 mb-2" aria-label="Account filter">
-                                <button type="button" class="btn btn-sm btn-primary quick-account-btn active" data-account="all">All Accounts</button>
+                                <button type="button" class="btn btn-sm btn-primary quick-account-btn active" data-account="all">{{ _('All Accounts') }}</button>
                                 {% for account in accounts %}
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-account-btn" data-account="{{ account.account_number }}">{{ account.bank_name }} (•••• {{ account.account_number[-4:] }})</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-account-btn" data-account="{{ account.account_number }}">{{ account.bank_name }} ({{ account.account_number|account_number_rtl }})</button>
                                 {% endfor %}
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="quick-range d-flex flex-wrap gap-2 overflow-auto pt-1" aria-label="Date range filter">
-                                <button type="button" class="btn btn-sm btn-primary quick-range-btn active" data-range="overall">Overall</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="2w">2 Weeks</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="1m">1 Month</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="3m">3 Months</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="6m">6 Months</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="12m">12 Months</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="24m">24 Months</button>
+                                <button type="button" class="btn btn-sm btn-primary quick-range-btn active" data-range="overall">{{ _('Overall') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="2w">{{ _('2 Weeks') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="1m">{{ _('1 Month') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="3m">{{ _('3 Months') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="6m">{{ _('6 Months') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="12m">{{ _('12 Months') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="24m">{{ _('24 Months') }}</button>
                             </div>
                         </div>
                     </div>
@@ -158,13 +158,13 @@
         <div class="row g-4">
             <!-- Monthly Trend Chart -->
             <div class="col-md-6 col-lg-6">
-                <div class="card h-100 chart-card">
+                <div class="card h-100 chart-card ">
                     <div class="card-body">
                         <h5 class="chart-title">
                             <i class="bi bi-graph-up-arrow"></i>
-                            Monthly Trends
+                            {{ _('Monthly Trends') }}
                         </h5>
-                        <p class="chart-description">Track your financial patterns with income and expense trends over time</p>
+                        <p class="chart-description">{{ _('Track your financial patterns with income and expense trends over time') }}</p>
                         <div class="chart-container">
                             <canvas id="trendChart"></canvas>
                         </div>
@@ -174,16 +174,16 @@
             <!-- Category Distribution Chart -->
             <div class="col-md-6 col-lg-6">
                 <div class="card h-100 chart-card">
-                    <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-3">
+                    <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-3{% if text_direction == 'rtl' %} flex-row-reverse{% endif %}">
                         <h5 class="chart-title mb-0">
                             <i class="bi bi-pie-chart-fill"></i>
-                            Category Distribution
+                            {{ _('Category Distribution') }}
                         </h5>
                         <!-- Toggle will be inserted here by JavaScript -->
                         <div id="category-toggle-container" class="category-header-toggle"></div>
                     </div>
                     <div class="card-body pt-2">
-                        <p class="chart-description mb-3">Visualize your spending patterns with interactive category breakdown</p>
+                        <p class="chart-description mb-3">{{ _('Visualize your spending patterns with interactive category breakdown') }}</p>
                         {% if categories %}
                         <div class="chart-container">
                             <canvas id="categoryChart"></canvas>
@@ -191,9 +191,9 @@
                         {% else %}
                         <div class="text-center py-5">
                             <i class="bi bi-tags display-4 text-muted"></i>
-                            <p class="mt-3 mb-4">You don't have any categories yet.</p>
+                            <p class="mt-3 mb-4">{{ _("You don't have any categories yet.") }}</p>
                             <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-2"></i>Add Your First Category
+                                <i class="bi bi-plus-circle me-2"></i>{{ _('Add Your First Category') }}
                             </a>
                         </div>
                         {% endif %}
@@ -207,9 +207,9 @@
                     <div class="card-body">
                         <h5 class="chart-title">
                             <i class="bi bi-bar-chart-fill"></i>
-                            Account Balances
+                            {{ _('Account Balances') }}
                         </h5>
-                        <p class="chart-description">Compare balances across all your linked accounts at a glance</p>
+                        <p class="chart-description">{{ _('Compare balances across all your linked accounts at a glance') }}</p>
                         <div class="chart-container">
                             <canvas id="balanceChart"></canvas>
                         </div>
@@ -223,9 +223,9 @@
                     <div class="card-body">
                         <h5 class="chart-title">
                             <i class="bi bi-circle-half"></i>
-                            Income vs Expense
+                            {{ _('Income vs Expense') }}
                         </h5>
-                        <p class="chart-description">Get insights into your financial balance with this comprehensive overview</p>
+                        <p class="chart-description">{{ _('Get insights into your financial balance with this comprehensive overview') }}</p>
                         <div class="chart-container">
                             <canvas id="incomeExpenseChart"></canvas>
                         </div>

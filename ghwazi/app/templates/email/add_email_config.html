@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Add Email Configuration - Money Tracker{% endblock %}
+{% block title %}{{ _("Add Email Configuration") }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,14 +8,14 @@
         <div class="col-lg-8">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('email.email_configs') }}" class="text-decoration-none">Email Configurations</a></li>
-                    <li class="breadcrumb-item active">Add Configuration</li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('email.email_configs') }}" class="text-decoration-none">{{ _("Email Configurations") }}</a></li>
+                    <li class="breadcrumb-item active">{{ _("Add Configuration") }}</li>
                 </ol>
             </nav>
 
-            <div class="card">
+            <div class="card{% if text_direction == 'rtl' %} text-end{% endif %}">
                 <div class="card-header bg-transparent p-4 border-bottom">
-                    <h2 class="h4 mb-0">Add Email Configuration</h2>
+                    <h2 class="h4 mb-0">{{ _("Add Email Configuration") }}</h2>
                 </div>
                 <div class="card-body p-4">
                     <form method="post" class="needs-validation" novalidate>
@@ -25,21 +25,21 @@
                             <!-- Configuration Name -->
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label for="name" class="form-label">Configuration Name</label>
+                                    <label for="name" class="form-label">{{ _("Configuration Name") }}</label>
                                     <input type="text"
                                            class="form-control form-control-lg"
                                            id="name"
                                            name="name"
                                            placeholder="e.g., Gmail, Outlook"
                                            required>
-                                    <div class="invalid-feedback">Please provide a name for this configuration.</div>
+                                    <div class="invalid-feedback">{{ _("Please provide a name for this configuration.") }}</div>
                                 </div>
                             </div>
 
                             <!-- Email Address (moved up) -->
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label for="email_username" class="form-label">Email Address</label>
+                                    <label for="email_username" class="form-label">{{ _("Email Address") }}</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                                         <input type="email"
@@ -49,14 +49,14 @@
                                                placeholder="your.email@example.com"
                                                required>
                                     </div>
-                                    <div class="invalid-feedback">Please provide a valid email address.</div>
+                                    <div class="invalid-feedback">{{ _("Please provide a valid email address.") }}</div>
                                     <div id="provider-detection-message" class="form-text text-success mt-2" style="display: none;">
                                         <i class="bi bi-check-circle-fill me-1"></i> 
-                                        Email provider detected. Configuration will be set automatically.
+                                        {{ _("Email provider detected. Configuration will be set automatically.") }}
                                     </div>
                                     <div id="provider-not-detected-message" class="form-text text-warning mt-2" style="display: none;">
                                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                        Email provider not recognized. Please provide server details manually.
+                                        {{ _("Email provider not recognized. Please provide server details manually.") }}
                                     </div>
                                 </div>
                             </div>
@@ -64,7 +64,7 @@
                             <!-- Password -->
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label for="email_password" class="form-label">Password or App Password</label>
+                                    <label for="email_password" class="form-label">{{ _("Password or App Password") }}</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-key"></i></span>
                                         <input type="password"
@@ -78,11 +78,11 @@
                                             <i class="bi bi-eye"></i>
                                         </button>
                                     </div>
-                                    <div class="invalid-feedback">Please provide your password.</div>
+                                    <div class="invalid-feedback">{{ _("Please provide your password.") }}</div>
                                     <div class="form-text">
-                                        Please use an
-                                        <a href="https://myaccount.google.com/apppasswords" target="_blank">app password</a>
-                                        instead of your main account password.
+                                        {{ _("Please use an") }}
+                                        <a href="https://myaccount.google.com/apppasswords" target="_blank">{{ _("app password") }}</a>
+                                        {{ _("instead of your main account password.") }}
                                     </div>
                                 </div>
                             </div>
@@ -90,7 +90,7 @@
                             <!-- Manual Configuration Section (initially hidden) -->
                             <div class="col-12 mt-3" id="manual-config-toggle-container" style="display: none;">
                                 <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-manual-config">
-                                    <i class="bi bi-gear me-1"></i> <span id="toggle-text">Show Manual Configuration</span>
+                                    <i class="bi bi-gear me-1"></i> <span id="toggle-text">{{ _("Show Manual Configuration") }}</span>
                                 </button>
                             </div>
 
@@ -99,7 +99,7 @@
                                     <!-- Host -->
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="email_host" class="form-label">Email Host</label>
+                                            <label for="email_host" class="form-label">{{ _("Email Host") }}</label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-hdd-network"></i></span>
                                                 <input type="text"
@@ -108,9 +108,9 @@
                                                        name="email_host"
                                                        placeholder="e.g., imap.gmail.com">
                                             </div>
-                                            <div class="form-text">Common hosts:
-                                                <a href="#" class="quick-host" data-host="imap.gmail.com" data-port="993">Gmail</a>,
-                                                <a href="#" class="quick-host" data-host="outlook.office365.com" data-port="993">Outlook</a>
+                                            <div class="form-text">{{ _("Common hosts:") }}
+                                                <a href="#" class="quick-host" data-host="imap.gmail.com" data-port="993">{{ _("Gmail") }}</a>,
+                                                <a href="#" class="quick-host" data-host="outlook.office365.com" data-port="993">{{ _("Outlook") }}</a>
                                             </div>
                                         </div>
                                     </div>
@@ -118,7 +118,7 @@
                                     <!-- Port -->
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="email_port" class="form-label">Port</label>
+                                            <label for="email_port" class="form-label">{{ _("Port") }}</label>
                                             <input type="number"
                                                    class="form-control form-control-lg"
                                                    id="email_port"
@@ -135,9 +135,9 @@
                                                    id="email_use_ssl"
                                                    name="email_use_ssl"
                                                    checked>
-                                            <label class="form-check-label" for="email_use_ssl">Use SSL/TLS</label>
+                                            <label class="form-check-label" for="email_use_ssl">{{ _("Use SSL/TLS") }}</label>
                                         </div>
-                                        <div class="form-text">Recommended for secure connections.</div>
+                                        <div class="form-text">{{ _("Recommended for secure connections.") }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -145,13 +145,13 @@
                             <!-- Email Filtering Section -->
                             <div class="col-12">
                                 <hr class="my-4">
-                                <h3 class="h5 mb-3">This email receives emails from this Bank/s:</h3>
+                                <h3 class="h5 mb-3">{{ _("This email receives emails from this Bank/s:") }}</h3>
                             </div>
 
                             <!-- Bank Selection -->
                            <div class="col-12">
                                <div class="form-group">
-                                   <label class="form-label">Select Banks</label>
+                                   <label class="form-label">{{ _("Select Banks") }}</label>
                                    <div>
                                        {% for bank in banks %}
                                        <div class="form-check">
@@ -160,33 +160,33 @@
                                        </div>
                                        {% endfor %}
                                    </div>
-                                   <div class="form-text">Select one or more banks to configure email filtering.</div>
+                                   <div class="form-text">{{ _("Select one or more banks to configure email filtering.") }}</div>
                                </div>
                            </div>
 
                             <!-- Bank Email Addresses (hidden but kept for backward compatibility) -->
                             <div class="col-12" id="bank_email_addresses_container" style="display: none;">
                                 <div class="form-group">
-                                    <label for="bank_email_addresses" class="form-label">Bank Email Addresses</label>
+                                    <label for="bank_email_addresses" class="form-label">{{ _("Bank Email Addresses") }}</label>
                                     <textarea class="form-control"
                                               id="bank_email_addresses"
                                               name="bank_email_addresses"
                                               rows="2"
-                                              placeholder="Enter email addresses, separated by commas"></textarea>
-                                    <div class="form-text">Enter the email addresses that send bank transaction notifications, separated by commas.</div>
+                                              placeholder="{{ _("Enter email addresses, separated by commas") }}"></textarea>
+                                    <div class="form-text">{{ _("Enter the email addresses that send bank transaction notifications, separated by commas.") }}</div>
                                 </div>
                             </div>
 
                             <!-- Subject Keywords (hidden but kept for backward compatibility) -->
                             <div class="col-12" id="bank_email_subjects_container" style="display: none;">
                                 <div class="form-group">
-                                    <label for="bank_email_subjects" class="form-label">Subject Keywords</label>
+                                    <label for="bank_email_subjects" class="form-label">{{ _("Subject Keywords") }}</label>
                                     <textarea class="form-control"
                                               id="bank_email_subjects"
                                               name="bank_email_subjects"
                                               rows="2"
-                                              placeholder="Enter keywords, separated by commas"></textarea>
-                                    <div class="form-text">Enter keywords that appear in bank transaction email subjects, separated by commas.</div>
+                                              placeholder="{{ _("Enter keywords, separated by commas") }}"></textarea>
+                                    <div class="form-text">{{ _("Enter keywords that appear in bank transaction email subjects, separated by commas.") }}</div>
                                 </div>
                             </div>
 
@@ -195,10 +195,10 @@
                         <!-- Form Buttons -->
                         <div class="mt-4 d-flex justify-content-between align-items-center">
                             <a href="{{ url_for('email.email_configs') }}" class="btn btn-outline-primary">
-                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                                <i class="bi bi-arrow-left me-2"></i>{{ _("Cancel") }}
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check2 me-2"></i>Add Configuration
+                                <i class="bi bi-check2 me-2"></i>{{ _("Add Configuration") }}
                             </button>
                         </div>
                     </form>

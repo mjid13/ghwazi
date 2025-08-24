@@ -54,7 +54,7 @@ body {
 .dropdown-item i {
     width: 1.2rem;
     text-align: center;
-    margin-right: 0.5rem;
+    margin-inline-end: 0.5rem;
 }
 
 .card {
@@ -103,7 +103,7 @@ body {
 .flash-messages {
     position: fixed;
     top: 20px;
-    right: 20px;
+    inset-inline-end: 20px;
     z-index: 1050;
     min-width: 300px;
 }

@@ -11,7 +11,7 @@ function initDataTables() {
     $('.datatable').DataTable({
         // Pagination settings
         pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, _('All')]],
         pagingType: 'simple_numbers', // clean previous/next with numbers
 
         // Responsive design
@@ -22,24 +22,24 @@ function initDataTables() {
 
         // Accessibility-friendly language settings
         language: {
-            search: 'Search:',
-            lengthMenu: 'Show _MENU_ per page',
-            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-            infoEmpty: 'Showing 0 to 0 of 0 entries',
-            infoFiltered: '(filtered from _MAX_ total entries)',
-            zeroRecords: 'No matching records found',
+            search: _('Search:'),
+            lengthMenu: _('Show _MENU_ per page'),
+            info: _('Showing _START_ to _END_ of _TOTAL_ entries'),
+            infoEmpty: _('Showing 0 to 0 of 0 entries'),
+            infoFiltered: _('(filtered from _MAX_ total entries)'),
+            zeroRecords: _('No matching records found'),
             paginate: {
-                first: 'First',
-                last: 'Last',
-                next: 'Next',
-                previous: 'Previous'
+                first: _('First'),
+                last: _('Last'),
+                next: _('Next'),
+                previous: _('Previous')
             },
             aria: {
                 paginate: {
-                    first: 'First Page',
-                    previous: 'Previous Page',
-                    next: 'Next Page',
-                    last: 'Last Page'
+                    first: _('First Page'),
+                    previous: _('Previous Page'),
+                    next: _('Next Page'),
+                    last: _('Last Page')
                 }
             }
         },
@@ -68,17 +68,17 @@ function initServerSideDataTable(tableId, ajaxUrl) {
         
         // Custom language settings
         "language": {
-            "search": "Search:",
-            "lengthMenu": "Show _MENU_ entries per page",
+            "search": _('Search:'),
+            "lengthMenu": _('Show _MENU_ entries per page'),
             "info": "Showing _START_ to _END_ of _TOTAL_ entries",
             "infoEmpty": "Showing 0 to 0 of 0 entries",
-            "processing": "Loading data...",
-            "zeroRecords": "No matching records found",
+            "processing": _('Loading data...'),
+            "zeroRecords": _('No matching records found'),
             "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
+                "first": _('First'),
+                "last": _('Last'),
+                "next": _('Next'),
+                "previous": _('Previous')
             }
         },
         
@@ -92,7 +92,7 @@ function initDataTableWithFilters(tableId, filterConfig) {
     const table = $(tableId).DataTable({
         // Pagination settings
         "pageLength": 25,
-        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, _('All')]],
         
         // Responsive design
         "responsive": true,
@@ -102,17 +102,17 @@ function initDataTableWithFilters(tableId, filterConfig) {
         
         // Custom language settings
         "language": {
-            "search": "Search:",
-            "lengthMenu": "Show _MENU_ entries per page",
+            "search": _('Search:'),
+            "lengthMenu": _('Show _MENU_ entries per page'),
             "info": "Showing _START_ to _END_ of _TOTAL_ entries",
             "infoEmpty": "Showing 0 to 0 of 0 entries",
             "infoFiltered": "(filtered from _MAX_ total entries)",
-            "zeroRecords": "No matching records found",
+            "zeroRecords": _('No matching records found'),
             "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
+                "first": _('First'),
+                "last": _('Last'),
+                "next": _('Next'),
+                "previous": _('Previous')
             }
         },
         

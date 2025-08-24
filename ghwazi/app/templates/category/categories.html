@@ -1,29 +1,29 @@
 {% extends "main/base.html" %}
 
-{% block title %}Categories - Money Tracker{% endblock %}
+{% block title %}{{ _('Categories') }} - Money Tracker{% endblock %}
 
 {% block content %}
 {% include "components/delete_modal.html" %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Categories</h1>
+        <h1 class="h2 mb-0">{{ _('Categories') }}</h1>
         <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>Add Category
+            <i class="bi bi-plus-circle me-2"></i>{{ _('Add Category') }}
         </a>
     </div>
 
-    <div class="card">
+    <div class="card{% if text_direction == 'rtl' %} text-end{% endif %}">
         <div class="card-body">
             {% if categories %}
             <div class="table-responsive">
                 <table class="table table-hover datatable" id="categoriesTable">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Transactions</th>
-                            <th>Total Spent</th>
-                            <th>Description</th>
-                            <th class="text-end">Actions</th>
+                            <th>{{ _('Name') }}</th>
+                            <th>{{ _('Transactions') }}</th>
+                            <th>{{ _('Total Spent') }}</th>
+                            <th>{{ _('Description') }}</th>
+                            <th class="text-end">{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -53,18 +53,18 @@
                             </td>
                             <td>{{ category.description or '-' }}</td>
                             <td class="text-end">
-                                <button class="btn btn-link btn-sm p-0 text-secondary" data-bs-toggle="dropdown" title="Actions">
+                                <button class="btn btn-link btn-sm p-0 text-secondary" data-bs-toggle="dropdown" title="{{ _('Actions') }}">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <a class="dropdown-item" href="{{ url_for('category.category_mappings', category_id=category.id) }}">
-                                            <i class="bi bi-link me-2"></i>Mappings
+                                            <i class="bi bi-link me-2"></i>{{ _('Mappings') }}
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ url_for('category.edit_category', category_id=category.id) }}">
-                                            <i class="bi bi-pencil me-2"></i>Edit
+                                            <i class="bi bi-pencil me-2"></i>{{ _('Edit') }}
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
@@ -76,8 +76,8 @@
                                                 data-item-id="{{ category.id }}"
                                                 data-item-name="{{ category.name }}"
                                                 data-delete-url="{{ url_for('category.delete_category', category_id=category.id) }}"
-                                                data-warning-text="This will remove all mappings associated with this category.">
-                                            <i class="bi bi-trash me-2"></i>Delete
+                                                data-warning-text="{{ _('This will remove all mappings associated with this category.') }}">
+                                            <i class="bi bi-trash me-2"></i>{{ _('Delete') }}
                                         </button>
                                     </li>
                                 </ul>
@@ -90,9 +90,9 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-tags display-4 text-muted"></i>
-                <p class="mt-3 mb-4">You don't have any categories yet.</p>
+                <p class="mt-3 mb-4">{{ _("You don't have any categories yet.") }}</p>
                 <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Add Your First Category
+                    <i class="bi bi-plus-circle me-2"></i>{{ _('Add Your First Category') }}
                 </a>
             </div>
             {% endif %}
@@ -101,7 +101,7 @@
 
     <div class="mt-4">
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            <i class="bi bi-arrow-left me-2"></i>{{ _('Back to Dashboard') }}
         </a>
     </div>
 </div>

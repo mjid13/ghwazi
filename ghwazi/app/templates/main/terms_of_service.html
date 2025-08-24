@@ -1,6 +1,6 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Terms of Service - Ghwazi Money Tracker{% endblock %}
+{% block title %}{{ _("Terms of Service") }} - Ghwazi Money Tracker{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,19 +8,19 @@
         <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
                 <h1 class="card-title mb-0">
-                    <i class="bi bi-file-text me-2"></i>Terms of Service
+                    <i class="bi bi-file-text me-2"></i>{{ _("Terms of Service") }}
                 </h1>
             </div>
             <div class="card-body">
                 <div class="terms-content">
                     <div class="alert alert-info" role="alert">
                         <i class="bi bi-info-circle me-2"></i>
-                        <strong>Please read these Terms of Service carefully before using Ghwazi Money Tracker.</strong>
+                        <strong>{{ _("Please read these Terms of Service carefully before using Ghwazi Money Tracker.") }}</strong>
                     </div>
 
                     <section class="mb-5">
                         <h2 class="h4 text-success mb-3">
-                            <i class="bi bi-handshake me-2"></i>Agreement to Terms
+                            <i class="bi bi-handshake me-2"></i>{{ _("Agreement to Terms") }}
                         </h2>
                         <p>
                             By accessing and using Ghwazi Money Tracker ("the Service," "we," "us," or "our"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
@@ -32,10 +32,10 @@
 
                     <section class="mb-5">
                         <h2 class="h4 text-success mb-3">
-                            <i class="bi bi-person-check me-2"></i>Eligibility and Account Registration
+                            <i class="bi bi-person-check me-2"></i>{{ _("Eligibility and Account Registration") }}
                         </h2>
                         
-                        <h3 class="h5 mb-3">Age Requirements</h3>
+                        <h3 class="h5 mb-3">{{ _("Age Requirements") }}</h3>
                         <ul class="list-group list-group-flush mb-4">
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-check-circle text-success me-2"></i>
@@ -51,26 +51,26 @@
                             </li>
                         </ul>
 
-                        <h3 class="h5 mb-3">Account Responsibilities</h3>
+                        <h3 class="h5 mb-3">{{ _("Account Responsibilities") }}</h3>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item border-0 px-0">
-                                <strong>Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials
+                                <strong>{{ _("Account Security:") }}</strong> {{ _("You are responsible for maintaining the confidentiality of your account credentials") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
-                                <strong>Accurate Information:</strong> You must provide accurate and complete information during registration
+                                <strong>{{ _("Accurate Information:") }}</strong> {{ _("You must provide accurate and complete information during registration") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
-                                <strong>Account Activity:</strong> You are responsible for all activities that occur under your account
+                                <strong>{{ _("Account Activity:") }}</strong> {{ _("You are responsible for all activities that occur under your account") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
-                                <strong>Unauthorized Access:</strong> You must notify us immediately of any unauthorized use of your account
+                                <strong>{{ _("Unauthorized Access:") }}</strong> {{ _("You must notify us immediately of any unauthorized use of your account") }}
                             </li>
                         </ul>
                     </section>
 
                     <section class="mb-5">
                         <h2 class="h4 text-success mb-3">
-                            <i class="bi bi-gear me-2"></i>Description of Service
+                            <i class="bi bi-gear me-2"></i>{{ _("Description of Service") }}
                         </h2>
                         <p>
                             Ghwazi Money Tracker is a personal financial management application that provides:
@@ -80,19 +80,19 @@
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-wallet2 me-2 text-primary"></i>
-                                        Transaction tracking and categorization
+                                        {{ _("Transaction tracking and categorization") }}
                                     </li>
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-bank me-2 text-primary"></i>
-                                        Multiple bank account management
+                                        {{ _("Multiple bank account management") }}
                                     </li>
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-file-pdf me-2 text-primary"></i>
-                                        PDF bank statement parsing
+                                        {{ _("PDF bank statement parsing") }}
                                     </li>
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-envelope me-2 text-primary"></i>
-                                        Email transaction processing
+                                        {{ _("Email transaction processing") }}
                                     </li>
                                 </ul>
                             </div>
@@ -100,19 +100,19 @@
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-graph-up me-2 text-primary"></i>
-                                        Financial analytics and reporting
+                                        {{ _("Financial analytics and reporting") }}
                                     </li>
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-tags me-2 text-primary"></i>
-                                        Expense categorization and insights
+                                        {{ _("Expense categorization and insights") }}
                                     </li>
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-people me-2 text-primary"></i>
-                                        Counterparty management
+                                        {{ _("Counterparty management") }}
                                     </li>
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-shield-check me-2 text-primary"></i>
-                                        Secure data storage and encryption
+                                        {{ _("Secure data storage and encryption") }}
                                     </li>
                                 </ul>
                             </div>
@@ -121,50 +121,50 @@
 
                     <section class="mb-5">
                         <h2 class="h4 text-success mb-3">
-                            <i class="bi bi-exclamation-triangle me-2"></i>Acceptable Use Policy
+                            <i class="bi bi-exclamation-triangle me-2"></i>{{ _("Acceptable Use Policy") }}
                         </h2>
                         
-                        <h3 class="h5 mb-3">Permitted Uses</h3>
+                        <h3 class="h5 mb-3">{{ _("Permitted Uses") }}</h3>
                         <ul class="list-group list-group-flush mb-4">
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-check-circle text-success me-2"></i>
-                                Personal financial management and tracking
+                                {{ _("Personal financial management and tracking") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-check-circle text-success me-2"></i>
-                                Uploading your own bank statements and financial documents
+                                {{ _("Uploading your own bank statements and financial documents") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-check-circle text-success me-2"></i>
-                                Configuring email access for your own financial accounts
+                                {{ _("Configuring email access for your own financial accounts") }}
                             </li>
                         </ul>
 
-                        <h3 class="h5 mb-3">Prohibited Activities</h3>
+                        <h3 class="h5 mb-3">{{ _("Prohibited Activities") }}</h3>
                         <div class="alert alert-danger" role="alert">
                             <i class="bi bi-x-circle me-2"></i>
-                            <strong>You must not use our service for any unlawful or prohibited activities</strong>
+                            <strong>{{ _("You must not use our service for any unlawful or prohibited activities") }}</strong>
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-x-circle text-danger me-2"></i>
-                                <strong>Unauthorized Access:</strong> Accessing accounts, data, or systems that don't belong to you
+                                <strong>{{ _("Unauthorized Access:") }}</strong> {{ _("Accessing accounts, data, or systems that don't belong to you") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-x-circle text-danger me-2"></i>
-                                <strong>Data Misuse:</strong> Using the service to process or store data belonging to others without authorization
+                                <strong>{{ _("Data Misuse:") }}</strong> {{ _("Using the service to process or store data belonging to others without authorization") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-x-circle text-danger me-2"></i>
-                                <strong>Security Violations:</strong> Attempting to breach, circumvent, or test security measures
+                                <strong>{{ _("Security Violations:") }}</strong> {{ _("Attempting to breach, circumvent, or test security measures") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-x-circle text-danger me-2"></i>
-                                <strong>Malicious Activities:</strong> Uploading malware, viruses, or harmful code
+                                <strong>{{ _("Malicious Activities:") }}</strong> {{ _("Uploading malware, viruses, or harmful code") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-x-circle text-danger me-2"></i>
-                                <strong>Service Disruption:</strong> Interfering with the proper functioning of the service
+                                <strong>{{ _("Service Disruption:") }}</strong> {{ _("Interfering with the proper functioning of the service") }}
                             </li>
                             <li class="list-group-item border-0 px-0">
                                 <i class="bi bi-x-circle text-danger me-2"></i>
@@ -244,7 +244,7 @@
                             <i class="bi bi-exclamation-circle me-2"></i>Disclaimers and Limitations
                         </h2>
                         
-                        <h3 class="h5 mb-3">Service Disclaimers</h3>
+                        <h3 class="h5 mb-3">{{ _("Service Disclaimers") }}</h3>
                         <div class="alert alert-warning" role="alert">
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             <strong>Important:</strong> This service is provided "as is" without warranties of any kind.
@@ -264,7 +264,7 @@
                             </li>
                         </ul>
 
-                        <h3 class="h5 mb-3">Limitation of Liability</h3>
+                        <h3 class="h5 mb-3">{{ _("Limitation of Liability") }}</h3>
                         <p>
                             To the maximum extent permitted by law, Ghwazi Money Tracker shall not be liable for:
                         </p>
@@ -293,7 +293,7 @@
                             <i class="bi bi-x-octagon me-2"></i>Account Termination
                         </h2>
                         
-                        <h3 class="h5 mb-3">Termination by You</h3>
+                        <h3 class="h5 mb-3">{{ _("Termination by You") }}</h3>
                         <p>
                             You may terminate your account at any time by:
                         </p>
@@ -312,7 +312,7 @@
                             </li>
                         </ul>
 
-                        <h3 class="h5 mb-3">Termination by Us</h3>
+                        <h3 class="h5 mb-3">{{ _("Termination by Us") }}</h3>
                         <p>
                             We may suspend or terminate your account if:
                         </p>
@@ -345,7 +345,7 @@
                         </p>
                         <div class="row">
                             <div class="col-md-6">
-                                <h3 class="h6 mb-3">Our Rights</h3>
+                                <h3 class="h6 mb-3">{{ _("Our Rights") }}</h3>
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-c-circle me-2"></i>
@@ -362,7 +362,7 @@
                                 </ul>
                             </div>
                             <div class="col-md-6">
-                                <h3 class="h6 mb-3">Your Rights</h3>
+                                <h3 class="h6 mb-3">{{ _("Your Rights") }}</h3>
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item border-0 px-0">
                                         <i class="bi bi-person-check me-2"></i>

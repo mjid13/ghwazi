@@ -1,0 +1,517 @@
+/* RTL Layout Support for Arabic */
+[dir="rtl"] {
+    text-align: right;
+}
+
+/* Bootstrap RTL Overrides */
+[dir="rtl"] .navbar-nav {
+    margin-right: auto !important;
+    margin-left: 0 !important;
+}
+
+[dir="rtl"] .dropdown-menu-end {
+    --bs-position: start;
+}
+
+[dir="rtl"] .me-2 {
+    margin-left: 0.5rem !important;
+    margin-right: 0 !important;
+}
+
+[dir="rtl"] .ms-2 {
+    margin-right: 0.5rem !important;
+    margin-left: 0 !important;
+}
+
+[dir="rtl"] .pe-3 {
+    padding-left: 1rem !important;
+    padding-right: 0 !important;
+}
+
+[dir="rtl"] .ps-3 {
+    padding-right: 1rem !important;
+    padding-left: 0 !important;
+}
+
+/* Card and Content RTL */
+[dir="rtl"] .card-header,
+[dir="rtl"] .card-body,
+[dir="rtl"] .card-footer {
+    text-align: right;
+}
+
+[dir="rtl"] .card-title {
+    text-align: right;
+}
+
+[dir="rtl"] .card-subtitle {
+    text-align: right;
+}
+
+[dir="rtl"] .card-text {
+    text-align: right;
+}
+
+/* Keep badge groups in LTR for better readability */
+[dir="rtl"] .badge + .badge {
+    direction: ltr;
+}
+
+/* Form Controls */
+[dir="rtl"] .form-control,
+[dir="rtl"] .form-select {
+    text-align: right;
+}
+
+[dir="rtl"] .input-group .form-control:not(:first-child) {
+    border-top-right-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Table RTL */
+[dir="rtl"] .table th,
+[dir="rtl"] .table td {
+    text-align: right;
+}
+
+[dir="rtl"] .table th:first-child,
+[dir="rtl"] .table td:first-child {
+    text-align: right;
+}
+
+/* Dashboard specific */
+[dir="rtl"] .account-item {
+    text-align: right;
+}
+
+[dir="rtl"] .chart-title {
+    text-align: right;
+}
+
+/* Navigation fixes */
+[dir="rtl"] .navbar-nav .nav-link {
+    text-align: right;
+}
+
+[dir="rtl"] .dropdown-item {
+    text-align: right;
+}
+
+/* Icon positioning for RTL */
+[dir="rtl"] .nav-link i.bi {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+[dir="rtl"] .btn i.bi {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+[dir="rtl"] .dropdown-item i.bi {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+/* Arabic numerals and currency */
+[dir="rtl"] .badge,
+[dir="rtl"] .currency-display {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: ltr;
+    unicode-bidi: embed;
+  text-align: left;
+
+}
+
+/* Chart containers */
+[dir="rtl"] .chart-container {
+    direction: ltr;
+}
+
+/* Account balance display */
+[dir="rtl"] .account-item .badge {
+    direction: ltr;
+    text-align: center;
+}
+
+/* Welcome section */
+[dir="rtl"] .welcome-section h1,
+[dir="rtl"] .welcome-section p {
+    text-align: right;
+}
+
+/* Button groups */
+[dir="rtl"] .btn-group {
+    flex-direction: row-reverse;
+}
+
+/* Card specific flex layouts for RTL - only for justify-content-between */
+[dir="rtl"] .card-header .d-flex.justify-content-between,
+[dir="rtl"] .card-body .d-flex.justify-content-between,
+[dir="rtl"] .card-footer .d-flex.justify-content-between,
+[dir="rtl"] .account-item .d-flex.justify-content-between {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .account-item h5 {
+    text-align: right;
+    justify-content: flex-start;
+}
+
+[dir="rtl"] .account-item p {
+    text-align: right;
+}
+
+/*[dir="rtl"] .account-item small {*/
+/*    text-align: right;*/
+/*}*/
+
+
+[dir="rtl"] .quick-account-btn,
+[dir="rtl"] .quick-range-btn {
+    text-align: center;
+}
+
+/* Account card h5 flex fix for RTL */
+[dir="rtl"] .account-item h5.d-flex {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .account-item .bi-bank2 {
+    margin-left: 0.5rem;
+    margin-right: 0;
+    order: 2;
+}
+
+/* Transaction summary RTL fixes */
+[dir="rtl"] .transaction-summary .d-flex {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .transaction-summary .currency-amount {
+    direction: ltr;
+    text-align: right;
+}
+
+[dir="rtl"] .transaction-summary small,
+[dir="rtl"] .transaction-summary strong {
+    text-align: right;
+}
+
+/* Success/Error card content RTL */
+[dir="rtl"] .bg-success-subtle > div > div,
+[dir="rtl"] .bg-danger-subtle > div > div {
+    text-align: right;
+}
+/* Category header toggle RTL */
+[dir="rtl"] .category-header-toggle {
+    order: -1;
+}
+
+/* Badge positioning in cards RTL */
+[dir="rtl"] .badge.bg-primary.bg-opacity-10 {
+    text-align: center;
+    direction: ltr;
+}
+
+/* Account list specific RTL */
+[dir="rtl"] .account-list .badge {
+    direction: ltr;
+}
+
+/* Empty state cards RTL */
+[dir="rtl"] .text-center p {
+    text-align: center;
+}
+
+/* Card with forms RTL */
+[dir="rtl"] .card .form-floating label {
+    text-align: right;
+    transform-origin: right bottom;
+}
+
+/* Card navigation RTL */
+[dir="rtl"] .nav-tabs,
+[dir="rtl"] .nav-pills {
+    flex-direction: row-reverse;
+}
+
+/* Transaction and balance card badges RTL */
+[dir="rtl"] .transaction-card .badge,
+[dir="rtl"] .balance-card .currency-display {
+    direction: ltr;
+    text-align: center;
+}
+
+/* Account summary card RTL */
+[dir="rtl"] .account-summary-card .text-end {
+    text-align: left !important;
+}
+
+[dir="rtl"] .account-summary-card .text-start {
+    text-align: right !important;
+}
+
+[dir="rtl"] .account-summary-card .badge {
+    direction: ltr;
+}
+
+/* Account details card RTL */
+[dir="rtl"] .account-details-card .text-end {
+    text-align: left !important;
+}
+
+/* Success/Error state in cards RTL */
+[dir="rtl"] .bg-success-subtle,
+[dir="rtl"] .bg-danger-subtle,
+[dir="rtl"] .bg-warning-subtle,
+[dir="rtl"] .bg-info-subtle {
+    text-align: right;
+}
+
+/* Arabic font support */
+body {
+    font-family: 'Segoe UI', 'Tahoma', 'Arial', 'Helvetica Neue', sans-serif;
+}
+
+[dir="rtl"] body {
+    font-family: 'Segoe UI', 'Tahoma', 'Arial Unicode MS', 'Helvetica', sans-serif;
+}
+
+/* Flash messages RTL */
+[dir="rtl"] .flash-messages .alert {
+    text-align: right;
+}
+
+/* Footer RTL */
+[dir="rtl"] .footer {
+    text-align: right;
+}
+
+/* Loading spinner RTL */
+[dir="rtl"] .loading-spinner p {
+    text-align: center;
+}
+
+/* Transaction table RTL improvements */
+[dir="rtl"] .responsive-label {
+    text-align: right;
+}
+
+[dir="rtl"] .responsive-data {
+    text-align: right;
+}
+
+[dir="rtl"] .transaction-details {
+    text-align: right;
+}
+
+/* DataTable RTL enhancements */
+[dir="rtl"] table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
+[dir="rtl"] table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    inset-inline-start: auto;
+    inset-inline-end: 5px;
+}
+
+[dir="rtl"] table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control,
+[dir="rtl"] table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control {
+    padding-inline-start: 8px;
+    padding-inline-end: 30px;
+}
+
+[dir="rtl"] .child {
+    text-align: right;
+}
+
+/* Form improvements for RTL */
+[dir="rtl"] .form-label {
+    text-align: right;
+}
+
+[dir="rtl"] .form-text {
+    text-align: right;
+}
+
+[dir="rtl"] .invalid-feedback {
+    text-align: right;
+}
+
+[dir="rtl"] .valid-feedback {
+    text-align: right;
+}
+
+/* Input group RTL */
+[dir="rtl"] .input-group-text {
+    border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
+}
+
+[dir="rtl"] .input-group .form-control:first-child {
+    border-radius: var(--bs-border-radius) 0 0 var(--bs-border-radius);
+}
+
+/* Category edit RTL */
+[dir="rtl"] .category-edit .input-group {
+    flex-direction: row-reverse;
+}
+
+/* Responsive RTL improvements */
+[dir="rtl"] .table-responsive {
+    direction: rtl;
+}
+
+[dir="rtl"] .table-responsive table {
+    direction: rtl;
+}
+
+
+/* DataTable language dropdown RTL */
+[dir="rtl"] .dataTables_length {
+    text-align: right;
+}
+
+[dir="rtl"] .dataTables_filter {
+    text-align: left;
+}
+
+[dir="rtl"] .dataTables_info {
+    text-align: right;
+}
+
+[dir="rtl"] .dataTables_paginate {
+    text-align: left;
+}
+
+/* Modal RTL improvements */
+[dir="rtl"] .modal-header,
+[dir="rtl"] .modal-body,
+[dir="rtl"] .modal-footer {
+    text-align: right;
+}
+
+[dir="rtl"] .modal-header .btn-close {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* Breadcrumb RTL */
+[dir="rtl"] .breadcrumb {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb-item + .breadcrumb-item::before {
+    transform: scaleX(-1);
+}
+
+/* Progress bar RTL */
+[dir="rtl"] .progress {
+    direction: ltr;
+}
+
+/* Pagination RTL */
+[dir="rtl"] .pagination {
+    flex-direction: row-reverse;
+}
+
+/* List group RTL */
+[dir="rtl"] .list-group-item {
+    text-align: right;
+}
+
+/* Alert RTL */
+[dir="rtl"] .alert {
+    text-align: right;
+}
+
+[dir="rtl"] .alert-dismissible .btn-close {
+    left: 0;
+    right: auto;
+}
+
+/* RTL table specific styles */
+[dir="rtl"] .rtl-table {
+    direction: rtl;
+}
+
+[dir="rtl"] .rtl-table td,
+[dir="rtl"] .rtl-table th {
+    text-align: right;
+}
+
+[dir="rtl"] .dt-rtl {
+    text-align: right;
+}
+
+/* Fix DataTable search and pagination controls */
+[dir="rtl"] .dataTables_wrapper .dataTables_length,
+[dir="rtl"] .dataTables_wrapper .dataTables_filter,
+[dir="rtl"] .dataTables_wrapper .dataTables_info,
+[dir="rtl"] .dataTables_wrapper .dataTables_paginate {
+    direction: rtl;
+}
+
+[dir="rtl"] .dataTables_wrapper .dataTables_filter input {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .dataTables_wrapper .dataTables_length select {
+    direction: rtl;
+}
+
+/* Chart containers direction fix */
+[dir="rtl"] .chart-container canvas {
+    direction: ltr;
+}
+
+/* Fix button toolbar RTL */
+[dir="rtl"] .btn-toolbar {
+    flex-direction: row-reverse;
+}
+
+/* Toast RTL */
+[dir="rtl"] .toast {
+    text-align: right;
+}
+
+[dir="rtl"] .toast-header {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .toast-header .btn-close {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* Accordion RTL */
+[dir="rtl"] .accordion-button {
+    text-align: right;
+}
+
+[dir="rtl"] .accordion-button::after {
+    margin-left: 0;
+    margin-right: auto;
+    transform: rotate(180deg);
+}
+
+[dir="rtl"] .accordion-button:not(.collapsed)::after {
+    transform: rotate(270deg);
+}
+
+
+/* Responsive utilities for RTL */
+@media (max-width: 768px) {
+    [dir="rtl"] .table-responsive {
+        overflow-x: auto;
+        direction: rtl;
+    }
+    
+    [dir="rtl"] .table-responsive table {
+        direction: rtl;
+    }
+    
+    [dir="rtl"] .navbar-collapse {
+        text-align: right;
+    }
+}

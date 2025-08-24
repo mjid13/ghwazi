@@ -113,7 +113,7 @@
 @media (min-width: 768px) {
   .nav-item-responsive {
     width: auto;
-    text-align: left;
+    text-align: start;
   }
 }
 
@@ -233,7 +233,7 @@
 .table-responsive-modern th,
 .table-responsive-modern td {
   padding: var(--space-3) var(--space-4);
-  text-align: left;
+  text-align: start;
   border-bottom: 1px solid var(--color-gray-200);
 }
 
@@ -264,7 +264,7 @@
   .table-responsive-modern--stack thead tr {
     position: absolute;
     top: -9999px;
-    left: -9999px;
+    inset-inline-start: -9999px;
   }
 
   .table-responsive-modern--stack tr {
@@ -279,15 +279,15 @@
     border: none;
     padding: var(--space-2) 0;
     position: relative;
-    padding-left: 50%;
+    padding-inline-start: 50%;
   }
 
   .table-responsive-modern--stack td:before {
     content: attr(data-label) ": ";
     position: absolute;
-    left: 6px;
+    inset-inline-start: 6px;
     width: 45%;
-    text-align: left;
+    text-align: start;
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-600);
   }

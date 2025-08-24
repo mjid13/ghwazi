@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}400 - Bad Request - GHWAZI{% endblock %}
+{% block title %}400 - {{ _('Bad Request') }} - GHWAZI{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -13,22 +13,22 @@
                 <div class="error-icon mb-4">
                     <i class="bi bi-exclamation-circle display-4 text-warning opacity-75"></i>
                 </div>
-                <h1 class="h3 mb-4">Bad Request</h1>
-                <p class="lead text-body-secondary mb-3">The request you made could not be understood by the server.</p>
-                <p class="text-body-secondary mb-5">Please check your input and try again.</p>
+                <h1 class="h3 mb-4">{{ _('Bad Request') }}</h1>
+                <p class="lead text-body-secondary mb-3">{{ _('The request you made could not be understood by the server.') }}</p>
+                <p class="text-body-secondary mb-5">{{ _('Please check your input and try again.') }}</p>
 
                 <div class="d-flex justify-content-center gap-3 mb-4">
                     <a href="{{ url_for('main.dashboard') if session.get('user_id') else url_for('main.index') }}" class="btn btn-primary px-4">
-                        <i class="bi bi-house-door me-2"></i>Return Home
+                        <i class="bi bi-house-door me-2"></i>{{ _('Return Home') }}
                     </a>
                     <button onclick="history.back()" class="btn btn-outline-primary px-4">
-                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                        <i class="bi bi-arrow-left me-2"></i>{{ _('Go Back') }}
                     </button>
                 </div>
 
                 {% if error_id %}
                 <div class="mt-4">
-                    <small class="text-muted">Error ID: {{ error_id }}</small>
+                    <small class="text-muted">{{ _('Error ID') }}: {{ error_id }}</small>
                 </div>
                 {% endif %}
             </div>

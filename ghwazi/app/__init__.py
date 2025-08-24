@@ -6,9 +6,11 @@ import logging
 import os
 import time
 import traceback
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from flask import Flask, session, redirect, url_for, flash, request, jsonify
+
+from flask_babel import Babel, get_locale
 
 from .views.email import email_tasks, email_tasks_lock, scraping_accounts
 
@@ -16,6 +18,7 @@ from .config.base import Config
 from .extensions import db, migrate, limiter, csrf
 from .utils.safe_session_interface import SafeCookieSessionInterface
 from flask_wtf.csrf import CSRFError, generate_csrf
+from .utils.template_filters import format_currency_rtl, format_account_number_rtl
 
 # Optional Redis session support
 try:
@@ -30,6 +33,8 @@ def create_app(config_class=Config):
     """Create and configure the Flask application."""
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.jinja_env.filters['format_currency_rtl'] = format_currency_rtl
+    app.jinja_env.filters['account_number_rtl'] = format_account_number_rtl
 
     # Initialize session management
     _initialize_session_management(app)
@@ -47,6 +52,9 @@ def create_app(config_class=Config):
     except Exception:
         pass
     csrf.init_app(app)
+
+    # Initialize Babel (i18n)
+    _initialize_babel(app)
 
     # Register blueprints
     _register_blueprints(app)
@@ -76,6 +84,149 @@ def create_app(config_class=Config):
     _register_request_handlers(app)
 
     return app
+
+
+babel = Babel()
+
+
+def _initialize_babel(app):
+    """Initialize Flask-Babel and locale selection."""
+    # Supported languages with better metadata
+    app.config.setdefault('LANGUAGES', {
+        'ar': {'name': 'العربية', 'rtl': True},
+        'en': {'name': 'English', 'rtl': False}
+    })
+    app.config.setdefault('BABEL_DEFAULT_LOCALE', 'ar')
+    app.config.setdefault('BABEL_DEFAULT_TIMEZONE', 'UTC')
+
+    # Ensure Babel looks at the correct translations directory
+    try:
+        translations_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'translations'))
+        app.config.setdefault('BABEL_TRANSLATION_DIRECTORIES', translations_dir)
+    except Exception as e:
+        app.logger.debug(f"Failed to compute translations dir: {e}")
+
+    # Define the locale selector compatible with Flask-Babel 3/4
+    def select_locale():
+        try:
+            # Prefer session setting, fallback to Accept-Language header
+            lang = session.get('lang')
+            supported_languages = list(app.config.get('LANGUAGES', {}).keys())
+            if lang in supported_languages:
+                app.logger.debug(f"Locale selector: using session lang '{lang}'")
+                return lang
+            # Get best match from Accept-Language
+            best = request.accept_languages.best_match(supported_languages)
+            chosen = best or app.config.get('BABEL_DEFAULT_LOCALE', 'ar')
+            app.logger.debug(
+                f"Locale selector: session='{lang}', accept='{request.headers.get('Accept-Language')}', chosen='{chosen}'"
+            )
+            return chosen
+        except Exception as e:
+            fallback = app.config.get('BABEL_DEFAULT_LOCALE', 'ar')
+            app.logger.warning(f"Locale selector error: {e}; falling back to {fallback}")
+            return fallback
+
+    # Initialize Babel passing the locale selector directly
+    try:
+        babel.init_app(app, locale_selector=select_locale)
+    except TypeError:
+        # Older Flask-Babel versions may not support keyword; try positional
+        try:
+            babel.init_app(app, select_locale)
+        except Exception as e:
+            app.logger.warning(f"Babel init_app with locale selector failed: {e}")
+            # Last resort: attempt legacy registration
+            try:
+                app.extensions['babel'].localeselector(select_locale)
+            except Exception as e2:
+                app.logger.debug(f"Legacy locale selector registration failed: {e2}")
+
+    # Log Babel configuration and available translations
+    try:
+        from flask_babel import gettext as _
+        trans_dirs = app.config.get('BABEL_TRANSLATION_DIRECTORIES')
+        app.logger.info(
+            f"Babel configured: default_locale={app.config.get('BABEL_DEFAULT_LOCALE')}, "
+            f"default_tz={app.config.get('BABEL_DEFAULT_TIMEZONE')}, "
+            f"translation_dirs={trans_dirs}"
+        )
+        try:
+            available = [str(loc) for loc in getattr(babel, 'list_translations', lambda: [])()]
+        except Exception:
+            # Some versions expose list_translations() as a function on the extension
+            try:
+                available = [str(loc) for loc in babel.list_translations()]
+            except Exception:
+                available = []
+        app.logger.info(f"Babel available translations: {available}")
+    except Exception as e:
+        app.logger.debug(f"Babel diagnostics failed: {e}")
+
+    # Enhanced context processor
+    @app.context_processor
+    def inject_i18n_helpers():
+        try:
+            current_locale_code = str(get_locale()) if get_locale() else app.config.get('BABEL_DEFAULT_LOCALE', 'ar')
+            languages = app.config.get('LANGUAGES', {})
+            current_language_info = languages.get(current_locale_code, {'rtl': False})
+            text_direction = 'rtl' if current_language_info.get('rtl', False) else 'ltr'
+        except Exception:
+            current_locale_code = app.config.get('BABEL_DEFAULT_LOCALE', 'ar')
+            text_direction = 'rtl' if current_locale_code == 'ar' else 'ltr'
+
+        return {
+            'current_locale': current_locale_code,
+            'text_direction': text_direction,
+            'languages': app.config.get('LANGUAGES', {}),
+            'year': datetime.utcnow().year,
+        }
+
+    # Add lightweight i18n diagnostics and language set endpoints
+    try:
+        from flask import jsonify
+        from flask_babel import gettext
+
+        @app.route('/i18n-debug')
+        def i18n_debug():
+            try:
+                current_locale_code = str(get_locale()) if get_locale() else None
+            except Exception:
+                current_locale_code = None
+            try:
+                available = [str(loc) for loc in getattr(babel, 'list_translations', lambda: [])()]
+            except Exception:
+                try:
+                    available = [str(loc) for loc in babel.list_translations()]
+                except Exception:
+                    available = []
+            sample_msgid = 'Login'
+            try:
+                sample_translation = gettext(sample_msgid)
+            except Exception as e:
+                sample_translation = f"<error: {e}>"
+            return jsonify({
+                'current_locale': current_locale_code,
+                'session_lang': session.get('lang'),
+                'accept_language': request.headers.get('Accept-Language'),
+                'babel_default_locale': app.config.get('BABEL_DEFAULT_LOCALE'),
+                'translation_directories': app.config.get('BABEL_TRANSLATION_DIRECTORIES'),
+                'available_translations': available,
+                'sample_msgid': sample_msgid,
+                'sample_translation': sample_translation,
+            })
+
+        @app.route('/i18n-set-lang')
+        def i18n_set_lang():
+            lang = request.args.get('lang')
+            supported = list(app.config.get('LANGUAGES', {}).keys())
+            if lang in supported:
+                session['lang'] = lang
+                app.logger.info(f"/i18n-set-lang set session lang to '{lang}'")
+                return jsonify({'ok': True, 'set_lang': lang})
+            return jsonify({'ok': False, 'error': 'unsupported_lang', 'supported': supported}), 400
+    except Exception as e:
+        app.logger.debug(f"Failed to register i18n endpoints: {e}")
 
 
 def _initialize_session_management(app):
@@ -303,6 +454,14 @@ def _configure_template_globals(app):
         return {"csrf_token": generate_csrf_token}
 
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
+
+    # Expose Flask-Babel gettext as '_' in templates so {{ _('...') }} works everywhere
+    try:
+        from flask_babel import gettext as _gettext
+        app.jinja_env.globals['_'] = _gettext
+    except Exception as e:
+        # Don't break app startup if Flask-Babel isn't available
+        app.logger.debug(f"Flask-Babel gettext not available for templates: {e}")
 
 
 def _register_template_filters(app):

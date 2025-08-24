@@ -131,7 +131,7 @@ export class NotificationManager {
             ${title ? `<h6 class="alert-heading mb-1">${title}</h6>` : ''}
             <div>${message}</div>
           </div>
-          ${!persistent ? '<button type="button" class="btn-close" aria-label="Close"></button>' : ''}
+          ${!persistent ? '<button type="button" class="btn-close" aria-label="' + _('Close') + '"></button>' : ''}
         </div>
       `
     });
@@ -183,19 +183,19 @@ export class NotificationManager {
     return `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  success(message, title = 'Success') {
+  success(message, title = _('Success')) {
     return this.show({ type: 'success', title, message });
   }
 
-  error(message, title = 'Error') {
+  error(message, title = _('Error')) {
     return this.show({ type: 'error', title, message, persistent: true });
   }
 
-  warning(message, title = 'Warning') {
+  warning(message, title = _('Warning')) {
     return this.show({ type: 'warning', title, message });
   }
 
-  info(message, title = 'Info') {
+  info(message, title = _('Info')) {
     return this.show({ type: 'info', title, message });
   }
 
@@ -220,7 +220,7 @@ export class LoadingManager {
     if (!element) return;
 
     const {
-      text = 'Loading...',
+      text = _('Loading...'),
       overlay = true,
       size = 'md'
     } = options;
@@ -252,7 +252,7 @@ export class LoadingManager {
       attributes: { 'data-loader-id': id },
       innerHTML: `
         <div class="spinner-border text-primary ${sizeClass}" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">' + _('Loading...') + '</span>
         </div>
         <div class="mt-2 text-muted small">${text}</div>
       `
@@ -278,7 +278,7 @@ export class LoadingManager {
   /**
    * Show global loading overlay
    */
-  showGlobal(text = 'Loading...') {
+  showGlobal(text = _('Loading...')) {
     if (this.overlay) return;
 
     this.overlay = DOM.create('div', {
@@ -287,7 +287,7 @@ export class LoadingManager {
       innerHTML: `
         <div class="bg-white rounded-4 p-4 shadow-lg text-center">
           <div class="spinner-border text-primary mb-3" role="status">
-            <span class="visually-hidden">Loading...</span>
+            <span class="visually-hidden">' + _('Loading...') + '</span>
           </div>
           <div class="text-muted">${text}</div>
         </div>
@@ -397,14 +397,14 @@ export class FormManager {
 
   getErrorMessage(ruleName, params) {
     const messages = {
-      required: 'This field is required',
-      email: 'Please enter a valid email address',
-      min: `Minimum ${params[0]} characters required`,
-      max: `Maximum ${params[0]} characters allowed`,
-      numeric: 'Please enter numbers only'
+      required: _('This field is required'),
+      email: _('Please enter a valid email address'),
+      min: _('Minimum ') + params[0] + _(' characters required'),
+      max: _('Maximum ') + params[0] + _(' characters allowed'),
+      numeric: _('Please enter numbers only')
     };
     
-    return messages[ruleName] || 'Invalid input';
+    return messages[ruleName] || _('Invalid input');
   }
 
   showFieldError(input, message) {
@@ -518,7 +518,7 @@ export class ModalManager {
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="${id}-label">${title}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="" + _('Close') + ""></button>
             </div>
             <div class="modal-body">
               ${content}
@@ -534,11 +534,11 @@ export class ModalManager {
     return `modal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  confirm(message, title = 'Confirm') {
+  confirm(message, title = _('Confirm')) {
     return new Promise((resolve) => {
       const footer = `
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary confirm-btn">Confirm</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' + _('Cancel') + '</button>
+        <button type="button" class="btn btn-primary confirm-btn">' + _('Confirm') + '</button>
       `;
       
       const { modal } = this.show({

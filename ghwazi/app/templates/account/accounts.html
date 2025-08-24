@@ -1,14 +1,14 @@
 {% extends "main/base.html" %}
 
-{% block title %}Accounts - Money Tracker{% endblock %}
+{% block title %}{{ _('Accounts') }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="row g-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h2 mb-0">Account Summaries</h1>
+            <h1 class="h2 mb-0">{{ _('Account Summaries') }}</h1>
             <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Add Account
+                <i class="bi bi-plus-circle me-2"></i>{{ _('Add Account') }}
             </a>
         </div>
 
@@ -16,14 +16,14 @@
             <div class="row g-4">
                 {% for summary in summaries %}
                     <div class="col-md-6">
-                        <div class="card h-100 account-summary-card">
+                        <div class="card h-100 account-summary-card{% if text_direction == 'rtl' %} text-end{% endif %}">
                             <div class="card-header bg-transparent border-0 pt-4 px-4">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-3{% if text_direction == 'rtl' %} flex-row-reverse{% endif %}">
                                     <div>
                                         <span class="badge bg-primary-subtle text-primary mb-2"><i class="bi bi-bank"></i> {{ summary.bank_name }}</span>
-                                        <h3 class="h4 mb-1">•••• {{ summary.account_number[-4:] }}
+                                        <h3 class="h4 mb-1">{{ summary.account_number|account_number_rtl }}
                                             <span class="ms-2 badge bg-info-subtle text-info d-none account-sync-badge" data-account-number="{{ summary.account_number }}">
-                                                <i class="bi bi-arrow-repeat me-1 spin"></i>Syncing
+                                                <i class="bi bi-arrow-repeat me-1 spin"></i>{{ _('Syncing') }}
                                             </span>
                                         </h3>
                                         <p class="text-body-secondary mb-0">
@@ -31,58 +31,42 @@
                                             {{ summary.account_holder }}
                                         </p>
                                     </div>
-                                    <div class="text-end">
+                                    <div class="{% if text_direction == 'rtl' %}text-start{% else %}text-end{% endif %}">
                                         <h4 class="mb-1 text-primary">{{ "{:,.3f}".format(summary.balance) }}</h4>
                                         <small class="text-body-secondary">{{ summary.currency }}</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="card-body px-4">
-                                <h5 class="mb-3">Transaction Summary</h5>
+                                <h5 class="mb-3">{{ _('Transaction Summary') }}</h5>
                                 <div class="transaction-summary">
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <div class="p-3 rounded-3 bg-success-subtle text-success">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div>
-                                                        <small class="d-block">Income</small>
-                                                        <strong>{{ summary.income_count }} Transactions </strong>
+                                                        <small class="d-block">{{ _('Income') }}</small>
+                                                        <strong>{{ summary.income_count }} {{ _('Transactions') }}</strong>
                                                     </div>
                                                     <i class="bi bi-graph-up-arrow"></i>
                                                 </div>
-                                                <div class="mt-2 small">
-                                                    {{ "{:,.3f}".format(summary.total_income) }} {{ summary.currency }}
-                                                </div>
+                                                <div class="mt-2 small currency-amount" dir="ltr">
+                                                    {{ summary.total_income|format_currency_rtl(summary.currency) }}                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="p-3 rounded-3 bg-danger-subtle text-danger">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div>
-                                                        <small class="d-block">Expense</small>
-                                                        <strong>{{ summary.expense_count3 }} Transactions </strong>
+                                                        <small class="d-block">{{ _('Expense') }}</small>
+                                                        <strong>{{ summary.expense_count }} {{ _('Transactions') }}</strong>
                                                     </div>
                                                     <i class="bi bi-graph-down-arrow"></i>
                                                 </div>
-                                                <div class="mt-2 small">
-                                                    {{ "{:,.3f}".format(summary.total_expense) }} {{ summary.currency }}
-                                                </div>
+                                                <div class="mt-2 small currency-amount" dir="ltr">
+                                                    {{ summary.total_expense|format_currency_rtl(summary.currency) }}                                                </div>
                                             </div>
                                         </div>
-<!--                                        <div class="col-md-4">-->
-<!--                                            <div class="p-3 rounded-3 bg-info-subtle text-info">-->
-<!--                                                <div class="d-flex justify-content-between align-items-center">-->
-<!--                                                    <div>-->
-<!--                                                        <small class="d-block">Transfers</small>-->
-<!--                                                        <strong>{{ summary.transfer_count }}</strong>-->
-<!--                                                    </div>-->
-<!--                                                    <i class="bi bi-arrow-left-right"></i>-->
-<!--                                                </div>-->
-<!--                                                <div class="mt-2 small">-->
-<!--                                                    N/A-->
-<!--                                                </div>-->
-<!--                                            </div>-->
-<!--                                        </div>-->
                                     </div>
                                 </div>
                             </div>
@@ -90,7 +74,7 @@
                                 <div class="d-grid">
                                     <a href="{{ url_for('account.account_details', account_number=summary.account_number) }}"
                                        class="btn btn-primary">
-                                        <i class="bi bi-eye me-2"></i>View Details
+                                        <i class="bi bi-eye me-2"></i>{{ _('View Details') }}
                                     </a>
                                 </div>
                             </div>
@@ -103,11 +87,11 @@
                 <div class="mb-4">
                     <i class="bi bi-bank2 display-1 text-muted"></i>
                 </div>
-                <h2 class="h4 mb-3">No accounts found</h2>
-                <p class="text-body-secondary mb-4">You don't have any accounts in the database yet.<br>Get started by adding your first account or parsing bank emails.</p>
+                <h2 class="h4 mb-3">{{ _('No accounts found') }}</h2>
+                <p class="text-body-secondary mb-4">{{ _("You don't have any accounts in the database yet.") }}<br>{{ _('Get started by adding your first account or parsing bank emails.') }}</p>
                 <div class="d-flex justify-content-center gap-2">
                     <a href="{{ url_for('account.add_account') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Add Account
+                        <i class="bi bi-plus-circle me-2"></i>{{ _('Add Account') }}
                     </a>
                 </div>
             </div>

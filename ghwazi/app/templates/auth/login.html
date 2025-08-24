@@ -1,17 +1,17 @@
 {% extends "main/base.html" %}
 
-{% block title %}Login - Money Tracker{% endblock %}
+{% block title %}{{ _('Login') }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
             <div class="text-center mb-4">
-                <h1 class="h3 mb-3">Welcome Back</h1>
-                <p class="text-body-secondary">Log in to manage your accounts and transactions</p>
+                <h1 class="h3 mb-3">{{ _('Welcome Back') }}</h1>
+                <p class="text-body-secondary">{{ _('Log in to manage your accounts and transactions') }}</p>
             </div>
 
-            <div class="card">
+            <div class="card{% if text_direction == 'rtl' %} text-end{% endif %}">
                 <div class="card-body p-4">
                     <form method="post" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -21,10 +21,10 @@
                                    class="form-control form-control-lg"
                                    id="username"
                                    name="username"
-                                   placeholder="Username"
+                                   placeholder="{{ _('Username') }}"
                                    required>
-                            <label for="username">Username</label>
-                            <div class="invalid-feedback">Please enter your username.</div>
+                            <label for="username">{{ _('Username') }}</label>
+                            <div class="invalid-feedback">{{ _('Please enter your username.') }}</div>
                         </div>
 
                         <div class="form-floating mb-4">
@@ -32,15 +32,15 @@
                                    class="form-control form-control-lg"
                                    id="password"
                                    name="password"
-                                   placeholder="Password"
+                                   placeholder="{{ _('Password') }}"
                                    required>
-                            <label for="password">Password</label>
-                            <div class="invalid-feedback">Please enter your password.</div>
+                            <label for="password">{{ _('Password') }}</label>
+                            <div class="invalid-feedback">{{ _('Please enter your password.') }}</div>
                         </div>
 
                         <div class="d-grid mb-3">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Log In
+                                <i class="bi bi-box-arrow-in-right me-2"></i>{{ _('Log In') }}
                             </button>
                         </div>
                     </form>
@@ -49,20 +49,20 @@
                     <div class="position-relative my-4">
                         <hr>
                         <div class="position-absolute top-50 start-50 translate-middle bg-white px-3">
-                            <span class="text-muted small">or</span>
+                            <span class="text-muted small">{{ _('or') }}</span>
                         </div>
                     </div>
 
                     <!-- Google Sign-in -->
                     <div class="d-grid mb-4">
                         <a href="{{ url_for('oauth.google_login') }}" class="btn btn-outline-danger btn-lg">
-                            <i class="bi bi-google me-2"></i>Sign in with Google
+                            <i class="bi bi-google me-2"></i>{{ _('Sign in with Google') }}
                         </a>
                     </div>
 
                     <div class="text-center">
-                        <p class="mb-0">Don't have an account?
-                            <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Create one now</a>
+                        <p class="mb-0">{{ _("Don't have an account?") }}
+                            <a href="{{ url_for('auth.register') }}" class="text-decoration-none">{{ _('Create one now') }}</a>
                         </p>
                     </div>
                 </div>
@@ -70,7 +70,7 @@
 
             <div class="text-center mt-4">
                 <a href="{{ url_for('main.index') }}" class="text-decoration-none">
-                    <i class="bi bi-arrow-left me-2"></i>Back to Home
+                    <i class="bi bi-arrow-left me-2"></i>{{ _('Back to Home') }}
                 </a>
             </div>
         </div>

@@ -1,6 +1,6 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Privacy Policy - Ghwazi Money Tracker{% endblock %}
+{% block title %}{{ _("Privacy Policy") }} - Ghwazi Money Tracker{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,7 +8,7 @@
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h1 class="card-title mb-0">
-                    <i class="bi bi-shield-lock me-2"></i>Privacy Policy
+                    <i class="bi bi-shield-lock me-2"></i>{{ _("Privacy Policy") }}
                 </h1>
             </div>
             <div class="card-body">
@@ -19,19 +19,19 @@
 
                     <section class="mb-5">
                         <h2 class="h4 text-primary mb-3">
-                            <i class="bi bi-info-circle me-2"></i>Introduction
+                            <i class="bi bi-info-circle me-2"></i>{{ _("Introduction") }}
                         </h2>
                         <p>
-                            Welcome to Ghwazi Money Tracker. We are committed to protecting your privacy and ensuring the security of your personal and financial information. This Privacy Policy explains how we collect, use, protect, and share information when you use our money tracking application and related services.
+                            {{ _("Welcome to Ghwazi Money Tracker. We are committed to protecting your privacy and ensuring the security of your personal and financial information. This Privacy Policy explains how we collect, use, protect, and share information when you use our money tracking application and related services.") }}
                         </p>
                     </section>
 
                     <section class="mb-5">
                         <h2 class="h4 text-primary mb-3">
-                            <i class="bi bi-collection me-2"></i>Information We Collect
+                            <i class="bi bi-collection me-2"></i>{{ _("Information We Collect") }}
                         </h2>
                         
-                        <h3 class="h5 mb-3">Personal Information</h3>
+                        <h3 class="h5 mb-3">{{ _("Personal Information") }}</h3>
                         <ul class="list-group list-group-flush mb-4">
                             <li class="list-group-item border-0 px-0">
                                 <strong>Account Information:</strong> Name, email address, username, and encrypted password

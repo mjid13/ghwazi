@@ -1,14 +1,14 @@
 {% extends "main/base.html" %}
 
-{% block title %}Email Configuration - Bank Email Parser{% endblock %}
+{% block title %}{{ _("Email Configuration") }} - Bank Email Parser{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Email Configuration</li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">{{ _("Dashboard") }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ _("Email Configuration") }}</li>
             </ol>
         </nav>
     </div>
@@ -18,31 +18,31 @@
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-header">
-                <h3>Email Configuration</h3>
+                <h3>{{ _("Email Configuration") }}</h3>
             </div>
             <div class="card-body">
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label for="email_host" class="form-label">Email Host *</label>
+                        <label for="email_host" class="form-label">{{ _("Email Host") }} *</label>
                         <input type="text" class="form-control" id="email_host" name="email_host" value="{{ email_config.email_host if email_config else 'imap.gmail.com' }}" required>
-                        <div class="form-text">Enter your email server host (e.g., imap.gmail.com).</div>
+                        <div class="form-text">{{ _("Enter your email server host (e.g., imap.gmail.com).") }}</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="email_port" class="form-label">Email Port *</label>
+                        <label for="email_port" class="form-label">{{ _("Email Port") }} *</label>
                         <input type="number" class="form-control" id="email_port" name="email_port" value="{{ email_config.email_port if email_config else 993 }}" required>
-                        <div class="form-text">Enter your email server port (e.g., 993 for Gmail).</div>
+                        <div class="form-text">{{ _("Enter your email server port (e.g., 993 for Gmail).") }}</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="email_username" class="form-label">Email Username *</label>
+                        <label for="email_username" class="form-label">{{ _("Email Username") }} *</label>
                         <input type="text" class="form-control" id="email_username" name="email_username" value="{{ email_config.email_username if email_config else '' }}" required>
-                        <div class="form-text">Enter your email address.</div>
+                        <div class="form-text">{{ _("Enter your email address.") }}</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="email_password" class="form-label">Email Password *</label>
+                        <label for="email_password" class="form-label">{{ _("Email Password") }} *</label>
                         <input type="password" class="form-control" id="email_password" name="email_password" value="{{ email_config.email_password if email_config else '' }}" required>
                         <div class="form-text">Enter your email password or app password. For Gmail, use an App Password instead of your regular password.</div>
                     </div>

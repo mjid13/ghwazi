@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Processing Emails - Money Tracker{% endblock %}
+{% block title %}{{ _("Processing Emails") }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -11,16 +11,16 @@
                     <div class="text-center mb-4">
                         <div class="spinner-processing mb-3">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Processing...</span>
+                                <span class="visually-hidden">{{ _("Processing...") }}</span>
                             </div>
                         </div>
-                        <h2 class="h4 mb-2">Processing Your Emails</h2>
-                        <p class="text-body-secondary mb-0" id="statusMessage">Initializing...</p>
+                        <h2 class="h4 mb-2">{{ _("Processing Your Emails") }}</h2>
+                        <p class="text-body-secondary mb-0" id="statusMessage">{{ _("Initializing...") }}</p>
                     </div>
 
                     <div class="progress-container">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="progress-label">Progress</span>
+                            <span class="progress-label">{{ _("Progress") }}</span>
                             <span class="progress-percentage">0%</span>
                         </div>
                         <div class="progress" style="height: 10px;">
@@ -35,13 +35,13 @@
                         <div class="row g-3">
                             <div class="col-6">
                                 <div class="p-3 rounded-3 bg-success-subtle">
-                                    <h6 class="text-success mb-1">Processed</h6>
+                                    <h6 class="text-success mb-1">{{ _("Processed") }}</h6>
                                     <span class="h4 mb-0 text-success processed-count">0</span>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="p-3 rounded-3 bg-primary-subtle">
-                                    <h6 class="text-primary mb-1">Saved</h6>
+                                    <h6 class="text-primary mb-1">{{ _("Saved") }}</h6>
                                     <span class="h4 mb-0 text-primary saved-count">0</span>
                                 </div>
                             </div>
@@ -50,8 +50,8 @@
 
                     <div class="time-info mt-4">
                         <div class="d-flex justify-content-between text-body-secondary small">
-                            <span>Elapsed time: <span id="elapsedTime">0s</span></span>
-                            <span>Estimated time remaining: <span id="remainingTime">Calculating...</span></span>
+                            <span>{{ _("Elapsed time:") }} <span id="elapsedTime">0s</span></span>
+                            <span>{{ _("Estimated time remaining:") }} <span id="remainingTime">{{ _("Calculating...") }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
 
             <div class="text-center mt-4">
                 <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-arrow-left me-2"></i>Return to Dashboard
+                    <i class="bi bi-arrow-left me-2"></i>{{ _("Return to Dashboard") }}
                 </a>
             </div>
         </div>

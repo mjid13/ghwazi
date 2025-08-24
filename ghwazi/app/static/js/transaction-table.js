@@ -56,25 +56,25 @@ function initTransactionTable() {
         const cells = row.querySelectorAll('td');
         
         // Date column
-        if (cells[0]) cells[0].setAttribute('data-label', 'Date');
+        if (cells[0]) cells[0].setAttribute('data-label', _('Date'));
         
         // Type column
-        if (cells[1]) cells[1].setAttribute('data-label', 'Type');
+        if (cells[1]) cells[1].setAttribute('data-label', _('Type'));
         
         // Amount column
-        if (cells[2]) cells[2].setAttribute('data-label', 'Amount');
+        if (cells[2]) cells[2].setAttribute('data-label', _('Amount'));
         
         // Description column
-        if (cells[3]) cells[3].setAttribute('data-label', 'Description');
+        if (cells[3]) cells[3].setAttribute('data-label', _('Description'));
         
         // Category column
-        if (cells[4]) cells[4].setAttribute('data-label', 'Category');
+        if (cells[4]) cells[4].setAttribute('data-label', _('Category'));
         
         // Sender/Receiver column
-        if (cells[5]) cells[5].setAttribute('data-label', 'Sender/Receiver');
+        if (cells[5]) cells[5].setAttribute('data-label', _('Sender/Receiver'));
         
         // Actions column
-        if (cells[6]) cells[6].setAttribute('data-label', 'Actions');
+        if (cells[6]) cells[6].setAttribute('data-label', _('Actions'));
     });
     
     // Initialize DataTables with responsive features
@@ -119,8 +119,8 @@ function initTransactionTable() {
         
         // Custom language settings
         "language": {
-            "emptyTable": "No transactions found",
-            "zeroRecords": "No matching transactions found"
+            "emptyTable": _('No transactions found'),
+            "zeroRecords": _('No matching transactions found')
         }
     });
 }

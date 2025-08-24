@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}429 - Too Many Requests - GHWAZI{% endblock %}
+{% block title %}429 - {{ _('Too Many Requests') }} - GHWAZI{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -41,7 +41,7 @@
 
                 {% if error_id %}
                 <div class="mt-4">
-                    <small class="text-muted">Error ID: {{ error_id }}</small>
+                    <small class="text-muted">{{ _('Error ID') }}: {{ error_id }}</small>
                 </div>
                 {% endif %}
             </div>

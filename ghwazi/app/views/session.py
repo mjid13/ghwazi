@@ -3,9 +3,11 @@ Session management endpoints for monitoring and administration.
 """
 
 import logging
+import time
 from datetime import datetime
 
 from flask import Blueprint, jsonify, render_template, request, session, flash, redirect, url_for
+from flask_babel import gettext as _
 
 from ..services.session_service import SessionService
 from ..services.session_lifecycle import SessionLifecycleManager
@@ -16,6 +18,18 @@ from ..utils.decorators import login_required
 
 session_bp = Blueprint("session", __name__)
 logger = logging.getLogger(__name__)
+
+
+@session_bp.route("/set-lang")
+def set_language():
+    """Set the UI language for the current session via ?lang=en|ar."""
+    lang = request.args.get('lang', '').lower()
+    if lang not in ['en', 'ar']:
+        flash(_('Invalid language selection'), 'error')
+        return redirect(request.referrer or url_for('main.index'))
+    session['lang'] = lang
+    flash(_('Language updated'), 'success')
+    return redirect(request.referrer or url_for('main.index'))
 
 
 @session_bp.route("/sessions")

@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Edit Email Configuration - Bank Email Parser{% endblock %}
+{% block title %}{{ _("Edit Email Configuration") }} - Bank Email Parser{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,15 +8,15 @@
         <div class="col-lg-8">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('email.email_configs') }}" class="text-decoration-none">Email Configurations</a></li>
-                    <li class="breadcrumb-item active">Edit Configuration</li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}" class="text-decoration-none">{{ _("Dashboard") }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('email.email_configs') }}" class="text-decoration-none">{{ _("Email Configurations") }}</a></li>
+                    <li class="breadcrumb-item active">{{ _("Edit Configuration") }}</li>
                 </ol>
             </nav>
 
-            <div class="card">
+            <div class="card{% if text_direction == 'rtl' %} text-end{% endif %}">
                 <div class="card-header bg-transparent p-4 border-bottom">
-                    <h2 class="h4 mb-0">Edit Email Configuration</h2>
+                    <h2 class="h4 mb-0">{{ _("Edit Email Configuration") }}</h2>
                 </div>
                 <div class="card-body p-4">
                     <form method="post" class="needs-validation" novalidate>
@@ -26,21 +26,21 @@
                             <!-- Configuration Name -->
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label for="name" class="form-label">Configuration Name</label>
+                                    <label for="name" class="form-label">{{ _("Configuration Name") }}</label>
                                     <input type="text"
                                            class="form-control form-control-lg"
                                            id="name"
                                            name="name"
                                            value="{{ email_config.name }}"
                                            required>
-                                    <div class="invalid-feedback">Please provide a name for this configuration.</div>
+                                    <div class="invalid-feedback">{{ _("Please provide a name for this configuration.") }}</div>
                                 </div>
                             </div>
 
                             <!-- Email Address (moved up) -->
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label for="email_username" class="form-label">Email Address</label>
+                                    <label for="email_username" class="form-label">{{ _("Email Address") }}</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                                         <input type="email"
@@ -50,7 +50,7 @@
                                                value="{{ email_config.email_username }}"
                                                required>
                                     </div>
-                                    <div class="invalid-feedback">Please provide a valid email address.</div>
+                                    <div class="invalid-feedback">{{ _("Please provide a valid email address.") }}</div>
                                     <div id="provider-detection-message" class="form-text text-success mt-2" style="display: none;">
                                         <i class="bi bi-check-circle-fill me-1"></i>
                                         Email provider detected. Configuration will be set automatically.

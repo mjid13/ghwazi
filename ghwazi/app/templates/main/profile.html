@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Profile - GHWAZI{% endblock %}
+{% block title %}{{ _("Profile") }} - GHWAZI{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -337,7 +337,7 @@
                         <i class="bi bi-house-door me-1"></i>Dashboard
                     </a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Profile</li>
+                <li class="breadcrumb-item active" aria-current="page">{{ _("Profile") }}</li>
             </ol>
         </nav>
     </div>
@@ -388,14 +388,14 @@
         <!-- Profile Information -->
         <div class="info-card fade-in-up">
             <h3 class="mb-4">
-                <i class="bi bi-person-badge me-2 text-primary"></i>Personal Information
+                <i class="bi bi-person-badge me-2 text-primary"></i>{{ _("Personal Information") }}
             </h3>
             <div class="info-item">
                 <div class="info-icon">
                     <i class="bi bi-person"></i>
                 </div>
                 <div class="info-content">
-                    <div class="info-label">Username</div>
+                    <div class="info-label">{{ _("Username") }}</div>
                     <div class="info-value">{{ (user.oauth_users[0].name if user.oauth_users else user.username)|html_escape|default_if_empty }}</div>
                 </div>
             </div>
@@ -404,7 +404,7 @@
                     <i class="bi bi-envelope"></i>
                 </div>
                 <div class="info-content">
-                    <div class="info-label">Email Address</div>
+                    <div class="info-label">{{ _("Email Address") }}</div>
                     <div class="info-value">{{ user.email|html_escape|default_if_empty }}</div>
                 </div>
             </div>
@@ -413,7 +413,7 @@
                     <i class="bi bi-calendar-plus"></i>
                 </div>
                 <div class="info-content">
-                    <div class="info-label">Member Since</div>
+                    <div class="info-label">{{ _("Member Since") }}</div>
                     <div class="info-value">
                         {% if user.created_at %}
                             {{ user.created_at|date_format('%B %d, %Y') }}

@@ -46,7 +46,7 @@
 /* Ensure badges are properly displayed on mobile */
 .badge {
     white-space: normal;
-    text-align: left;
+    text-align: start;
 }
 
 /* Improve display of transaction date on mobile */
@@ -72,14 +72,14 @@
 table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control,
 table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control {
     position: relative;
-    padding-left: 30px;
+    padding-inline-start: 30px;
     cursor: pointer;
 }
 
 table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
 table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
     top: 50%;
-    left: 5px;
+    inset-inline-start: 5px;
     height: 16px;
     width: 16px;
     margin-top: -8px;
@@ -121,15 +121,15 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before
     /* Make sure the date column is not too wide on mobile */
     #transaction-table td:first-child,
     #transaction-table th:first-child {
-        padding-left: 0.75rem;
-        padding-right: 0.5rem;
+        padding-inline-start: 0.75rem;
+        padding-inline-end: 0.5rem;
     }
     
     /* Ensure the action column is not too wide on mobile */
     #transaction-table td:last-child,
     #transaction-table th:last-child {
-        padding-left: 0.5rem;
-        padding-right: 0.75rem;
+        padding-inline-start: 0.5rem;
+        padding-inline-end: 0.75rem;
     }
     
     /* Adjust font sizes for mobile */
@@ -163,8 +163,8 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before
     
     /* Make the table take full width */
     .table-responsive {
-        margin-left: -1rem;
-        margin-right: -1rem;
+        margin-inline-start: -1rem;
+        margin-inline-end: -1rem;
         width: calc(100% + 2rem);
     }
     

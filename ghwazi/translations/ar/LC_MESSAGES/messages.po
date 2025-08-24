@@ -1,0 +1,1415 @@
+# Arabic translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-20 14:03+0400\n"
+"PO-Revision-Date: 2025-08-19 19:55+0400\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ar\n"
+"Language-Team: ar <LL@li.org>\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=0 && n%100<=2 ? 4 : 5);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+# ---------- Generic statuses / UI ----------
+msgid "error"
+msgstr "خطأ"
+
+msgid "warning"
+msgstr "تحذير"
+
+msgid "success"
+msgstr "نجاح"
+
+msgid "An error occurred. Please try again."
+msgstr "حدث خطأ، يرجى المحاولة مجدداً."
+
+msgid "Processing..."
+msgstr "جارٍ المعالجة..."
+
+msgid "Loading..."
+msgstr "جارٍ التحميل..."
+
+msgid "Failed to load content. Please try again."
+msgstr "تعذّر تحميل المحتوى، حاول مرة أخرى."
+
+msgid "JavaScript Error"
+msgstr "خطأ في جافاسكربت"
+
+msgid "An unexpected error occurred"
+msgstr "حدث خطأ غير متوقع"
+
+msgid "System Error"
+msgstr "خلل في النظام"
+
+msgid "Access denied"
+msgstr "تم رفض الوصول"
+
+msgid "Authorization Error"
+msgstr "خطأ في الصلاحيات"
+
+msgid "Too many requests. Please try again later."
+msgstr "عدد كبير جداً من الطلبات، يرجى المحاولة لاحقاً."
+
+msgid "Rate Limited"
+msgstr "تم تجاوز الحد المسموح"
+
+msgid "Server error. Please try again."
+msgstr "خطأ في الخادم، حاول مرة أخرى."
+
+msgid "Server Error"
+msgstr "خطأ بالخادم"
+
+msgid "Application failed to initialize"
+msgstr "فشل التطبيق في بدء التشغيل"
+
+msgid "Startup Error"
+msgstr "خطأ في التشغيل"
+
+msgid "Error loading category data. Please try again."
+msgstr "تعذّر تحميل بيانات الفئات، حاول مرة أخرى."
+
+msgid "Error loading chart data. Please try again."
+msgstr "تعذّر تحميل بيانات الرسم البياني، حاول مرة أخرى."
+
+# ---------- Dashboard / Scraping / Upload ----------
+msgid "This account is currently being scraped. Please wait for the process to complete."
+msgstr "يتم الآن جلب بيانات هذا الحساب، يرجى الانتظار حتى تكتمل العملية."
+
+msgid "Email fetching started successfully. You can check the status in the dashboard."
+msgstr "بدأ جلب البريد الإلكتروني بنجاح، ويمكنك متابعة الحالة من لوحة التحكم."
+
+msgid "Failed to start email fetching."
+msgstr "تعذّر بدء جلب البريد الإلكتروني."
+
+msgid "Uploading..."
+msgstr "جارٍ الرفع..."
+
+msgid "PDF uploaded and processed successfully."
+msgstr "تم رفع ملف PDF ومعالجته بنجاح."
+
+msgid "Failed to upload PDF."
+msgstr "فشل رفع ملف PDF."
+
+msgid "An error occurred while uploading the PDF."
+msgstr "حدث خطأ أثناء رفع ملف PDF."
+
+msgid "Email fetching completed successfully."
+msgstr "اكتمل جلب البريد الإلكتروني بنجاح."
+
+msgid "Email fetching failed: "
+msgstr "فشلت عملية جلب البريد الإلكتروني: "
+
+msgid "Unknown error"
+msgstr "خطأ غير معروف"
+
+msgid "Scraping"
+msgstr "استخراج البيانات"
+
+msgid "Syncing"
+msgstr "مزامنة"
+
+# ---------- DataTables ----------
+msgid "All"
+msgstr "الكل"
+
+msgid "Search:"
+msgstr "بحث:"
+
+msgid "Show _MENU_ per page"
+msgstr "عرض _MENU_ في الصفحة"
+
+msgid "Showing _START_ to _END_ of _TOTAL_ entries"
+msgstr "إظهار من _START_ إلى _END_ من أصل _TOTAL_ إدخال"
+
+msgid "Showing 0 to 0 of 0 entries"
+msgstr "إظهار 0 إلى 0 من أصل 0 إدخال"
+
+msgid "(filtered from _MAX_ total entries)"
+msgstr "(مصفى من أصل _MAX_ إدخال)"
+
+msgid "No matching records found"
+msgstr "لا توجد سجلات مطابقة"
+
+msgid "First"
+msgstr "الأولى"
+
+msgid "Last"
+msgstr "الأخيرة"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "First Page"
+msgstr "الصفحة الأولى"
+
+msgid "Previous Page"
+msgstr "الصفحة السابقة"
+
+msgid "Next Page"
+msgstr "الصفحة التالية"
+
+msgid "Last Page"
+msgstr "الصفحة الأخيرة"
+
+msgid "Show _MENU_ entries per page"
+msgstr "عرض _MENU_ إدخال لكل صفحة"
+
+msgid "Loading data..."
+msgstr "جارٍ تحميل البيانات..."
+
+# ---------- Transaction table / columns ----------
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Type"
+msgstr "النوع"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Category"
+msgstr "الفئة"
+
+msgid "Sender/Receiver"
+msgstr "المرسل/المستلم"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "No transactions found"
+msgstr "لا توجد معاملات"
+
+msgid "No matching transactions found"
+msgstr "لا توجد معاملات مطابقة"
+
+# ---------- UI module ----------
+msgid "Success"
+msgstr "تم بنجاح"
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "Warning"
+msgstr "تنبيه"
+
+msgid "Info"
+msgstr "معلومة"
+
+msgid "This field is required"
+msgstr "هذا الحقل إجباري"
+
+msgid "Please enter a valid email address"
+msgstr "أدخل بريداً إلكترونياً صحيحاً"
+
+msgid "Minimum "
+msgstr "الحد الأدنى "
+
+msgid " characters required"
+msgstr " أحرف مطلوبة"
+
+msgid "Maximum "
+msgstr "الحد الأقصى "
+
+msgid " characters allowed"
+msgstr " أحرف مسموحة"
+
+msgid "Please enter numbers only"
+msgstr "أدخل أرقاماً فقط"
+
+msgid "Invalid input"
+msgstr "إدخال غير صحيح"
+
+msgid "Confirm"
+msgstr "تأكيد"
+
+msgid "Validation failed"
+msgstr "فشل التحقق"
+
+# ---------- Accounts (pages) ----------
+msgid "Account"
+msgstr "الحساب"
+
+msgid "Accounts"
+msgstr "الحسابات"
+
+msgid "Last updated"
+msgstr "آخر تحديث"
+
+msgid "N/A"
+msgstr "غير متوفر"
+
+msgid "Current Balance"
+msgstr "الرصيد الحالي"
+
+msgid "Update Balance"
+msgstr "تحديث الرصيد"
+
+msgid "Toggle Dropdown"
+msgstr "تبديل القائمة المنسدلة"
+
+msgid "Edit Account"
+msgstr "تعديل الحساب"
+
+msgid "Delete Account"
+msgstr "حذف الحساب"
+
+msgid "Total Income"
+msgstr "إجمالي الدخل"
+
+msgid "Total Expenses"
+msgstr "إجمالي المصروفات"
+
+msgid "Transaction History"
+msgstr "سجل المعاملات"
+
+msgid "Export"
+msgstr "تنزيل"
+
+msgid "Filters"
+msgstr "المرشحات"
+
+msgid "Show/Hide"
+msgstr "إظهار/إخفاء"
+
+msgid "Clear"
+msgstr "مسح"
+
+msgid "Transaction Type"
+msgstr "نوع المعاملة"
+
+msgid "Income"
+msgstr "الدخل"
+
+msgid "Expenses"
+msgstr "المصروفات"
+
+msgid "Transfers"
+msgstr "التحويلات"
+
+msgid "All Types"
+msgstr "جميع الأنواع"
+
+msgid "Overall"
+msgstr "عام"
+
+msgid "30d"
+msgstr "30 يوماً"
+
+msgid "3m"
+msgstr "3 أشهر"
+
+msgid "6m"
+msgstr "6 أشهر"
+
+msgid "1y"
+msgstr "سنة واحدة"
+
+msgid "Start date"
+msgstr "تاريخ البداية"
+
+msgid "End date"
+msgstr "تاريخ النهاية"
+
+msgid "Clear date range"
+msgstr "مسح نطاق التاريخ"
+
+msgid "Done"
+msgstr "تم"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Search by counterparty, amount, description"
+msgstr "ابحث بالطرف المقابل أو المبلغ أو الوصف"
+
+msgid "Search transactions"
+msgstr "ابحث في المعاملات"
+
+msgid "Clear search"
+msgstr "مسح البحث"
+
+msgid "New Balance"
+msgstr "الرصيد الجديد"
+
+msgid "Please provide a valid balance amount."
+msgstr "يرجى إدخال مبلغ رصيد صحيح."
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Are you sure you want to delete this account? This action cannot be undone."
+msgstr "هل أنت متأكد أنك تريد حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء."
+
+msgid "All transactions associated with this account will also be deleted."
+msgstr "ستُحذف جميع المعاملات المرتبطة بهذا الحساب أيضاً."
+
+msgid "Account Summaries"
+msgstr "ملخص الحسابات"
+
+msgid "Add Account"
+msgstr "إضافة حساب"
+
+msgid "Transaction Summary"
+msgstr "ملخص المعاملات"
+
+msgid "Expense"
+msgstr "المصروفات"
+
+msgid "View Details"
+msgstr "عرض التفاصيل"
+
+msgid "No accounts found"
+msgstr "لم يتم العثور على حسابات"
+
+msgid "You don't have any accounts in the database yet."
+msgstr "ليس لديك أي حسابات بعد."
+
+msgid "Get started by adding your first account or parsing bank emails."
+msgstr "ابدأ بإضافة حسابك الأول أو تحليل رسائل البنك الإلكترونية."
+
+msgid "Add Bank Account"
+msgstr "إضافة حساب بنكي"
+
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+msgid "Account Number"
+msgstr "رقم الحساب"
+
+msgid "Account number must be 16 digits."
+msgstr "رقم الحساب يجب أن يكون مكوّناً من 16 رقماً."
+
+msgid "Bank"
+msgstr "البنك"
+
+msgid "-- Select a Bank --"
+msgstr "-- اختر البنك --"
+
+msgid "Select your bank from the list."
+msgstr "اختر البنك من القائمة."
+
+msgid "Account Holder"
+msgstr "صاحب الحساب"
+
+msgid "Enter the name of the account holder."
+msgstr "أدخل اسم صاحب الحساب."
+
+msgid "Enter the current balance of your account."
+msgstr "أدخل الرصيد الحالي لحسابك."
+
+msgid "Currency"
+msgstr "العملة"
+
+msgid "Currency is automatically set based on the selected bank."
+msgstr "تُحدَّد العملة تلقائياً بناءً على البنك المختار."
+
+msgid "Edit Bank Account"
+msgstr "تعديل حساب بنكي"
+
+msgid "Save Changes"
+msgstr "حفظ التغييرات"
+
+msgid "Confirm Delete"
+msgstr "تأكيد الحذف"
+
+msgid "Warning:"
+msgstr "تحذير:"
+
+msgid "Deleting this account will also delete all associated transactions."
+msgstr "حذف هذا الحساب سيؤدي إلى حذف جميع المعاملات المرتبطة به."
+
+# ---------- Auth ----------
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+msgid "Welcome Back"
+msgstr "مرحباً بعودتك"
+
+msgid "Log in to manage your accounts and transactions"
+msgstr "سجّل دخولك لإدارة حساباتك ومعاملاتك"
+
+msgid "Username"
+msgstr "اسم المستخدم"
+
+msgid "Please enter your username."
+msgstr "يرجى إدخال اسم المستخدم."
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Please enter your password."
+msgstr "يرجى إدخال كلمة المرور."
+
+msgid "Log In"
+msgstr "تسجيل الدخول"
+
+msgid "or"
+msgstr "أو"
+
+msgid "Sign in with Google"
+msgstr "تسجيل الدخول بواسطة Google"
+
+msgid "Don't have an account?"
+msgstr "ليس لديك حساب؟"
+
+msgid "Create one now"
+msgstr "أنشئ حساباً الآن"
+
+msgid "Back to Home"
+msgstr "العودة للرئيسية"
+
+msgid "Register"
+msgstr "إنشاء حساب"
+
+msgid "Create Account"
+msgstr "إنشاء حساب"
+
+msgid "Sign up to start tracking your transactions"
+msgstr "أنشئ حساباً لبدء تتبّع معاملاتك"
+
+msgid "Username must be 3-20 characters long and contain only letters, numbers, and underscores."
+msgstr "يجب أن يتراوح اسم المستخدم بين 3 و20 حرفاً، ويحتوي على أحرف وأرقام والشرطة السفلية فقط."
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Email address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Please enter a valid email address."
+msgstr "يرجى إدخال عنوان بريد إلكتروني صحيح."
+
+msgid "Password must be at least 8 characters long and contain at least one letter and one number."
+msgstr "يجب أن تكون كلمة المرور 8 أحرف على الأقل وتحتوي على حرف واحد ورقم واحد على الأقل."
+
+msgid "Confirm Password"
+msgstr "تأكيد كلمة المرور"
+
+msgid "Please confirm your password."
+msgstr "يرجى تأكيد كلمة المرور."
+
+msgid "Already have an account?"
+msgstr "هل لديك حساب بالفعل؟"
+
+msgid "Log in"
+msgstr "تسجيل الدخول"
+
+# ---------- Categories ----------
+msgid "Add Category"
+msgstr "إضافة فئة"
+
+msgid "Category Name"
+msgstr "اسم الفئة"
+
+msgid "Please provide a category name."
+msgstr "يرجى إدخال اسم الفئة."
+
+msgid "Description (Optional)"
+msgstr "الوصف (اختياري)"
+
+msgid "Color (Optional)"
+msgstr "اللون (اختياري)"
+
+msgid "If no color is selected, a random color will be assigned."
+msgstr "إذا لم يتم اختيار لون، سيُعيَّن لون عشوائي."
+
+msgid "Save Category"
+msgstr "حفظ الفئة"
+
+msgid "Add Category Mapping"
+msgstr "إضافة صنف للفئة"
+
+msgid "Add Mapping for \"%(name)s\""
+msgstr "إضافة تصنيف لـ \"%(name)s\""
+
+msgid "How Mappings Work"
+msgstr "كيف تعمل التصنيفات"
+
+msgid "Mappings automatically categorize transactions based on patterns in the counterparty name or transaction description. When a new transaction matches a pattern, it will be automatically assigned to this category."
+msgstr "تقوم بتصنيف المعاملات تلقائياً بالاعتماد على أنماط في اسم الطرف المقابل أو وصف المعاملة. عند تطابق معاملة جديدة مع النمط، تُسند للفئة تلقائياً."
+
+msgid "Mapping Type"
+msgstr "نوع الفئة"
+
+msgid "Select a type"
+msgstr "اختر النوع"
+
+msgid "Counterparty Name"
+msgstr "اسم الطرف المقابل"
+
+msgid "Transaction Description"
+msgstr "وصف المعاملة"
+
+msgid "Please select a mapping type."
+msgstr "يرجى اختيار نوع الفئة."
+
+msgid "Match the name of the person or business you're transacting with"
+msgstr "مطابقة اسم الشخص أو الجهة التي تتعامل معها"
+
+msgid "Match the description of the transaction"
+msgstr "مطابقة وصف المعاملة"
+
+msgid "Pattern"
+msgstr "النمط"
+
+msgid "Please provide a pattern."
+msgstr "يرجى إدخال النمط."
+
+msgid "Enter the text to match. Transactions containing this text will be categorized automatically."
+msgstr "أدخل النص المراد مطابقته. ستُصنَّف المعاملات التي تحتوي هذا النص تلقائياً."
+
+msgid "Save Mapping"
+msgstr "حفظ الصنف"
+
+msgid "Categories"
+msgstr "الفئات"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Total Spent"
+msgstr "إجمالي المصروف"
+
+msgid "Transactions"
+msgstr "المعاملات"
+
+msgid "Mappings"
+msgstr " التصانيف"
+
+msgid "Edit"
+msgstr "تعديل"
+
+msgid "This will remove all mappings associated with this category."
+msgstr "سيؤدي ذلك إلى إزالة جميع التصانيف المرتبطة بهذه الفئة."
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "You don't have any categories yet."
+msgstr "ليس لديك أي فئات بعد."
+
+msgid "Add Your First Category"
+msgstr "أضف فئتك الأولى"
+
+msgid "Back to Dashboard"
+msgstr "العودة إلى لوحة التحكم"
+
+msgid "Category Mappings"
+msgstr "تصانيف الفئة"
+
+msgid "Mappings for \"%(name)s\""
+msgstr "قواعد التصنيف لـ \"%(name)s\""
+
+msgid "Manage patterns that automatically categorize transactions"
+msgstr "إدارة الأنماط التي تُصنِّف المعاملات تلقائياً"
+
+msgid "Add Mapping"
+msgstr "إضافة صنف"
+
+msgid "Counterparty"
+msgstr "الطرف المقابل"
+
+msgid "Edit Category"
+msgstr "تعديل الفئة"
+
+msgid "Color"
+msgstr "اللون"
+
+msgid "Update Category"
+msgstr "تحديث الفئة"
+
+msgid "Are you sure you want to delete the category"
+msgstr "هل أنت متأكد أنك تريد حذف الفئة"
+
+msgid "Are you sure you want to delete this mapping?"
+msgstr "هل أنت متأكد أنك تريد حذف هذه الصنف؟"
+
+# ---------- Email settings / configs ----------
+msgid "Add Email Configuration"
+msgstr "إضافة إعداد بريد إلكتروني"
+
+msgid "Email Configurations"
+msgstr "إعدادات البريد الإلكتروني"
+
+msgid "Add Configuration"
+msgstr "إضافة إعداد"
+
+msgid "Configuration Name"
+msgstr "اسم الإعداد"
+
+msgid "Please provide a name for this configuration."
+msgstr "يرجى إدخال اسم لهذا الإعداد."
+
+msgid "Email Address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Please provide a valid email address."
+msgstr "يرجى إدخال عنوان بريد إلكتروني صحيح."
+
+msgid "Email provider detected. Configuration will be set automatically."
+msgstr "تم التعرّف على مزوّد البريد. سيُضبط الإعداد تلقائياً."
+
+msgid "Email provider not recognized. Please provide server details manually."
+msgstr "لم يتم التعرّف على مزوّد البريد. يرجى إدخال تفاصيل الخادم يدوياً."
+
+msgid "Password or App Password"
+msgstr "كلمة المرور أو كلمة مرور التطبيق"
+
+msgid "Please provide your password."
+msgstr "يرجى إدخال كلمة المرور."
+
+msgid "Please use an"
+msgstr "يرجى استخدام"
+
+msgid "app password"
+msgstr "كلمة مرور التطبيق"
+
+msgid "instead of your main account password."
+msgstr "بدلاً من كلمة مرور الحساب الرئيسية."
+
+msgid "Show Manual Configuration"
+msgstr "إظهار الإعداد اليدوي"
+
+msgid "Email Host"
+msgstr "مضيف البريد الإلكتروني"
+
+msgid "Common hosts:"
+msgstr "مضيفات شائعة:"
+
+msgid "Gmail"
+msgstr "Gmail"
+
+msgid "Outlook"
+msgstr "Outlook"
+
+msgid "Port"
+msgstr "المنفذ"
+
+msgid "Use SSL/TLS"
+msgstr "استخدام SSL/TLS"
+
+msgid "Recommended for secure connections."
+msgstr "مستحسن للاتصالات الآمنة."
+
+msgid "This email receives emails from this Bank/s:"
+msgstr "يتلقى هذا البريد رسائل من البنك/البنوك التالية:"
+
+msgid "Select Banks"
+msgstr "اختر البنوك"
+
+msgid "Select one or more banks to configure email filtering."
+msgstr "اختر بنكاً أو أكثر لإعداد تصفية البريد."
+
+msgid "Bank Email Addresses"
+msgstr "عناوين البريد الخاصة بالبنك"
+
+msgid "Enter email addresses, separated by commas"
+msgstr "أدخل عناوين البريد مفصولة بفواصل"
+
+msgid "Enter the email addresses that send bank transaction notifications, separated by commas."
+msgstr "أدخل عناوين البريد التي تُرسل إشعارات المعاملات البنكية، مفصولة بفواصل."
+
+msgid "Subject Keywords"
+msgstr "كلمات مفتاحية في العنوان"
+
+msgid "Enter keywords, separated by commas"
+msgstr "أدخل الكلمات المفتاحية مفصولة بفواصل"
+
+msgid "Enter keywords that appear in bank transaction email subjects, separated by commas."
+msgstr "أدخل الكلمات المفتاحية الظاهرة في عناوين رسائل المعاملات البنكية، مفصولة بفواصل."
+
+msgid "Edit Email Configuration"
+msgstr "تعديل إعداد البريد الإلكتروني"
+
+msgid "Edit Configuration"
+msgstr "تعديل الإعداد"
+
+msgid "Email Configuration"
+msgstr "إعداد البريد الإلكتروني"
+
+msgid "Enter your email server host (e.g., imap.gmail.com)."
+msgstr "أدخل مضيف خادم البريد (مثل: imap.gmail.com)."
+
+msgid "Email Port"
+msgstr "منفذ البريد الإلكتروني"
+
+msgid "Enter your email server port (e.g., 993 for Gmail)."
+msgstr "أدخل منفذ خادم البريد (مثال: 993 لخدمة Gmail)."
+
+msgid "Email Username"
+msgstr "اسم مستخدم البريد"
+
+msgid "Enter your email address."
+msgstr "أدخل عنوان بريدك الإلكتروني."
+
+# ---------- Email processing ----------
+msgid "Processing Emails"
+msgstr "معالجة الرسائل الإلكترونية"
+
+msgid "Processing Your Emails"
+msgstr "جارٍ معالجة رسائلك"
+
+msgid "Initializing..."
+msgstr "جارٍ التهيئة..."
+
+msgid "Progress"
+msgstr "التقدّم"
+
+msgid "Processed"
+msgstr "تمت المعالجة"
+
+msgid "Saved"
+msgstr "تم الحفظ"
+
+msgid "Elapsed time:"
+msgstr "الوقت المنقضي:"
+
+msgid "Estimated time remaining:"
+msgstr "الوقت المتبقي المقدر:"
+
+msgid "Calculating..."
+msgstr "جارٍ الحساب..."
+
+msgid "Return to Dashboard"
+msgstr "العودة إلى لوحة التحكم"
+
+# ---------- Errors pages ----------
+msgid "Bad Request"
+msgstr "طلب غير صحيح"
+
+msgid "The request you made could not be understood by the server."
+msgstr "تعذّر على الخادم فهم الطلب الذي أرسلته."
+
+msgid "Please check your input and try again."
+msgstr "يرجى مراجعة المدخلات والمحاولة مجدداً."
+
+msgid "Return Home"
+msgstr "العودة للرئيسية"
+
+msgid "Go Back"
+msgstr "الرجوع"
+
+msgid "Error ID"
+msgstr "معرّف الخطأ"
+
+msgid "Unauthorized"
+msgstr "غير مصرح لك"
+
+msgid "Authentication Required"
+msgstr "المصادقة مطلوبة"
+
+msgid "You need to be logged in to access this resource."
+msgstr "يلزم تسجيل الدخول للوصول إلى هذا المورد."
+
+msgid "Please log in to continue."
+msgstr "يرجى تسجيل الدخول للمتابعة."
+
+msgid "Home"
+msgstr "الرئيسية"
+
+msgid "Access Forbidden"
+msgstr "الوصول محظور"
+
+msgid "You don't have permission to access this resource."
+msgstr "لا تملك صلاحية الوصول إلى هذا المورد."
+
+msgid "If you believe this is an error, please contact support."
+msgstr "إذا كنت ترى أن هذا خطأ، يرجى التواصل مع الدعم."
+
+msgid "Page Not Found"
+msgstr "الصفحة غير موجودة"
+
+msgid "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable."
+msgstr "قد تكون الصفحة أزيلت أو تغيّر اسمها أو أنها غير متاحة مؤقتاً."
+
+msgid "Validation Error"
+msgstr "خطأ في التحقق"
+
+msgid "Too Many Requests"
+msgstr "طلبات كثيرة جداً"
+
+msgid "Internal Server Error"
+msgstr "خطأ داخلي في الخادم"
+
+msgid "Something went wrong on our end. Our team has been notified and we're working to fix it."
+msgstr "حدثت مشكلة لدينا. تم إشعار فريقنا ونعمل على إصلاحها."
+
+msgid "Please try again later or contact support if the problem persists."
+msgstr "يرجى المحاولة لاحقاً أو التواصل مع الدعم إذا استمرت المشكلة."
+
+msgid "Try Again"
+msgstr "المحاولة مجدداً"
+
+msgid "Helpful Tips"
+msgstr "نصائح مفيدة"
+
+msgid "Try refreshing the page"
+msgstr "جرّب تحديث الصفحة"
+
+msgid "Clear your browser cache and cookies"
+msgstr "امسح ذاكرة التخزين المؤقت وملفات تعريف الارتباط للمتصفح"
+
+msgid "Check your internet connection"
+msgstr "تحقّق من اتصال الإنترنت"
+
+msgid "Try again in a few minutes"
+msgstr "أعد المحاولة بعد بضع دقائق"
+
+msgid "Service Unavailable"
+msgstr "الخدمة غير متاحة"
+
+# ---------- Main nav / layout ----------
+msgid "View All Accounts"
+msgstr "عرض جميع الحسابات"
+
+msgid "Add New Account"
+msgstr "إضافة حساب جديد"
+
+msgid "PDF Statement"
+msgstr "كشف حساب PDF"
+
+msgid "Counterparties"
+msgstr "الأطراف المقابلة"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "Privacy Policy"
+msgstr "سياسة الخصوصية"
+
+msgid "Terms of Service"
+msgstr "شروط الخدمة"
+
+# ---------- Counterparties page ----------
+msgid "Manage and categorize unique transaction counterparties"
+msgstr "إدارة وتصنيف الأطراف المقابلة الفريدة للمعاملات"
+
+msgid "Auto-categorize all uncategorized transactions?"
+msgstr "هل تريد تصنيف جميع المعاملات غير المصنّفة تلقائياً؟"
+
+msgid "Auto-Categorize All"
+msgstr "تصنيف الكل تلقائياً"
+
+msgid "About Counterparties"
+msgstr "نبذة عن الأطراف المقابلة"
+
+msgid "Counterparties are the people or businesses you transact with. Each unique combination of counterparty name and description is listed here. You can categorize them to automatically organize your transactions."
+msgstr "الأطراف المقابلة هم الأفراد أو الجهات التي تتعامل معها. تُعرض هنا كل توليفة فريدة من اسم الطرف المقابل والوصف. يمكنك تصنيفها لتنظيم معاملاتك تلقائياً."
+
+msgid "Choice Account"
+msgstr "اختر الحساب"
+
+msgid "All Accounts"
+msgstr "جميع الحسابات"
+
+msgid "Current Category"
+msgstr "الفئة الحالية"
+
+msgid "Last Transaction"
+msgstr "آخر معاملة"
+
+msgid "Uncategorized"
+msgstr "غير مصنّف"
+
+msgid "No details"
+msgstr "لا توجد تفاصيل"
+
+msgid "Enter description"
+msgstr "أدخل الوصف"
+
+# ---------- Dashboard page ----------
+msgid "Welcome back, %(username)s! 👋"
+msgstr "مرحباً بعودتك، %(username)s! 👋"
+
+msgid "Track your finances and your transactions all in one place."
+msgstr "تتبّع أموالك ومعاملاتك في مكان واحد."
+
+msgid "Auto-Categorize"
+msgstr "التصنيف التلقائي"
+
+msgid "Sync Gmail"
+msgstr "مزامنة Gmail"
+
+msgid "Your Bank Accounts"
+msgstr "حساباتك البنكية"
+
+msgid "Add"
+msgstr "إضافة"
+
+msgid "Holder"
+msgstr "صاحب الحساب"
+
+msgid "You don't have any bank accounts yet."
+msgstr "ليس لديك أي حسابات بنكية بعد."
+
+msgid "Add Your First Account"
+msgstr "أضف حسابك الأول"
+
+msgid "Overview Charts"
+msgstr "مخططات عامة"
+
+msgid "2 Weeks"
+msgstr "أسبوعان"
+
+msgid "1 Month"
+msgstr "شهر واحد"
+
+msgid "3 Months"
+msgstr "3 أشهر"
+
+msgid "6 Months"
+msgstr "6 أشهر"
+
+msgid "12 Months"
+msgstr "12 شهراً"
+
+msgid "24 Months"
+msgstr "24 شهراً"
+
+msgid "Monthly Trends"
+msgstr "الاتجاهات الشهرية"
+
+msgid "Track your financial patterns with income and expense trends over time"
+msgstr "تتبّع أنماطك المالية عبر الزمن من خلال اتجاهات الدخل والمصروفات"
+
+msgid "Category Distribution"
+msgstr "توزيع الفئات"
+
+msgid "Visualize your spending patterns with interactive category breakdown"
+msgstr "اعرف أنماط إنفاقك بتقسيم تفاعلي للفئات"
+
+msgid "Account Balances"
+msgstr "أرصدة الحسابات"
+
+msgid "Compare balances across all your linked accounts at a glance"
+msgstr "قارن أرصدة جميع حساباتك المرتبطة بنظرة سريعة"
+
+msgid "Income vs Expense"
+msgstr "الدخل مقابل المصروفات"
+
+msgid "Get insights into your financial balance with this comprehensive overview"
+msgstr "احصل على رؤى حول ميزانيتك من خلال هذه النظرة الشاملة"
+
+# ---------- Landing (index) ----------
+msgid "Money Tracker - Smart Bank Transaction Management"
+msgstr "متتبع المال - إدارة ذكية للمعاملات البنكية"
+
+msgid "Track Your Bank Transactions Smart Way"
+msgstr "تتبّع معاملاتك البنكية بطريقة ذكية"
+
+msgid "Automatically extract transaction data from bank emails and bank statements"
+msgstr "استخرج بيانات معاملاتك تلقائياً من رسائل البنك وكشوف الحساب"
+
+msgid "Transaction Tracking"
+msgstr "تتبع المعاملات"
+
+msgid "Monitor your income, expenses, and transfers"
+msgstr "راقب الدخل والمصروفات والتحويلات"
+
+msgid "Multi-Account Support"
+msgstr "دعم تعدد الحسابات"
+
+msgid "Manage multiple bank accounts in one place"
+msgstr "أدر عدة حسابات بنكية من مكان واحد"
+
+msgid "Go to Dashboard"
+msgstr "الانتقال إلى لوحة التحكم"
+
+msgid "Key Features"
+msgstr "الميزات الرئيسية"
+
+msgid "Email & PDF Parsing"
+msgstr "استخراج البيانات من البريد وملفات PDF"
+
+# ---------- Privacy Policy ----------
+msgid "Introduction"
+msgstr "مقدمة"
+
+msgid "Welcome to Ghwazi Money Tracker. We are committed to protecting your privacy and ensuring the security of your personal and financial information. This Privacy Policy explains how we collect, use, protect, and share information when you use our money tracking application and related services."
+msgstr "مرحباً بك في Ghwazi Money Tracker. نلتزم بحماية خصوصيتك وأمان معلوماتك الشخصية والمالية. توضح هذه السياسة كيف نجمع المعلومات ونستخدمها ونحميها ونشاركها عند استخدامك تطبيق تتبّع الأموال وخدماته."
+
+msgid "Information We Collect"
+msgstr "المعلومات التي نجمعها"
+
+msgid "Personal Information"
+msgstr "المعلومات الشخصية"
+
+msgid "Member Since"
+msgstr "عضو منذ"
+
+# ---------- Results (parsed email/tx) ----------
+msgid "Transaction Parsed Successfully"
+msgstr "تم تحليل المعاملة بنجاح"
+
+msgid "The email has been processed and the transaction details are shown below."
+msgstr "تمت معالجة الرسالة الإلكترونية وتظهر تفاصيل المعاملة أدناه."
+
+msgid "Additional Details"
+msgstr "تفاصيل إضافية"
+
+msgid "Source Email"
+msgstr "البريد المصدر"
+
+msgid "From:"
+msgstr "من:"
+
+msgid "Subject:"
+msgstr "الموضوع:"
+
+msgid "Date:"
+msgstr "التاريخ:"
+
+msgid "View Email Content"
+msgstr "عرض محتوى الرسالة"
+
+msgid "View Account"
+msgstr "عرض الحساب"
+
+msgid "Transaction saved successfully!"
+msgstr "تم حفظ المعاملة بنجاح!"
+
+# ---------- Terms of Service ----------
+msgid "Please read these Terms of Service carefully before using Ghwazi Money Tracker."
+msgstr "يرجى قراءة شروط الخدمة بعناية قبل استخدام Ghwazi Money Tracker."
+
+msgid "Agreement to Terms"
+msgstr "الموافقة على الشروط"
+
+msgid "Eligibility and Account Registration"
+msgstr "الأهلية وتسجيل الحساب"
+
+msgid "Age Requirements"
+msgstr "متطلبات العمر"
+
+msgid "Account Responsibilities"
+msgstr "مسؤوليات الحساب"
+
+msgid "Account Security:"
+msgstr "أمان الحساب:"
+
+msgid "You are responsible for maintaining the confidentiality of your account credentials"
+msgstr "أنت مسؤول عن الحفاظ على سرية بيانات اعتماد حسابك"
+
+msgid "Accurate Information:"
+msgstr "معلومات دقيقة:"
+
+msgid "You must provide accurate and complete information during registration"
+msgstr "يجب تقديم معلومات دقيقة وكاملة أثناء التسجيل"
+
+msgid "Account Activity:"
+msgstr "نشاط الحساب:"
+
+msgid "You are responsible for all activities that occur under your account"
+msgstr "أنت مسؤول عن كل الأنشطة التي تتم عبر حسابك"
+
+msgid "Unauthorized Access:"
+msgstr "الوصول غير المصرح به:"
+
+msgid "You must notify us immediately of any unauthorized use of your account"
+msgstr "يجب إبلاغنا فوراً بأي استخدام غير مصرح به لحسابك"
+
+msgid "Description of Service"
+msgstr "وصف الخدمة"
+
+msgid "Transaction tracking and categorization"
+msgstr "تتبّع المعاملات وتصنيفها"
+
+msgid "Multiple bank account management"
+msgstr "إدارة عدة حسابات بنكية"
+
+msgid "PDF bank statement parsing"
+msgstr "معالجة كشوف الحساب البنكية بصيغة PDF"
+
+msgid "Email transaction processing"
+msgstr "معالجة معاملات البريد الإلكتروني"
+
+msgid "Financial analytics and reporting"
+msgstr "التحليلات المالية والتقارير"
+
+msgid "Expense categorization and insights"
+msgstr "تصنيف النفقات وتقديم الرؤى"
+
+msgid "Counterparty management"
+msgstr "إدارة الأطراف المقابلة"
+
+msgid "Secure data storage and encryption"
+msgstr "تخزين البيانات بأمان وتشفيرها"
+
+msgid "Acceptable Use Policy"
+msgstr "سياسة الاستخدام المقبول"
+
+msgid "Permitted Uses"
+msgstr "الاستخدامات المسموح بها"
+
+msgid "Personal financial management and tracking"
+msgstr "إدارة الشؤون المالية الشخصية وتتبّعها"
+
+msgid "Uploading your own bank statements and financial documents"
+msgstr "رفع كشوف الحساب البنكية والوثائق المالية الخاصة بك"
+
+msgid "Configuring email access for your own financial accounts"
+msgstr "إعداد وصول البريد لحساباتك المالية الخاصة"
+
+msgid "Prohibited Activities"
+msgstr "أنشطة محظورة"
+
+msgid "You must not use our service for any unlawful or prohibited activities"
+msgstr "يُحظر استخدام خدمتنا لأي أنشطة غير قانونية أو محظورة"
+
+msgid "Accessing accounts, data, or systems that don't belong to you"
+msgstr "الوصول إلى حسابات أو بيانات أو أنظمة لا تخصك"
+
+msgid "Data Misuse:"
+msgstr "سوء استخدام البيانات:"
+
+msgid "Using the service to process or store data belonging to others without authorization"
+msgstr "استخدام الخدمة لمعالجة أو تخزين بيانات تخص الآخرين دون تصريح"
+
+msgid "Security Violations:"
+msgstr "انتهاكات الأمان:"
+
+msgid "Attempting to breach, circumvent, or test security measures"
+msgstr "محاولة اختراق أو تجاوز أو اختبار الضوابط الأمنية"
+
+msgid "Malicious Activities:"
+msgstr "أنشطة ضارة:"
+
+msgid "Uploading malware, viruses, or harmful code"
+msgstr "تحميل برمجيات خبيثة أو فيروسات أو أكواد ضارة"
+
+msgid "Service Disruption:"
+msgstr "تعطيل الخدمة:"
+
+msgid "Interfering with the proper functioning of the service"
+msgstr "التدخل في التشغيل السليم للخدمة"
+
+msgid "Service Disclaimers"
+msgstr "إخلاء المسؤولية عن الخدمة"
+
+msgid "Limitation of Liability"
+msgstr "تحديد المسؤولية"
+
+msgid "Termination by You"
+msgstr "إنهاء من طرفك"
+
+msgid "Termination by Us"
+msgstr "إنهاء من طرفنا"
+
+msgid "Our Rights"
+msgstr "حقوقنا"
+
+msgid "Your Rights"
+msgstr "حقوقك"
+
+# ---------- Upload PDF ----------
+msgid "Upload PDF Statement"
+msgstr "رفع كشف حساب PDF"
+
+msgid "Upload PDF Bank Statement"
+msgstr "رفع كشف حساب بنكي"
+
+msgid "-- Select Account --"
+msgstr "-- اختر الحساب --"
+
+msgid "Select the account for which you are uploading the statement."
+msgstr "اختر الحساب الذي سترفع كشفه."
+
+msgid "Preserve account balance"
+msgstr "الحفاظ على رصيد الحساب"
+
+msgid "Check this if you want to preserve the current account balance instead of updating it from the statement."
+msgstr "فعّل هذا الخيار إذا رغبت في الإبقاء على الرصيد الحالي بدلاً من تحديثه من الكشف."
+
+msgid "Important Information"
+msgstr "معلومات مهمة"
+
+msgid "The PDF parser will extract transactions from your bank statement and add them to your account. Please ensure:"
+msgstr "سيقوم محلّل PDF باستخراج المعاملات من كشف حسابك البنكي وإضافتها إلى حسابك. يرجى التأكد مما يلي:"
+
+msgid "The PDF is a bank statement with transaction tables"
+msgstr "أن ملف PDF هو كشف حساب بنكي يتضمن جداول معاملات"
+
+msgid "You've selected the correct account"
+msgstr "أنك اخترت الحساب الصحيح"
+
+# ---------- OAuth / Gmail settings ----------
+msgid "Gmail Integration Settings"
+msgstr "إعدادات تكامل Gmail"
+
+msgid "Google Account Not Connected"
+msgstr "حساب Google غير متصل"
+
+msgid "To use Gmail integration, you need to connect your Google account first."
+msgstr "لاستخدام تكامل Gmail، ينبغي ربط حسابك في Google أولاً."
+
+msgid "Connect Google Account"
+msgstr "ربط حساب Google"
+
+msgid "Connected to Google Account"
+msgstr "متصل بحساب Google"
+
+msgid "Email:"
+msgstr "البريد الإلكتروني:"
+
+msgid "Name:"
+msgstr "الاسم:"
+
+msgid "Connected:"
+msgstr "متصل:"
+
+msgid "Total Messages"
+msgstr "إجمالي الرسائل"
+
+msgid "Total Threads"
+msgstr "إجمالي المحادثات"
+
+msgid "Sync Settings"
+msgstr "إعدادات المزامنة"
+
+msgid "OMR"
+msgstr "ريال"
+
+
+msgid "Enable Gmail Integration"
+msgstr "تفعيل تكامل Gmail"
+
+msgid "Allow the app to access your Gmail messages"
+msgstr "اسمح للتطبيق بالوصول إلى رسائل Gmail"
+
+msgid "Automatic Sync"
+msgstr "مزامنة تلقائية"
+
+msgid "Automatically sync new emails periodically"
+msgstr "مزامنة الرسائل الجديدة بشكل دوري تلقائياً"
+
+msgid "Sync Frequency (hours)"
+msgstr "تكرار المزامنة (بالساعات)"
+
+msgid "Every hour"
+msgstr "كل ساعة"
+
+msgid "Every 6 hours"
+msgstr "كل 6 ساعات"
+
+msgid "Every 12 hours"
+msgstr "كل 12 ساعة"
+
+# ---------- Pagination / Table footer ----------
+msgid "Showing %(start)d - %(end)d of %(total)d transactions"
+msgstr "عرض %(start)d - %(end)d من %(total)d معاملة"
+
+msgid "Rows per page"
+msgstr "صفوف لكل صفحة"
+
+msgid "No Transactions Found"
+msgstr "لا توجد معاملات"
+
+msgid "Start by processing your bank account"
+msgstr "ابدأ بمعالجة حسابك البنكي"
+
+# ---------- Session / Language ----------
+msgid "Invalid language selection"
+msgstr "اختيار لغة غير صالح"
+
+msgid "Language updated"
+msgstr "تم تحديث اللغة"
+
+# ---------- Edit Transaction page ----------
+msgid "Edit Transaction"
+msgstr "تعديل المعاملة"
+
+msgid "Please enter a valid amount."
+msgstr "يرجى إدخال مبلغ صحيح."
+
+msgid "Transfer"
+msgstr "تحويل"
+
+msgid "Please select a transaction type."
+msgstr "يرجى اختيار نوع المعاملة."
+
+msgid "Date & Time"
+msgstr "التاريخ والوقت"
+
+msgid "Please select a valid date and time."
+msgstr "يرجى اختيار تاريخ ووقت صالحين."
+
+msgid "Enter counterparty name"
+msgstr "أدخل اسم الطرف المقابل"
+
+msgid "The name of the person or entity involved in this transaction"
+msgstr "اسم الشخص أو الجهة المشاركة في هذه المعاملة"
+
+msgid "-- Select Category --"
+msgstr "-- اختر الفئة --"
+
+msgid "Add new category"
+msgstr "إضافة فئة جديدة"
+
+msgid "New Category"
+msgstr "فئة جديدة"
+
+msgid "Select a category or create a new one"
+msgstr "اختر فئة أو أنشئ فئة جديدة"
+
+msgid "Category Update Options"
+msgstr "خيارات تحديث الفئة"
+
+msgid "Update only this transaction"
+msgstr "تحديث هذه المعاملة فقط"
+
+msgid "Update all transactions from this counterparty"
+msgstr "تحديث جميع المعاملات من هذا الطرف المقابل"
+
+msgid "Choose whether to update the category for this transaction only or for all transactions from the same counterparty"
+msgstr "اختر ما إذا كنت تريد تحديث الفئة لهذه المعاملة فقط أو لجميع المعاملات من الطرف المقابل نفسه"
+
+msgid "Additional Details"
+msgstr "تفاصيل إضافية"
+
+msgid "Additional transaction details or notes."
+msgstr "تفاصيل أو ملاحظات إضافية حول المعاملة."
+
+msgid "This transaction was created from an email on %(date)s."
+msgstr "تم إنشاء هذه المعاملة من بريد إلكتروني بتاريخ %(date)s."
+
+msgid "View details"
+msgstr "عرض التفاصيل"
+
+msgid "Subject:"
+msgstr "الموضوع:"
+
+msgid "Content:"
+msgstr "المحتوى:"
+
+msgid "Delete Transaction"
+msgstr "حذف المعاملة"
+
+msgid "Are you sure you want to delete this transaction? This action cannot be undone."
+msgstr "هل أنت متأكد أنك تريد حذف هذه المعاملة؟ لا يمكن التراجع عن هذا الإجراء."
+
+msgid "This will permanently remove the transaction from your account history."
+msgstr "سيؤدي ذلك إلى إزالة المعاملة نهائياً من سجل حسابك."

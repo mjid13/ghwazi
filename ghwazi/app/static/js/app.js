@@ -53,7 +53,7 @@ class MoneyTrackerApp {
       
     } catch (error) {
       console.error('Failed to initialize Money Tracker App:', error);
-      notificationManager.error('Application failed to initialize', 'Startup Error');
+      notificationManager.error(_('Application failed to initialize'), _('Startup Error'));
     }
   }
 
@@ -456,7 +456,7 @@ class MoneyTrackerApp {
       if (this.debug) {
         notificationManager.error(
           `Script error: ${event.error.message}`,
-          'JavaScript Error'
+          _('JavaScript Error')
         );
       }
     });
@@ -467,8 +467,8 @@ class MoneyTrackerApp {
       
       if (this.debug) {
         notificationManager.error(
-          'An unexpected error occurred',
-          'System Error'
+          _('An unexpected error occurred'),
+          _('System Error')
         );
       }
     });
@@ -478,11 +478,11 @@ class MoneyTrackerApp {
       console.error('HTTP error:', error);
       
       if (error.status === 403) {
-        notificationManager.error('Access denied', 'Authorization Error');
+        notificationManager.error(_('Access denied'), _('Authorization Error'));
       } else if (error.status === 429) {
-        notificationManager.warning('Too many requests. Please try again later.', 'Rate Limited');
+        notificationManager.warning(_('Too many requests. Please try again later.'), _('Rate Limited'));
       } else if (error.status >= 500) {
-        notificationManager.error('Server error. Please try again.', 'Server Error');
+        notificationManager.error(_('Server error. Please try again.'), _('Server Error'));
       }
     });
   }

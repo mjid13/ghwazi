@@ -1,14 +1,14 @@
 {% extends "main/base.html" %}
 
-{% block title %}{{ account.bank_name }} Account - Money Tracker{% endblock %}
+{% block title %}{{ account.bank_name }} {{ _('Account') }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="row g-4">
     <div class="col-12">
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('account.accounts') }}" class="text-decoration-none"><i class="bi bi-bank me-1"></i>Accounts</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ account.account_number }}</li>
+            <ol class="breadcrumb {% if text_direction == 'rtl' %} flex-row-reverse{% endif %}">
+                <li class="breadcrumb-item"><a href="{{ url_for('account.accounts') }}" class="text-decoration-none"><i class="bi bi-bank me-1"></i>{{ _('Accounts') }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">•••• {{ account.account_number[-4:] }}</li>
             </ol>
         </nav>
 
@@ -20,35 +20,35 @@
                             <div>
                                 <span class="badge bg-primary-subtle text-primary mb-2">{{ account.bank_name }}</span>
                                 <h2 class="h3 mb-1">•••• {{ account.account_number[-4:] }}</h2>
-                                <p class="text-body-secondary mb-3">Last updated: {% if account.updated_at %}{{ account.updated_at.strftime('%b %d, %Y at %H:%M') }}{% else %}N/A{% endif %}</p>
+                                <p class="text-body-secondary mb-3">{{ _('Last updated') }}: {% if account.updated_at %}<span dir="ltr">{{ account.updated_at.strftime('%b %d, %Y at %H:%M') }}</span>{% else %}{{ _('N/A') }}{% endif %}</p>
 
                                 <div class="balance-section">
-                                    <h3 class="h4 mb-0 d-flex align-items-center">
+                                    <p class="text-body-secondary mb-0">{{ _('Current Balance') }}</p>
+                                    <h3 class="h4 mb-0 d-flex align-items-center" dir="ltr">
                                         <span class="me-2">{{ "{:,.3f}".format(account.balance) }}</span>
                                         <small class="text-body-secondary">{{ account.currency }}</small>
                                     </h3>
-                                    <p class="text-body-secondary mb-0">Current Balance</p>
                                 </div>
                             </div>
 
                             <div class="action-buttons">
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateBalanceModal">
-                                        <i class="bi bi-wallet2 me-2"></i>Update Balance
+                                        <i class="bi bi-wallet2 me-2"></i>{{ _('Update Balance') }}
                                     </button>
                                     <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
-                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                        <span class="visually-hidden">{{ _('Toggle Dropdown') }}</span>
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li>
                                             <a class="dropdown-item" href="{{ url_for('account.edit_account', account_id=account.id) }}">
-                                                <i class="bi bi-pencil me-2"></i>Edit Account
+                                                <i class="bi bi-pencil me-2"></i>{{ _('Edit Account') }}
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
-                                                <i class="bi bi-trash me-2"></i>Delete Account
+                                                <i class="bi bi-trash me-2"></i>{{ _('Delete Account') }}
                                             </button>
                                         </li>
                                     </ul>
@@ -64,7 +64,7 @@
                                     <div class="p-3 rounded-3 bg-success-subtle">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <small class="text-success d-block">Total Income</small>
+                                                <small class="text-success d-block">{{ _('Total Income') }}</small>
                                                 <strong class="text-success">{{ "{:,.3f}".format(summary.total_income) }} {{ account.currency }}</strong>
                                             </div>
                                             <div class="text-success">
@@ -78,7 +78,7 @@
                                     <div class="p-3 rounded-3 bg-danger-subtle">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <small class="text-danger d-block">Total Expenses</small>
+                                                <small class="text-danger d-block">{{ _('Total Expenses') }}</small>
                                                 <strong class="text-danger">{{ "{:,.3f}".format(summary.total_expense) }} {{ account.currency }}</strong>
                                             </div>
                                             <div class="text-danger">
@@ -98,25 +98,25 @@
         <div class="card">
             <div class="card-header bg-transparent p-4 border-bottom">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="h4 mb-0">Transaction History</h3>
+                    <h3 class="h4 mb-0">{{ _('Transaction History') }}</h3>
                     <a href="{{ url_for('transaction.export_transactions', account_number=account.account_number) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-download me-2"></i>Export
+                        <i class="bi bi-download me-2"></i>{{ _('Export') }}
                     </a>
                 </div>
 
-                
+
                 <!-- Enhanced Filter UI -->
                 <div class="filter-container border rounded-3 p-3 bg-body-tertiary">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge text-bg-primary-subtle text-primary"><i class="bi bi-funnel me-1"></i>Filters</span>
+                            <span class="badge text-bg-primary-subtle text-primary"><i class="bi bi-funnel me-1"></i>{{ _('Filters') }}</span>
                             <button class="btn btn-sm btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#historyFilters" aria-expanded="true" aria-controls="historyFilters">
-                                <i class="bi bi-chevron-down me-1"></i> Show/Hide
+                                <i class="bi bi-chevron-down me-1"></i> {{ _('Show/Hide') }}
                             </button>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <button id="clear-filters" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-x-circle me-1"></i>Clear
+                                <i class="bi bi-x-circle me-1"></i>{{ _('Clear') }}
                             </button>
                         </div>
                     </div>
@@ -125,46 +125,46 @@
                         <div class="row g-3">
                             <div class="col-12 col-lg-4">
                                 <div class="form-group">
-                                    <label for="transaction-type" class="form-label small">Transaction Type</label>
+                                    <label for="transaction-type" class="form-label small">{{ _('Transaction Type') }}</label>
                                     <div class="d-flex flex-wrap gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip active" data-value="">All</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip" data-value="income">Income</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip" data-value="expense">Expenses</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip" data-value="transfer">Transfers</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip active" data-value="">{{ _('All') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip" data-value="income">{{ _('Income') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip" data-value="expense">{{ _('Expenses') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary type-chip" data-value="transfer">{{ _('Transfers') }}</button>
                                     </div>
                                     <select id="transaction-type" class="form-select form-select-sm d-none" aria-hidden="true">
-                                        <option value="">All Types</option>
-                                        <option value="income">Income</option>
-                                        <option value="expense">Expenses</option>
-                                        <option value="transfer">Transfers</option>
+                                        <option value="">{{ _('All Types') }}</option>
+                                        <option value="income">{{ _('Income') }}</option>
+                                        <option value="expense">{{ _('Expenses') }}</option>
+                                        <option value="transfer">{{ _('Transfers') }}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="col-12 col-lg-5">
                                 <div class="form-group">
-                                    <label class="form-label small mb-1">Date</label>
+                                    <label class="form-label small mb-1">{{ _('Date') }}</label>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-2" type="button" id="dateRangeToggle" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bi bi-calendar3"></i>
-                                            <span id="dateRangeLabel">Overall</span>
+                                            <span id="dateRangeLabel">{{ _('Overall') }}</span>
                                         </button>
                                         <div class="dropdown-menu p-3 shadow dropdown-menu-md" aria-labelledby="dateRangeToggle" style="min-width: 280px;">
                                             <div class="d-flex flex-wrap gap-2 mb-2">
-                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="30">30d</button>
-                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="90">3m</button>
-                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="180">6m</button>
-                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="365">1y</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="30">{{ _('30d') }}</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="90">{{ _('3m') }}</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="180">{{ _('6m') }}</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary preset-range" data-range="365">{{ _('1y') }}</button>
                                             </div>
                                             <div class="input-group input-group-sm date-range-group rounded-pill overflow-hidden mb-2">
                                                 <span class="input-group-text bg-transparent border-0 ps-2"><i class="bi bi-calendar3"></i></span>
-                                                <input type="date" id="date-from" class="form-control form-control-sm border-0" placeholder="Start date" aria-label="Start date">
+                                                <input type="date" id="date-from" class="form-control form-control-sm border-0" placeholder="{{ _('Start date') }}" aria-label="{{ _('Start date') }}">
                                                 <span class="input-group-text border-0 text-muted">–</span>
-                                                <input type="date" id="date-to" class="form-control form-control-sm border-0" placeholder="End date" aria-label="End date">
-                                                <button class="btn btn-sm btn-link text-muted input-clear-btn px-2" id="date-clear" type="button" aria-label="Clear date range" title="Clear date range" style="display:none;"><i class="bi bi-x-circle"></i></button>
+                                                <input type="date" id="date-to" class="form-control form-control-sm border-0" placeholder="{{ _('End date') }}" aria-label="{{ _('End date') }}">
+                                                <button class="btn btn-sm btn-link text-muted input-clear-btn px-2" id="date-clear" type="button" aria-label="{{ _('Clear date range') }}" title="{{ _('Clear date range') }}" style="display:none;"><i class="bi bi-x-circle"></i></button>
                                             </div>
                                             <div class="text-end">
-                                                <button class="btn btn-link btn-sm text-secondary" type="button" id="dateCloseDropdown">Done</button>
+                                                <button class="btn btn-link btn-sm text-secondary" type="button" id="dateCloseDropdown">{{ _('Done') }}</button>
                                             </div>
                                         </div>
                                     </div>
@@ -173,11 +173,11 @@
 
                             <div class="col-12 col-lg-3">
                                 <div class="form-group">
-                                    <label for="search-text" class="form-label small">Search</label>
+                                    <label for="search-text" class="form-label small">{{ _('Search') }}</label>
                                     <div class="input-group input-group-sm search-group rounded-pill overflow-hidden">
                                         <span class="input-group-text bg-transparent border-0 ps-2"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="search-text" class="form-control form-control-sm border-0" placeholder="Search by counterparty, amount, description" aria-label="Search transactions">
-                                        <button class="btn btn-sm btn-link text-muted input-clear-btn px-2" id="search-clear" type="button" aria-label="Clear search" title="Clear search" style="display:none;"><i class="bi bi-x-circle"></i></button>
+                                        <input type="text" id="search-text" class="form-control form-control-sm border-0" placeholder="{{ _('Search by counterparty, amount, description') }}" aria-label="{{ _('Search transactions') }}">
+                                        <button class="btn btn-sm btn-link text-muted input-clear-btn px-2" id="search-clear" type="button" aria-label="{{ _('Clear search') }}" title="{{ _('Clear search') }}" style="display:none;"><i class="bi bi-x-circle"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -198,14 +198,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title">Update Balance</h5>
+                <h5 class="modal-title">{{ _('Update Balance') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form method="post" action="{{ url_for('account.update_balance', account_id=account.id) }}" id="updateBalanceForm" class="needs-validation" novalidate>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label for="new_balance" class="form-label">New Balance</label>
+                        <label for="new_balance" class="form-label">{{ _('New Balance') }}</label>
                         <div class="input-group">
                             <span class="input-group-text">{{ account.currency }}</span>
                             <input type="number"
@@ -216,14 +216,14 @@
                                    step="0.001"
                                    required>
                         </div>
-                        <div class="invalid-feedback">Please provide a valid balance amount.</div>
+                        <div class="invalid-feedback">{{ _('Please provide a valid balance amount.') }}</div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
                 <button type="submit" form="updateBalanceForm" class="btn btn-primary">
-                    <i class="bi bi-check2 me-2"></i>Update Balance
+                    <i class="bi bi-check2 me-2"></i>{{ _('Update Balance') }}
                 </button>
             </div>
         </div>
@@ -235,21 +235,21 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger">Delete Account</h5>
+                <h5 class="modal-title text-danger">{{ _('Delete Account') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this account? This action cannot be undone.</p>
+                <p>{{ _('Are you sure you want to delete this account? This action cannot be undone.') }}</p>
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    All transactions associated with this account will also be deleted.
+                    {{ _('All transactions associated with this account will also be deleted.') }}
                 </div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
                 <form method="post" action="{{ url_for('account.delete_account', account_id=account.id) }}" style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">Delete Account</button>
+                    <button type="submit" class="btn btn-danger">{{ _('Delete Account') }}</button>
                 </form>
             </div>
         </div>

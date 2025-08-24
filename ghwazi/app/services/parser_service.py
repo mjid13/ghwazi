@@ -111,7 +111,7 @@ class TransactionParser:
 
             # Remove leading numeric reference like "911792-" or "911792 :"
             raw = re.sub(r"^[#\s]*\d{2,}\s*[-:]\s*", "", raw)
-
+            print(raw)
             # If there are multiple separators, pick the most name-like (usually the last text part)
             parts = [p.strip() for p in re.split(r"[-:]", raw) if p.strip()]
             candidate = None
@@ -693,3 +693,6 @@ class TransactionParser:
 # for i,j in output.items():
 #
 #     print(f"{i}: {j}")
+
+parser = TransactionParser()
+print(parser._get_name("Description : 748277-AL MAHA - 155 P O BOX 5MCT"))

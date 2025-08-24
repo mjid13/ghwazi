@@ -30,7 +30,7 @@ function initEmailFetchForm() {
             const selectedOption = accountSelect.options[accountSelect.selectedIndex];
             if (selectedOption.disabled) {
                 event.preventDefault();
-                Ajax.showNotification('This account is currently being scraped. Please wait for the process to complete.', 'warning');
+                Ajax.showNotification(_('This account is currently being scraped. Please wait for the process to complete.'), _('warning'));
                 return;
             }
         }
@@ -40,7 +40,7 @@ function initEmailFetchForm() {
     Ajax.submitForm(emailFetchForm, function(response) {
         if (response.success) {
             // Show success notification
-            Ajax.showNotification('Email fetching started successfully. You can check the status in the dashboard.', 'success');
+            Ajax.showNotification(_('Email fetching started successfully. You can check the status in the dashboard.'), _('success'));
             
             // Start polling for status updates
             if (response.task_id) {
@@ -59,7 +59,7 @@ function initEmailFetchForm() {
             }
         } else {
             // Show error notification
-            Ajax.showNotification(response.message || 'Failed to start email fetching.', 'error');
+            Ajax.showNotification(response.message || _('Failed to start email fetching.'), _('error'));
         }
     });
 }
@@ -85,7 +85,7 @@ function initPdfUploadForm() {
         const submitBtn = pdfUploadForm.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + _('Uploading...');
         }
         
         // Create FormData
@@ -104,12 +104,12 @@ function initPdfUploadForm() {
             // Reset button
             if (submitBtn) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Upload and Process';
+                submitBtn.innerHTML = _('Upload and Process');
             }
             
             if (data.success) {
                 // Show success notification
-                Ajax.showNotification(data.message || 'PDF uploaded and processed successfully.', 'success');
+                Ajax.showNotification(data.message || _('PDF uploaded and processed successfully.'), _('success'));
                 
                 // Close any open modals
                 const modal = bootstrap.Modal.getInstance(document.querySelector('.modal.show'));
@@ -123,7 +123,7 @@ function initPdfUploadForm() {
                 }
             } else {
                 // Show error notification
-                Ajax.showNotification(data.message || 'Failed to upload PDF.', 'error');
+                Ajax.showNotification(data.message || _('Failed to upload PDF.'), _('error'));
             }
         })
         .catch(error => {
@@ -132,11 +132,11 @@ function initPdfUploadForm() {
             // Reset button
             if (submitBtn) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Upload and Process';
+                submitBtn.innerHTML = _('Upload and Process');
             }
             
             // Show error notification
-            Ajax.showNotification('An error occurred while uploading the PDF.', 'error');
+            Ajax.showNotification(_('An error occurred while uploading the PDF.'), _('error'));
         });
     });
 }
@@ -221,9 +221,9 @@ function pollEmailTaskStatus(taskId) {
         } else {
             // Task completed or failed, show notification
             if (response.status === 'completed') {
-                Ajax.showNotification('Email fetching completed successfully.', 'success');
+                Ajax.showNotification(_('Email fetching completed successfully.'), _('success'));
             } else if (response.status === 'failed') {
-                Ajax.showNotification(`Email fetching failed: ${response.message || 'Unknown error'}`, 'error');
+                Ajax.showNotification(_('Email fetching failed: ') + (response.message || _('Unknown error')), _('error'));
             }
             
             // Reload the page to show updated data
@@ -243,7 +243,7 @@ function updateTaskUI(accountNumber, task) {
     if (accountOption) {
         // Update the option text with progress
         const progress = task.progress ? Math.round(task.progress * 100) : 0;
-        accountOption.textContent = `${accountOption.textContent.split('(')[0]} (Scraping: ${progress}%)`;
+        accountOption.textContent = `${accountOption.textContent.split('(')[0]} (${_('Scraping')}: ${progress}%)`;
         accountOption.disabled = true;
     }
     
@@ -258,7 +258,7 @@ function updateTaskUI(accountNumber, task) {
             if (accountName) {
                 badge = document.createElement('span');
                 badge.className = 'badge bg-warning text-dark ms-2';
-                badge.innerHTML = '<i class="bi bi-arrow-repeat me-1 spin"></i>Scraping';
+                badge.innerHTML = '<i class="bi bi-arrow-repeat me-1 spin"></i>' + _('Scraping');
                 accountName.appendChild(badge);
             }
         }
@@ -266,7 +266,7 @@ function updateTaskUI(accountNumber, task) {
         // Update the badge text with progress
         if (badge && task.progress) {
             const progress = Math.round(task.progress * 100);
-            badge.innerHTML = `<i class="bi bi-arrow-repeat me-1 spin"></i>Scraping: ${progress}%`;
+            badge.innerHTML = `<i class="bi bi-arrow-repeat me-1 spin"></i>${_('Scraping')}: ${progress}%`;
         }
     });
 }

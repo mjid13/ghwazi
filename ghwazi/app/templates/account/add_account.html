@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Add Bank Account - Bank Email Parser{% endblock %}
+{% block title %}{{ _('Add Bank Account') }} - Bank Email Parser{% endblock %}
 
 {% block extra_js %}
 <script nonce="{{ csp_nonce() }}">
@@ -198,8 +198,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="col-md-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Add Bank Account</li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">{{ _("Dashboard") }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ _("Add Bank Account") }}</li>
             </ol>
         </nav>
     </div>
@@ -207,54 +207,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div class="row">
     <div class="col-md-6 offset-md-3">
-        <div class="card">
+        <div class="card{% if text_direction == 'rtl' %} text-end{% endif %}">
             <div class="card-header">
-                <h3>Add Bank Account</h3>
+                <h3>{{ _("Add Bank Account") }}</h3>
             </div>
             <div class="card-body">
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label for="account_number" class="form-label">Account Number *</label>
+                        <label for="account_number" class="form-label">{{ _("Account Number") }} *</label>
                         <input type="text" class="form-control" id="account_number" name="account_number" required autocomplete="off" placeholder="0000 0000 0000 0000" maxlength="19">
                         <div id="account-validation-message" class="form-text validation-message" style="display: none;"></div>
-                        <div class="form-text">Account number must be 16 digits. </div>
+                        <div class="form-text">{{ _("Account number must be 16 digits.") }} </div>
                     </div>
 
 
                     <div class="mb-3">
-                        <label for="bank_id" class="form-label">Bank *</label>
+                        <label for="bank_id" class="form-label">{{ _("Bank") }} *</label>
                         <select class="form-select" id="bank_id" name="bank_id" required>
-                            <option value="">-- Select a Bank --</option>
+                            <option value="">{{ _("-- Select a Bank --") }}</option>
                             {% for bank in banks %}
                                 <option value="{{ bank.id }}" data-currency="{{ bank.currency }}">{{ bank.name }}</option>
                             {% endfor %}
                         </select>
-                        <div class="form-text">Select your bank from the list.</div>
+                        <div class="form-text">{{ _("Select your bank from the list.") }}</div>
                     </div>
 
 
                     <div class="mb-3">
-                        <label for="account_holder" class="form-label">Account Holder</label>
+                        <label for="account_holder" class="form-label">{{ _("Account Holder") }}</label>
                         <input type="text" class="form-control" id="account_holder" name="account_holder">
-                        <div class="form-text">Enter the name of the account holder.</div>
+                        <div class="form-text">{{ _("Enter the name of the account holder.") }}</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="balance" class="form-label">Current Balance</label>
+                        <label for="balance" class="form-label">{{ _("Current Balance") }}</label>
                         <input type="number" class="form-control" id="balance" name="balance" step="1.00" value="0.00">
-                        <div class="form-text">Enter the current balance of your account.</div>
+                        <div class="form-text">{{ _("Enter the current balance of your account.") }}</div>
                     </div>
                     <div class="mb-3">
-                        <label for="currency" class="form-label">Currency</label>
+                        <label for="currency" class="form-label">{{ _("Currency") }}</label>
                         <input type="text" class="form-control" id="currency" name="currency" value="OMR" readonly>
-                        <div class="form-text">Currency is automatically set based on the selected bank.</div>
+                        <div class="form-text">{{ _("Currency is automatically set based on the selected bank.") }}</div>
                     </div>
 
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Add Account</button>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">{{ _("Cancel") }}</a>
+                        <button type="submit" class="btn btn-primary">{{ _("Add Account") }}</button>
                     </div>
                 </form>
             </div>

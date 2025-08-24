@@ -1,39 +1,37 @@
 {% extends "main/base.html" %}
 
-{% block title %}Counterparties - Money Tracker{% endblock %}
+{% block title %}{{ _("Counterparties") }} - Money Tracker{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h2 mb-0">Counterparties</h1>
-            <p class="text-muted mb-0">Manage and categorize unique transaction counterparties</p>
+            <h1 class="h2 mb-0">{{ _("Counterparties") }}</h1>
+            <p class="text-muted mb-0">{{ _("Manage and categorize unique transaction counterparties") }}</p>
         </div>
         <form method="post" action="{{ url_for('category.auto_categorize') }}" style="display:inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-primary" onclick="return confirm('Auto-categorize all uncategorized transactions?')">
-                <i class="bi bi-magic me-2"></i>Auto-Categorize All
+            <button type="submit" class="btn btn-primary" onclick="return confirm('{{ _("Auto-categorize all uncategorized transactions?") }}')">
+                <i class="bi bi-magic me-2"></i>{{ _("Auto-Categorize All") }}
             </button>
         </form>
     </div>
 
     <div class="alert alert-info mb-4">
-        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>About Counterparties</h5>
-        <p class="mb-0">Counterparties are the people or businesses you transact with.
-            Each unique combination of counterparty name and description is listed here.
-            You can categorize them to automatically organize your transactions.</p>
+        <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>{{ _("About Counterparties") }}</h5>
+        <p class="mb-0">{{ _("Counterparties are the people or businesses you transact with. Each unique combination of counterparty name and description is listed here. You can categorize them to automatically organize your transactions.") }}</p>
     </div>
 
     <!-- Account Filter -->
     {% if accounts %}
-    <div class="card mb-4">
+    <div class="card mb-4{% if text_direction == 'rtl' %} text-end{% endif %}">
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="account_filter" class="form-label">Choice Account</label>
+                        <label for="account_filter" class="form-label">{{ _("Choice Account") }}</label>
                         <select class="form-select" id="account_filter">
-                            <option value="all" {% if selected_account == 'all' %}selected{% endif %}>All Accounts</option>
+                            <option value="all" {% if selected_account == 'all' %}selected{% endif %}>{{ _("All Accounts") }}</option>
                             {% for account in accounts %}
                             <option value="{{ account.account_number }}" {% if selected_account == account.account_number %}selected{% endif %}>
                                 {{ account.bank_name }} (•••• {{ account.account_number[-4:] }})
@@ -47,23 +45,39 @@
     </div>
     {% endif %}
 
-    <div class="card">
+    <div class="card{% if text_direction == 'rtl' %} text-end{% endif %}">
         <div class="card-body">
             {% if counterparties %}
             <div class="table-responsive">
                 <table class="table table-hover datatable" id="counterpartiesTable">
                     <thead>
                     <tr>
-                        <th>Current Category</th>
-                        <th>Counterparty</th>
-                        <th>Description</th>
-                        <th>Last Transaction</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ _("Counterparty") }}</th>
+                        <th>{{ _("Last Transaction") }}</th>
+                        <th>{{ _("Current Category") }}</th>
+                        <th class="text-end">{{ _("Actions") }}</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for cp in counterparties %}
                     <tr>
+
+
+                        <td>
+                            <div class="fw-medium">{{ cp.counterparty_name }}</div>
+                        </td>
+                        <td>
+                            {% if cp.last_transaction_date %}
+                                <div class="d-flex align-items-center">
+                                    <div class="transaction-date" dir="ltr">
+                                        <strong class="d-block">{{ cp.last_transaction_date.strftime('%b %d, %Y') }}</strong>
+                                        <small class="text-body-secondary">{{ cp.last_transaction_date.strftime('%I:%M %p') }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">No date</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if cp.category_id %}
                                 {% set category = categories|selectattr("id", "equalto", cp.category_id)|first %}
@@ -73,48 +87,8 @@
                             {% endif %}
                             <span class="category-chip">
                                 <span class="category-dot" style="background-color: {{ bg }};"></span>
-                                <span class="category-name">{{ cp.category_name or 'Uncategorized' }}</span>
+                                <span class="category-name">{{ cp.category_name or _("Uncategorized") }}</span>
                             </span>
-                        </td>
-
-
-                        <td>
-                            <div class="fw-medium">{{ cp.counterparty_name }}</div>
-                        </td>
-                        <td>
-                            <div class="description-display" data-cp-id="{{ cp.counterparty_id }}">
-                                <span class="description-text">{{ cp.description or 'No details' }}</span>
-                                <button class="btn btn-sm btn-link edit-description-btn p-0 ms-2" title="Edit Description">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                            </div>
-                            <div class="description-edit d-none" data-cp-id="{{ cp.counterparty_id }}">
-                                <form class="description-form" data-cp-id="{{ cp.counterparty_id }}" data-cp-name="{{ cp.counterparty_name }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="input-group input-group-sm">
-                                        <input type="text" name="description" class="form-control form-control-sm description-input"
-                                               value="{{ cp.description or '' }}" placeholder="Enter description">
-                                        <button type="submit" class="btn btn-sm btn-primary save-description-btn">
-                                            <i class="bi bi-check"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary cancel-description-btn">
-                                            <i class="bi bi-x"></i>
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </td>
-                        <td>
-                            {% if cp.last_transaction_date %}
-                                <div class="d-flex align-items-center">
-                                    <div class="transaction-date">
-                                        <strong class="d-block">{{ cp.last_transaction_date.strftime('%b %d, %Y') }}</strong>
-                                        <small class="text-body-secondary">{{ cp.last_transaction_date.strftime('%I:%M %p') }}</small>
-                                    </div>
-                                </div>
-                            {% else %}
-                                <span class="text-muted">No date</span>
-                            {% endif %}
                         </td>
                         <td class="text-end">
                             <button class="btn btn-link btn-sm p-0 text-secondary" data-bs-toggle="dropdown" title="Actions">
@@ -132,7 +106,7 @@
                                         data-cp-category-id="{{ cp.category_id or '' }}"
                                         data-cp-category-name="{{ cp.category_name or '' }}"
                                     >
-                                        <i class="bi bi-tag me-2"></i>Categorize
+                                        <i class="bi bi-tag me-2"></i>_("Categorize")
                                     </button>
                                 </li>
                             </ul>
@@ -145,9 +119,9 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-people display-4 text-muted"></i>
-                <p class="mt-3 mb-4">No counterparties found. Process some transactions first.</p>
+                <p class="mt-3 mb-4">_("No counterparties found. Process some transactions first.")</p>
                 <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-                    <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                    <i class="bi bi-arrow-left me-2"></i>_("Back to Dashboard")
                 </a>
             </div>
             {% endif %}
@@ -156,7 +130,7 @@
 
     <div class="mt-4">
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            <i class="bi bi-arrow-left me-2"></i>_("Back to Dashboard")
         </a>
     </div>
 </div>
@@ -170,7 +144,7 @@
                 <input type="hidden" id="modal-counterparty_name" name="counterparty_name">
                 <input type="hidden" id="modal-description" name="description">
                 <div class="modal-header">
-                    <h5 class="modal-title">Categorize Counterparty</h5>
+                    <h5 class="modal-title">_("Categorize Counterparty</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

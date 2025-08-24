@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}422 - Validation Error - GHWAZI{% endblock %}
+{% block title %}422 - {{ _('Validation Error') }} - GHWAZI{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -44,7 +44,7 @@
 
                 {% if error_id %}
                 <div class="mt-4">
-                    <small class="text-muted">Error ID: {{ error_id }}</small>
+                    <small class="text-muted">{{ _('Error ID') }}: {{ error_id }}</small>
                 </div>
                 {% endif %}
             </div>

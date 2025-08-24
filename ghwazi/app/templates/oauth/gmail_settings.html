@@ -1,6 +1,6 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Gmail Integration Settings - Ghwazi Money Tracker{% endblock %}
+{% block title %}{{ _("Gmail Integration Settings") }} - Ghwazi Money Tracker{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -8,7 +8,7 @@
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h4 class="card-title mb-0">
-                    <i class="bi bi-envelope-at me-2"></i>Gmail Integration Settings
+                    <i class="bi bi-envelope-at me-2"></i>{{ _("Gmail Integration Settings") }}
                 </h4>
             </div>
             <div class="card-body">
@@ -16,13 +16,13 @@
                 <!-- Not Connected -->
                 <div class="alert alert-warning" role="alert">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>Google Account Not Connected</strong>
-                    <p class="mb-0 mt-2">To use Gmail integration, you need to connect your Google account first.</p>
+                    <strong>{{ _("Google Account Not Connected") }}</strong>
+                    <p class="mb-0 mt-2">{{ _("To use Gmail integration, you need to connect your Google account first.") }}</p>
                 </div>
                 
                 <div class="text-center py-4">
                     <a href="{{ url_for('oauth.google_login') }}" class="btn btn-danger btn-lg">
-                        <i class="bi bi-google me-2"></i>Connect Google Account
+                        <i class="bi bi-google me-2"></i>{{ _("Connect Google Account") }}
                     </a>
                 </div>
                 
@@ -30,11 +30,11 @@
                 <!-- Connected -->
                 <div class="alert alert-success" role="alert">
                     <i class="bi bi-check-circle me-2"></i>
-                    <strong>Connected to Google Account</strong>
+                    <strong>{{ _("Connected to Google Account") }}</strong>
                     <p class="mb-0 mt-2">
-                        <strong>Email:</strong> {{ oauth_user.email }}<br>
-                        <strong>Name:</strong> {{ oauth_user.name }}<br>
-                        <strong>Connected:</strong> {{ oauth_user.created_at.strftime('%B %d, %Y') }}
+                        <strong>{{ _("Email:") }}</strong> {{ oauth_user.email }}<br>
+                        <strong>{{ _("Name:") }}</strong> {{ oauth_user.name }}<br>
+                        <strong>{{ _("Connected:") }}</strong> {{ oauth_user.created_at.strftime('%B %d, %Y') }}
                     </p>
                 </div>
 
@@ -43,7 +43,7 @@
                     <div class="col-md-6">
                         <div class="card bg-light">
                             <div class="card-body text-center">
-                                <h6 class="card-title">Total Messages</h6>
+                                <h6 class="card-title">{{ _("Total Messages") }}</h6>
                                 <h4 class="text-primary">{{ "{:,}".format(profile.messages_total) }}</h4>
                             </div>
                         </div>
@@ -51,7 +51,7 @@
                     <div class="col-md-6">
                         <div class="card bg-light">
                             <div class="card-body text-center">
-                                <h6 class="card-title">Total Threads</h6>
+                                <h6 class="card-title">{{ _("Total Threads") }}</h6>
                                 <h4 class="text-success">{{ "{:,}".format(profile.threads_total) }}</h4>
                             </div>
                         </div>
@@ -63,7 +63,7 @@
                 <form method="POST" action="{{ url_for('oauth.update_gmail_settings') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <h5 class="mb-3">
-                        <i class="bi bi-gear me-2"></i>Sync Settings
+                        <i class="bi bi-gear me-2"></i>{{ _("Sync Settings") }}
                     </h5>
                     
                     <div class="row mb-3">
@@ -72,31 +72,31 @@
                                 <input class="form-check-input" type="checkbox" id="enabled" name="enabled" 
                                        {{ 'checked' if gmail_config and gmail_config.enabled else '' }}>
                                 <label class="form-check-label" for="enabled">
-                                    <strong>Enable Gmail Integration</strong>
+                                    <strong>{{ _("Enable Gmail Integration") }}</strong>
                                 </label>
                             </div>
-                            <small class="text-muted">Allow the app to access your Gmail messages</small>
+                            <small class="text-muted">{{ _("Allow the app to access your Gmail messages") }}</small>
                         </div>
                         <div class="col-md-6">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="auto_sync" name="auto_sync"
                                        {{ 'checked' if gmail_config and gmail_config.auto_sync else '' }}>
                                 <label class="form-check-label" for="auto_sync">
-                                    <strong>Automatic Sync</strong>
+                                    <strong>{{ _("Automatic Sync") }}</strong>
                                 </label>
                             </div>
-                            <small class="text-muted">Automatically sync new emails periodically</small>
+                            <small class="text-muted">{{ _("Automatically sync new emails periodically") }}</small>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="sync_frequency_hours" class="form-label">
-                            <i class="bi bi-clock me-1"></i>Sync Frequency (hours)
+                            <i class="bi bi-clock me-1"></i>{{ _("Sync Frequency (hours)") }}
                         </label>
                         <select class="form-select" id="sync_frequency_hours" name="sync_frequency_hours">
-                            <option value="1" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 1 else '' }}>Every hour</option>
-                            <option value="6" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 6 else '' }}>Every 6 hours</option>
-                            <option value="12" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 12 else '' }}>Every 12 hours</option>
+                            <option value="1" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 1 else '' }}>{{ _("Every hour") }}</option>
+                            <option value="6" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 6 else '' }}>{{ _("Every 6 hours") }}</option>
+                            <option value="12" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 12 else '' }}>{{ _("Every 12 hours") }}</option>
                             <option value="24" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 24 or not gmail_config else '' }}>Daily</option>
                             <option value="168" {{ 'selected' if gmail_config and gmail_config.sync_frequency_hours == 168 else '' }}>Weekly</option>
                         </select>
