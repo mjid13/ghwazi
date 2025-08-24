@@ -3,6 +3,15 @@
  * Requires Chart.js to be loaded
  */
 
+// Local translation helper resilient to script order
+const t = (function(){
+    try {
+        if (window.__t && typeof window.__t === 'function') return window.__t;
+        if (typeof window._ === 'function') return window._;
+    } catch(_) {}
+    return function(s){ return s; };
+})();
+
 // RTL configuration for charts
 const isRTL = document.documentElement.getAttribute('dir') === 'rtl';
 
@@ -852,7 +861,7 @@ function fetchCategoryChartData(accountNumber, dateRange, categoryType) {
         .catch(error => {
             console.error('Error fetching category chart data:', error);
             hideLoadingForContainer(categoryChartContainer);
-            showErrorForContainer(categoryChartContainer, _('Error loading category data. Please try again.'));
+            showErrorForContainer(categoryChartContainer, t('Error loading category data. Please try again.'));
         })
         .finally(() => {
             pendingRequests.categoryChart = false;
@@ -871,7 +880,7 @@ function showLoadingForContainer(container) {
 
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'chart-loading';
-    loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">' + _('Loading...') + '</span></div>';
+    loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">' + t('Loading...') + '</span></div>';
     container.appendChild(loadingDiv);
 }
 
@@ -959,7 +968,7 @@ function fetchChartData(accountNumber, dateRange) {
             // Show error message
             const errorMessage = document.createElement('div');
             errorMessage.className = 'alert alert-danger';
-            errorMessage.textContent = _('Error loading chart data. Please try again.');
+            errorMessage.textContent = t('Error loading chart data. Please try again.');
             const firstContainer = document.querySelector('.chart-container');
             if (firstContainer) {
                 firstContainer.parentNode.insertBefore(errorMessage, firstContainer);

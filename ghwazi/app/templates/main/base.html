@@ -217,6 +217,23 @@
     <script nonce="{{ csp_nonce() }}" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script nonce="{{ csp_nonce() }}" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script nonce="{{ csp_nonce() }}" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <!-- Client-side gettext shim to provide _() safely without conflicting with other libs -->
+    <script nonce="{{ csp_nonce() }}">
+      (function(){
+        try {
+          var hasLodashLike = (typeof window._ === 'function' && (window._.debounce || window._.VERSION));
+        } catch(e) { var hasLodashLike = false; }
+        if (typeof window.__t !== 'function') {
+          window.__t = function(s){ return s; };
+        }
+        if (typeof window._ === 'undefined') {
+          window._ = window.__t;
+        } else if (hasLodashLike) {
+          // leave lodash as _; our translations are available via __t
+        }
+      })();
+    </script>
+
     <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/ajax.js') }}"></script>
     <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/datatables-config.js') }}"></script>

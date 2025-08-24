@@ -23,11 +23,24 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Chart.js RTL support
-        if (typeof Chart !== 'undefined') {
-            Chart.defaults.plugins.legend.rtl = true;
-            Chart.defaults.plugins.tooltip.rtl = true;
-            Chart.defaults.scales.x.reverse = true;
+        // Chart.js RTL support (v4-safe)
+        if (typeof Chart !== 'undefined' && Chart.defaults) {
+            try {
+                if (Chart.defaults.plugins && Chart.defaults.plugins.legend) {
+                    Chart.defaults.plugins.legend.rtl = true;
+                }
+                if (Chart.defaults.plugins && Chart.defaults.plugins.tooltip) {
+                    Chart.defaults.plugins.tooltip.rtl = true;
+                }
+                // In v4, defaults are per scale type; set reverse on common types if present
+                if (Chart.defaults.scales) {
+                    if (Chart.defaults.scales.category) Chart.defaults.scales.category.reverse = true;
+                    if (Chart.defaults.scales.time) Chart.defaults.scales.time.reverse = true;
+                    if (Chart.defaults.scales.timeseries) Chart.defaults.scales.timeseries.reverse = true;
+                }
+            } catch(e) {
+                // swallow to avoid breaking page if structure differs
+            }
         }
 
         // Bootstrap components RTL adjustments
