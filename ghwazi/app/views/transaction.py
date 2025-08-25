@@ -356,7 +356,7 @@ def delete_transaction(transaction_id):
         db.close_session(db_session)
 
 
-@transaction_bp.route("/transaction/<int:transaction_id>/category", methods=["PUT"])
+@transaction_bp.route("/transaction/<int:transaction_id>/category", methods=["POST", "PUT"])
 @login_required
 def update_transaction_category(transaction_id):
     """Update the category of a transaction."""
