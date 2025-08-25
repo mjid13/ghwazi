@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const bankSelect = document.getElementById('bank_id');
     const currencyInput = document.getElementById('currency');
     const bankNameInput = document.getElementById('bank_name');
-    const emailFilterPreview = document.getElementById('email-filter-preview');
     const accountNumberInput = document.getElementById('account_number');
     const validationMessage = document.getElementById('account-validation-message');
 
@@ -141,8 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 bankNameInput.value = '';
             }
 
-            // Update email filter preview
-            updateEmailFilterPreview(selectedOption.value);
         } else {
             // Reset currency to default
             currencyInput.value = 'OMR';
@@ -152,8 +149,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 bankNameInput.disabled = false;
             }
 
-            // Hide email filter preview
-            emailFilterPreview.style.display = 'none';
         }
     });
 });

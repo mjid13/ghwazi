@@ -898,6 +898,188 @@ msgstr "تسجيل الخروج"
 msgid "Language"
 msgstr "اللغة"
 
+# ---------- Budget-related translations ----------
+msgid "Budget Setup"
+msgstr "إعداد الميزانية"
+
+msgid "Budget Dashboard"
+msgstr "لوحة الميزانية"
+
+msgid "Budget Overview"
+msgstr "نظرة عامة على الميزانية"
+
+msgid "Financial Analytics"
+msgstr "التحليلات المالية"
+
+msgid "Create and manage your category budgets with flexible settings"
+msgstr "إنشاء وإدارة ميزانيات الفئات مع إعدادات مرنة"
+
+msgid "Track your spending across all categories and accounts"
+msgstr "تتبع إنفاقك عبر جميع الفئات والحسابات"
+
+msgid "Create New Budget"
+msgstr "إنشاء ميزانية جديدة"
+
+msgid "Set up a budget for any category with flexible options"
+msgstr "أنشئ ميزانية لأي فئة مع خيارات مرنة"
+
+msgid "Setup Budgets"
+msgstr "إعداد الميزانيات"
+
+msgid "Create Budget"
+msgstr "إنشاء ميزانية"
+
+msgid "Category"
+msgstr "الفئة"
+
+msgid "Choose a category..."
+msgstr "اختر فئة..."
+
+msgid "Account Scope"
+msgstr "نطاق الحساب"
+
+msgid "All Accounts"
+msgstr "جميع الحسابات"
+
+msgid "Period"
+msgstr "الفترة"
+
+msgid "Budget Amount"
+msgstr "مبلغ الميزانية"
+
+msgid "Alert at"
+msgstr "تنبيه عند"
+
+msgid "Options"
+msgstr "الخيارات"
+
+msgid "Enable Rollover"
+msgstr "تفعيل الترحيل"
+
+msgid "Unused budget carries over to next period"
+msgstr "الميزانية غير المستخدمة تُرحّل للفترة التالية"
+
+msgid "Active Budget"
+msgstr "ميزانية نشطة"
+
+msgid "Start tracking immediately"
+msgstr "ابدأ التتبع فوراً"
+
+msgid "Create Budget"
+msgstr "إنشاء الميزانية"
+
+msgid "Reset"
+msgstr "إعادة تعيين"
+
+msgid "Active Budgets"
+msgstr "الميزانيات النشطة"
+
+msgid "budget"
+msgstr "ميزانية"
+
+msgid "budgets"
+msgstr "ميزانيات"
+
+msgid "configured"
+msgstr "تم تكوينها"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Enable"
+msgstr "تفعيل"
+
+msgid "Disable"
+msgstr "إلغاء التفعيل"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "Budget"
+msgstr "الميزانية"
+
+msgid "Rollover"
+msgstr "المُرحّل"
+
+msgid "BUDGET PROGRESS"
+msgstr "تقدم الميزانية"
+
+msgid "Spent"
+msgstr "تم إنفاقه"
+
+msgid "Remaining"
+msgstr "المتبقي"
+
+msgid "Budget Exceeded"
+msgstr "تجاوز الميزانية"
+
+msgid "You've overspent by OMR %(amount)s"
+msgstr "لقد تجاوزت الإنفاق بـ ر.ع %(amount)s"
+
+msgid "Approaching Limit"
+msgstr "اقتراب من الحد"
+
+msgid "% of budget used"
+msgstr "% من الميزانية تم استخدامها"
+
+msgid "No budgets configured"
+msgstr "لم يتم تكوين أي ميزانيات"
+
+msgid "Start tracking your spending by creating your first budget"
+msgstr "ابدأ تتبع إنفاقك بإنشاء أول ميزانية لك"
+
+msgid "Create Your First Budget"
+msgstr "أنشئ أول ميزانية لك"
+
+msgid "No budgets yet"
+msgstr "لا توجد ميزانيات بعد"
+
+msgid "Start tracking your spending by creating budgets"
+msgstr "ابدأ تتبع إنفاقك بإنشاء الميزانيات"
+
+msgid "Create First Budget"
+msgstr "أنشئ أول ميزانية"
+
+msgid "View All"
+msgstr "عرض الكل"
+
+msgid "More"
+msgstr "المزيد"
+
+# ---------- Omani Banks ----------
+msgid "National Bank of Oman (NBO)"
+msgstr "البنك الوطني العُماني"
+
+msgid "Bank Muscat"
+msgstr "بنك مسقط"
+
+msgid "Dhofar Bank"
+msgstr "بنك ظفار"
+
+msgid "Ahli Bank"
+msgstr "البنك الأهلي"
+
+msgid "Bank Sohar"
+msgstr "بنك صحار"
+
+msgid "HSBC Bank Oman"
+msgstr "بنك إتش إس بي سي عُمان"
+
+msgid "Bank Nizwa"
+msgstr "بنك نزوى"
+
+msgid "Oman Development Bank"
+msgstr "بنك التنمية العُماني"
+
+msgid "Alizz Islamic Bank"
+msgstr "بنك عِز الإسلامي"
+
+msgid "Oman Arab Bank"
+msgstr "البنك العربي العُماني"
+
 msgid "Privacy Policy"
 msgstr "سياسة الخصوصية"
 

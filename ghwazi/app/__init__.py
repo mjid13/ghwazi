@@ -299,6 +299,7 @@ def _register_blueprints(app):
     from .views.oauth import oauth_bp
     from .views.session import session_bp
     from .views.transaction import transaction_bp
+    from .views.budget import budget_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -311,6 +312,7 @@ def _register_blueprints(app):
     app.register_blueprint(oauth_bp, url_prefix="/oauth")
     app.register_blueprint(session_bp, url_prefix="/session")
     app.register_blueprint(transaction_bp, url_prefix="/transaction")
+    app.register_blueprint(budget_bp, url_prefix="/budget")
 
 
 def _configure_csrf_exemptions(app):

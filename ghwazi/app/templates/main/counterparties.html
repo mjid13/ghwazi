@@ -11,7 +11,7 @@
         </div>
         <form method="post" action="{{ url_for('category.auto_categorize') }}" style="display:inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-primary" onclick="return confirm('{{ _("Auto-categorize all uncategorized transactions?") }}')">
+            <button type="submit" class="btn btn-primary" data-confirm="{{ _("Auto-categorize all uncategorized transactions?") }}">
                 <i class="bi bi-magic me-2"></i>{{ _("Auto-Categorize All") }}
             </button>
         </form>

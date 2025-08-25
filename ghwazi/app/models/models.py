@@ -10,7 +10,7 @@ from datetime import timedelta
 import json
 from cryptography.fernet import Fernet
 from sqlalchemy import (Boolean, Column, DateTime, Enum, Float, ForeignKey,
-                        Integer, String, Text, UniqueConstraint)
+                        Integer, String, Text, UniqueConstraint, JSON)
 from sqlalchemy.orm import relationship
 from flask import current_app
 
@@ -684,3 +684,45 @@ class EmailAuthConfig(Base):
 
     def __repr__(self):
         return f'<EmailAuthConfig {self.oauth_user.provider} user_id={self.oauth_user.user_id} enabled={self.enabled}>'
+
+class Budget(Base):
+    __tablename__ = 'budgets'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
+    account_id = Column(Integer, ForeignKey('accounts.id'), nullable=True)  # Null = all accounts
+    amount = Column(Float, nullable=False)
+    period = Column(String(20), default='monthly')  # 'weekly', 'monthly', 'yearly'
+    auto_assign_rules = Column(JSON)  # Store rules for auto-categorization
+    alert_threshold = Column(Float, default=80.0)  # Alert at 80% of budget
+    start_date = Column(DateTime, default=datetime.utcnow)
+    end_date = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    rollover_enabled = Column(Boolean, default=False)
+
+    # Smart features
+    average_monthly_spending = Column(Float, default=0.0)
+    last_reset_date = Column(DateTime)
+
+    # Relationships
+    user = relationship("User", backref="budgets")
+    category = relationship("Category", backref="budgets")
+    account = relationship("Account", backref="budgets")
+
+class BudgetHistory(Base):
+    __tablename__ = 'budget_history'
+
+    id = Column(Integer, primary_key=True)
+    budget_id = Column(Integer, ForeignKey('budgets.id'), nullable=False)
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    spent_amount = Column(Float, default=0.0)
+    budget_amount = Column(Float, default=0.0)
+    rollover_amount = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    budget = relationship("Budget", backref="history")

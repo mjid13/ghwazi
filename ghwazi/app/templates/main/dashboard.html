@@ -102,11 +102,82 @@
         </div>
     </div>
     {% if accounts %}
-
-
+    
+    <!-- Budget Summary Cards -->
+    <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="text-primary mb-0">
-                <i class="bi bi-graph-up me-2"></i>{{ _('Overview Charts') }}
+                <i class="bi bi-wallet2 me-2"></i>{{ _('Budget Overview') }}
+            </h4>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('budget.dashboard') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-bar-chart me-2"></i>{{ _('View All') }}
+                </a>
+                <a href="{{ url_for('budget.setup') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-circle me-2"></i>{{ _('Create Budget') }}
+                </a>
+            </div>
+        </div>
+        
+        {% if budgets and budgets|length > 0 %}
+        <div class="budget-overview-grid mb-4">
+            <div class="row g-3">
+                {% for b in budgets[:6] %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="budget-card {% if b.alerts.gte_100 %}budget-danger{% elif b.alerts.custom_exceeded %}budget-warning{% else %}budget-success{% endif %}">
+                        <div class="budget-card-header">
+                            <div class="budget-icon">
+                                <i class="bi bi-tag-fill"></i>
+                            </div>
+                            <div class="budget-status">{{ '%.0f' % b.percent_used }}%</div>
+                        </div>
+                        <h6 class="budget-name">{{ b.category_name }}</h6>
+                        <div class="budget-amounts">
+                            <div class="spent">OMR {{ '%.0f' % b.spent }}</div>
+                            <div class="total">/ {{ '%.0f' % b.amount }}</div>
+                        </div>
+                        <div class="budget-progress">
+                            <div class="budget-progress-bar" style="width: {% if b.percent_used > 100 %}100{% else %}{{ b.percent_used }}{% endif %}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if budgets|length > 6 %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <a href="{{ url_for('budget.dashboard') }}" class="budget-card budget-more">
+                        <div class="budget-more-content">
+                            <div class="budget-more-icon">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                            <div class="budget-more-text">
+                                <strong>+{{ budgets|length - 6 }}</strong>
+                                <small>{{ _('More') }}</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="budget-empty-state mb-4">
+            <div class="text-center p-4 border rounded-3 bg-light bg-opacity-50">
+                <i class="bi bi-wallet2 display-6 text-muted mb-3"></i>
+                <h6 class="text-muted mb-2">{{ _('No budgets yet') }}</h6>
+                <p class="text-muted small mb-3">{{ _('Start tracking your spending by creating budgets') }}</p>
+                <a href="{{ url_for('budget.setup') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-2"></i>{{ _('Create First Budget') }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Charts Section -->
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-primary mb-0">
+                <i class="bi bi-graph-up me-2"></i>{{ _('Financial Analytics') }}
             </h4>
         </div>
     <div class="col-12">

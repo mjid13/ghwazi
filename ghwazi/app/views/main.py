@@ -13,11 +13,12 @@ from flask import (Blueprint, flash, redirect, render_template, request,
 from werkzeug.utils import secure_filename
 
 from ..models.database import Database
-from ..models.models import Account, EmailManuConfigs
+from ..models.models import Account, EmailManuConfigs, Budget, Category
 from ..models.transaction import TransactionRepository
 from ..models.user import User
 from ..services.counterparty_service import CounterpartyService
 from ..services.pdf_parser_service import PDFParser
+from ..services.budget_service import BudgetService
 from ..utils.helpers import allowed_file
 from ..utils.decorators import login_required
 from ..utils.db_session_manager import database_session
@@ -377,6 +378,29 @@ def dashboard():
             # Pass chart data as a Python dict; Jinja will JSON-encode it in the template with |tojson
             logger.info(f"Chart data keys: {list(chart_data.keys())}")
 
+            # Get budget data for the dashboard
+            budgets = []
+            try:
+                # Fetch all budgets with status
+                budget_statuses = BudgetService.list_budgets_with_status(db_session, user_id)
+                # Enrich with names
+                cat_map = {c.id: c.name for c in db_session.query(Category).filter(Category.user_id == user_id).all()}
+                acc_map = {}
+                for acc in db_session.query(Account).filter(Account.user_id == user_id).all():
+                    acc_map[acc.id] = f"{acc.bank_name} ({acc.account_number})"
+                
+                for s in budget_statuses:
+                    s["category_name"] = cat_map.get(s.get("category_id")) if s.get("category_id") else "All Categories"
+                    s["account_label"] = acc_map.get(s.get("account_id")) if s.get("account_id") else "All Accounts"
+                
+                # Filter active budgets and sort by percent used desc
+                budgets = [s for s in budget_statuses if s.get("is_active")]
+                budgets.sort(key=lambda s: s.get("percent_used", 0), reverse=True)
+                logger.info(f"Dashboard: User {user_id} has {len(budgets)} active budgets")
+            except Exception as e:
+                logger.error(f"Error loading budget data for dashboard: {str(e)}")
+                budgets = []
+
             return render_template(
                 "main/dashboard.html",
                 categories=True if len(category_labels) > 0 else False,
@@ -385,6 +409,7 @@ def dashboard():
                 scraping_account_numbers=scraping_account_numbers,
                 chart_data=chart_data,
                 show_charts=True if accounts else False,  # Only show charts if accounts exist
+                budgets=budgets,  # Add budget data to template
             )
 
     except Exception as e:
