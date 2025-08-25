@@ -717,10 +717,10 @@ class Database:
             if session:
                 session.close()
 
-    def _initialize_banks(self):
+    def _cleanup_international_banks(self):
         """
-        Initialize the banks table with common banks.
-        This method is called when the application starts to ensure the table has the necessary data.
+        Remove international banks that are not relevant for Oman.
+        This method cleans up any existing international banks from the database.
         """
         try:
             from ..models.models import Bank
@@ -728,12 +728,108 @@ class Database:
             # Create a session
             session = self.get_session()
 
-            # Common banks with their email configurations
+            # List of international banks to remove
+            international_banks = [
+                "HSBC", "Citibank", "Bank of America", "Chase", "Wells Fargo",
+                "JP Morgan Chase", "Goldman Sachs", "Morgan Stanley", "Barclays",
+                "Deutsche Bank", "UBS", "Credit Suisse", "Standard Chartered"
+            ]
+
+            # Remove international banks
+            for bank_name in international_banks:
+                banks_to_remove = session.query(Bank).filter(
+                    Bank.name.ilike(f"%{bank_name}%")
+                ).all()
+                
+                for bank in banks_to_remove:
+                    logger.info(f"Removing international bank: {bank.name}")
+                    session.delete(bank)
+
+            # Commit changes
+            session.commit()
+            logger.info("International banks cleanup completed")
+        except Exception as e:
+            logger.error(f"Error cleaning up international banks: {str(e)}")
+            if "session" in locals():
+                session.rollback()
+        finally:
+            if "session" in locals():
+                session.close()
+
+    def _initialize_banks(self):
+        """
+        Initialize the banks table with Omani banks.
+        This method is called when the application starts to ensure the table has the necessary data.
+        """
+        try:
+            from ..models.models import Bank
+
+            # First cleanup any international banks
+            self._cleanup_international_banks()
+
+            # Create a session
+            session = self.get_session()
+
+            # Omani banks with their email configurations
             banks = [
+                {
+                    "name": "National Bank of Oman (NBO)",
+                    "email_address": "noreply@nbo.co.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
                 {
                     "name": "Bank Muscat",
                     "email_address": "noreply@bankmuscat.com",
-                    "email_subjects": "Account Transaction",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Dhofar Bank",
+                    "email_address": "noreply@dhofarbank.com.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Ahli Bank",
+                    "email_address": "noreply@ahlibank.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Bank Sohar",
+                    "email_address": "noreply@banksohar.net",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "HSBC Bank Oman",
+                    "email_address": "noreply@hsbc.com.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Bank Nizwa",
+                    "email_address": "noreply@banknizwa.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Oman Development Bank",
+                    "email_address": "noreply@odb.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Alizz Islamic Bank",
+                    "email_address": "noreply@alizzislamic.com",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "currency": "OMR",
+                },
+                {
+                    "name": "Oman Arab Bank",
+                    "email_address": "noreply@oab.om",
+                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
                     "currency": "OMR",
                 },
             ]

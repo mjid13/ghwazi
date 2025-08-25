@@ -1049,6 +1049,37 @@ msgstr "عرض الكل"
 msgid "More"
 msgstr "المزيد"
 
+# ---------- Omani Banks ----------
+msgid "National Bank of Oman (NBO)"
+msgstr "البنك الوطني العُماني"
+
+msgid "Bank Muscat"
+msgstr "بنك مسقط"
+
+msgid "Dhofar Bank"
+msgstr "بنك ظفار"
+
+msgid "Ahli Bank"
+msgstr "البنك الأهلي"
+
+msgid "Bank Sohar"
+msgstr "بنك صحار"
+
+msgid "HSBC Bank Oman"
+msgstr "بنك إتش إس بي سي عُمان"
+
+msgid "Bank Nizwa"
+msgstr "بنك نزوى"
+
+msgid "Oman Development Bank"
+msgstr "بنك التنمية العُماني"
+
+msgid "Alizz Islamic Bank"
+msgstr "بنك عِز الإسلامي"
+
+msgid "Oman Arab Bank"
+msgstr "البنك العربي العُماني"
+
 msgid "Privacy Policy"
 msgstr "سياسة الخصوصية"
 
