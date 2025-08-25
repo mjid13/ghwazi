@@ -11,6 +11,7 @@ from threading import Lock
 
 from flask import (Blueprint, Flask, Response, flash, jsonify, redirect,
                    render_template, request, session, url_for)
+from sqlalchemy.orm import selectinload
 
 from ..models import (Account, Category, Database, Transaction,
                 TransactionRepository)
@@ -166,6 +167,11 @@ def edit_transaction(transaction_id):
         # Get transaction and verify it belongs to the user
         transaction = (
             db_session.query(Transaction)
+            .options(
+                selectinload(Transaction.account),
+                selectinload(Transaction.counterparty),
+                selectinload(Transaction.category),
+            )
             .join(Account)
             .filter(Transaction.id == transaction_id, Account.user_id == user_id)
             .first()
@@ -179,7 +185,11 @@ def edit_transaction(transaction_id):
             return redirect(url_for("account.accounts"))
 
         # Get all categories for the current user
-        categories = db_session.query(Category.id, Category.name).all()
+        categories = (
+            db_session.query(Category.id, Category.name)
+            .filter(Category.user_id == user_id)
+            .all()
+        )
 
         if request.method == "POST":
 
@@ -205,6 +215,22 @@ def edit_transaction(transaction_id):
             }
             updated_transaction = TransactionRepository.update_transaction(
                 db_session, transaction_id, transaction_data
+            )
+
+            # Re-fetch the transaction with eager-loaded relationships to avoid lazy loads
+            transaction = (
+                db_session.query(Transaction)
+                .options(
+                    selectinload(Transaction.account),
+                    selectinload(Transaction.counterparty),
+                    selectinload(Transaction.category),
+                )
+                .filter(Transaction.id == transaction_id)
+                .first()
+            )
+            # Precompute account_number for safe redirect after commit/teardown
+            account_number = (
+                transaction.account.account_number if transaction and transaction.account else None
             )
 
             if updated_transaction:
@@ -246,7 +272,7 @@ def edit_transaction(transaction_id):
                     return redirect(
                         url_for(
                             "account.account_details",
-                            account_number=transaction.account.account_number,
+                            account_number=account_number,
                         )
                     )
 
