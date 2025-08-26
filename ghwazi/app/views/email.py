@@ -191,7 +191,7 @@ def process_emails_task(
 
             if transaction_data:
                 # Check if the account is different
-                if account_number[-4:] not in transaction_data.get("account_number"):
+                if account_number[-3:] not in transaction_data.get("account_number"):
                     continue
 
                 # Save email metadata
@@ -660,7 +660,7 @@ def parse_email():
             return redirect(url_for("main.dashboard"))
 
         # Check if the account is different
-        if account_number[-4:] not in transaction_data.get("account_number"):
+        if account_number[-3:] not in transaction_data.get("account_number"):
             flash(
                 f'Transaction account number {transaction_data.get("account_number")} does not match selected account {account_number}',
                 "error",

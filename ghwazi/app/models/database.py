@@ -774,7 +774,7 @@ class Database:
             banks = [
                 {
                     "name": "National Bank of Oman (NBO)",
-                    "email_address": "noreply@nbo.co.om",
+                    "email_address": "nbo@nbo.co.om",
                     "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
                     "currency": "OMR",
                 },
@@ -799,12 +799,6 @@ class Database:
                 {
                     "name": "Bank Sohar",
                     "email_address": "noreply@banksohar.net",
-                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
-                    "currency": "OMR",
-                },
-                {
-                    "name": "HSBC Bank Oman",
-                    "email_address": "noreply@hsbc.com.om",
                     "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
                     "currency": "OMR",
                 },

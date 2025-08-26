@@ -648,7 +648,7 @@ class GmailService:
             if parsed:
                 acct_field = parsed.get("account_number") if isinstance(parsed, dict) else None
                 acct_field_str = str(acct_field) if acct_field is not None else ""
-                if account_number and len(account_number) >= 4 and account_number[-4:] not in acct_field_str:
+                if account_number and len(account_number) >= 4 and account_number[-3:] not in acct_field_str:
                     return transactions
 
                 # Add user_id, account_number, and email_metadata_id to transaction data
