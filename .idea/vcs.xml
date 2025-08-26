@@ -2,7 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/wt/auto-sync" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/wt/llm_extr" vcs="Git" />
   </component>
 </project>

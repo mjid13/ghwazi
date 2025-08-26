@@ -235,14 +235,20 @@ class TransactionParser:
 
         # Account number (xxxx + digits)
         account_re = re.compile(
-            r"account\s+(xxxx\d{4})|Account number\s*:\s*(xxxx\d{4})|a/c\s+(xxxx\d{4})",
+            r"(?:\baccount\s+(xxxx\d{4})\b|Account number\s*:\s*(xxxx\d{4})\b|a/c\s+(xxxx\d{4})\b|\(?\s*a/?c\s+([0-9\*\s]{6,})\s*\)?)",
             re.IGNORECASE,
         )
         acc_match = account_re.search(email_text)
         if acc_match:
-            data["account_number"] = (
-                acc_match.group(1) or acc_match.group(2) or acc_match.group(3)
-            )
+            acc_val = acc_match.group(1) or acc_match.group(2) or acc_match.group(3)
+            if not acc_val:
+                masked = acc_match.group(4)
+                if masked:
+                    masked = re.sub(r"\s+", "", masked)
+                    if "*" in masked:
+                        acc_val = masked
+            data["account_number"] = acc_val
+
 
         # Branch/location (digits + 'Br' + text)
         branch_re = re.compile(r"with\s+([\d\- ]*Br [A-Za-z ]+)", re.IGNORECASE)
@@ -280,14 +286,10 @@ class TransactionParser:
         currency_match = currency_re.search(email_text)
         if currency_match:
             data["currency"] = currency_match.group(1).upper()
+            # Extract the first amount associated with the first currency occurrence
+            data["amount"] = currency_match.group(2).replace(",", "")
 
-        amount_re = re.compile(
-            rf"{currency_match.group(1).upper()}\s*([\d,]+\.\d+|[\d,]+)", re.IGNORECASE
-        )
 
-        amount_match = amount_re.search(email_text)
-        if amount_match:
-            data["amount"] = amount_match.group(1).replace(",", "")
 
         # Date (two formats): "value date dd/mm/yy" or "Date/Time : 22 JUN 25 20:29"
         date_re1 = re.compile(r"value date\s+(\d{2}/\d{2}/\d{2})", re.IGNORECASE)
@@ -692,4 +694,4 @@ class TransactionParser:
 # for i,j in output.items():
 #
 #     print(f"{i}: {j}")
-
+        # Account number (xxxx + digits)
