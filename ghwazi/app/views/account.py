@@ -99,6 +99,29 @@ def _start_account_sync_background(user_id: int, account_number: str):
                         task['stats'] = stats if isinstance(stats, dict) else {}
                         task['end_time'] = time.time()
             except Exception as e:
+                # As a last-resort, mark the EmailAuthConfig as error if it is still stuck in 'syncing'
+                try:
+                    from ..models.models import OAuthUser, EmailAuthConfig
+                    from ..models.database import Database
+                    sess_db = Database()
+                    sess = sess_db.get_session()
+                    try:
+                        oauth_user = sess.query(OAuthUser).filter_by(user_id=user_id, provider='google', is_active=True).first()
+                        if oauth_user:
+                            cfg = sess.query(EmailAuthConfig).filter_by(oauth_user_id=oauth_user.id, enabled=True).first()
+                            if cfg and cfg.sync_status == 'syncing':
+                                cfg.update_sync_status('error', error=f'Background thread exception: {e}')
+                                sess.commit()
+                    except Exception:
+                        try:
+                            sess.rollback()
+                        except Exception:
+                            pass
+                    finally:
+                        sess_db.close_session(sess)
+                except Exception:
+                    # best-effort only
+                    pass
                 with _sync_tasks_lock:
                     task = _account_sync_tasks.get(account_number)
                     if task is not None:

@@ -213,7 +213,7 @@ class GmailService:
             # Combine query parts
             query = ' '.join(query_parts) if query_parts else 'in:inbox'
             
-            logger.info(f"Gmail search query: {query}")
+            logger.debug(f"Gmail search query: {query}")
             
             # Search messages
             response = service.users().messages().list(
@@ -433,24 +433,75 @@ class GmailService:
             ).first()
             if not gmail_config:
                 return False, "Gmail sync not enabled", {}
-            
-            # Update sync status
-            gmail_config.update_sync_status('syncing')
-            db_session.commit()
-            
+
+            # Guard: prevent concurrent syncs using DB row lock and clean up stale 'syncing'
+            try:
+                from flask import current_app
+                stuck_minutes = int(current_app.config.get('GMAIL_SYNC_STUCK_MINUTES', 15))
+                cooldown_sec = int(current_app.config.get('GMAIL_SYNC_COOLDOWN_SECONDS', 60))
+            except Exception:
+                stuck_minutes = 15
+                cooldown_sec = 60
+
+            # Acquire row-level lock on the config to coordinate across processes
+            try:
+                locked_cfg = (
+                    db_session.query(EmailAuthConfig)
+                    .filter_by(oauth_user_id=oauth_user.id, enabled=True)
+                    .with_for_update(nowait=False)
+                    .one_or_none()
+                )
+                if not locked_cfg:
+                    return False, "Gmail sync not enabled", {}
+                gmail_config = locked_cfg
+                logger.debug(f"Sync status before start: {gmail_config.sync_status}")
+                # Evaluate current status under the lock
+                if gmail_config.sync_status == 'syncing':
+                    last_update = gmail_config.updated_at
+                    is_stale = True
+                    if last_update:
+                        age_sec = (datetime.utcnow() - last_update).total_seconds()
+                        is_stale = age_sec > stuck_minutes * 60
+                    if is_stale:
+                        stale_msg = f"Previous sync stuck > {stuck_minutes} minutes; resetting"
+                        logger.warning(stale_msg)
+                        gmail_config.update_sync_status('error', error=stale_msg)
+                        db_session.commit()
+                    else:
+                        logger.info("Gmail sync requested but one is already running (recent). Skipping new start.")
+                        db_session.commit()  # release lock
+                        return False, "Sync already in progress", {}
+
+                # Respect cooldown after recent completion
+                if gmail_config.sync_status == 'completed' and gmail_config.updated_at:
+                    age_sec = (datetime.utcnow() - gmail_config.updated_at).total_seconds()
+                    if age_sec < cooldown_sec:
+                        logger.info(f"Gmail sync requested within cooldown window ({int(age_sec)}s < {cooldown_sec}s). Skipping.")
+                        db_session.commit()  # release lock
+                        return False, "Sync recently completed; cooldown in effect", {}
+
+                # Mark this run as syncing while holding the lock
+                gmail_config.update_sync_status('syncing')
+                db_session.commit()
+            except Exception as guard_e:
+                logger.error(f"Error during sync guard: {guard_e}")
+
+
+            logger.debug("Starting Gmail message search")
             # Search and process messages
             messages = self.search_messages(oauth_user, gmail_config, max_results=200)
 
-            logger.debug(f'this is the search result: {messages}')
             stats = {
                 'messages_found': len(messages),
                 'messages_processed': 0,
                 'transactions_created': 0,
                 'errors': 0
             }
-            
+            logger.info(f"Found {stats['messages_found']} messages for user {oauth_user.email}")
             # Enforce strict cutoff: skip any messages received at or before last_sync_at
             cutoff = gmail_config.last_sync_at if gmail_config.last_sync_at else None
+
+            logger.info(f"Syncing messages with cutoff {cutoff}")
             # Process each message for financial data
             for message in messages:
                 try:
@@ -470,7 +521,7 @@ class GmailService:
                             # On parsing issues, fall back to processing
                             pass
                     # Extract financial transactions from message
-                    transactions = self._extract_transactions_from_message(message, user_id, account_number)
+                    transactions = self._extract_transactions_from_message(db_session, message, user_id, account_number)
                     
                     if transactions:
                         # Store transactions in database
@@ -529,8 +580,26 @@ class GmailService:
                     return 0
                 most_recent = max(messages, key=_msg_time)
                 last_message_id = most_recent.get('id')
+
+            logger.debug(f"last_message_id: {last_message_id}")
+            logger.debug(f"stats: {stats}")
+
+            # Mark sync as completed (even if no messages found). This sets last_sync_at; message_id may be None.
             gmail_config.update_sync_status('completed', message_id=last_message_id)
+            logger.info(f"Sync completed: {stats['messages_processed']} messages processed, {stats['transactions_created']} transactions created, {stats['errors']} errors")
             db_session.commit()
+
+            # Reconcile: ensure status persisted as 'completed' and not left as 'syncing' by any race.
+            try:
+                cfg = db_session.get(EmailAuthConfig, gmail_config.id)
+                if cfg and cfg.sync_status != 'completed':
+                    logger.warning(
+                        f"Sync status persisted as '{cfg.sync_status}' after completion; forcing 'completed'."
+                    )
+                    cfg.update_sync_status('completed', message_id=last_message_id)
+                    db_session.commit()
+            except Exception as recon_e:
+                logger.error(f"Error during sync status reconciliation: {recon_e}")
             
             return True, f"Sync completed: {stats['messages_processed']} messages processed", stats
             
@@ -555,34 +624,31 @@ class GmailService:
         finally:
             self.db.close_session(db_session)
     
-    def _extract_transactions_from_message(self, message: Dict, user_id: int, account_number: str) -> List[Dict]:
+    def _extract_transactions_from_message(self, db_session, message: Dict, user_id: int, account_number: str) -> List[Dict]:
         """
-        Extract financial transactions from email message using the TransactionParser.
+        Extract financial transactions from an email message using the TransactionParser.
         
         Args:
+            db_session: Active SQLAlchemy session from the caller
             message: Message dictionary
             user_id: App user ID
-            
+            account_number: Bank account number to associate with transactions
+        
         Returns:
-            List of transaction dictionaries compatible with Transaction model
+            List of transaction objects or dicts compatible with Transaction model
         """
         transactions = []
-        db_session = self.db.get_session()
 
         try:
             subject = message.get('subject', '')
-            body_text = message.get('body_text', '')
-            sender = message.get('sender', '')
-            message_dt = message.get('date') or datetime.now()
-
-            # Clean the email text using the parser
-            clean_text = self.parser.clean_text(body_text)
 
             # Try to parse transaction data using the parser service
             parsed = self.parser.parse_email(message, subject)
-            logger.debug(f"this the account number: {account_number} and thie the parsed: {parsed.get("account_number")}")
+            logger.debug(f"Parsed account check for {account_number}: parsed account={parsed.get('account_number') if isinstance(parsed, dict) else None}")
             if parsed:
-                if account_number[-4:] not in parsed.get("account_number"):
+                acct_field = parsed.get("account_number") if isinstance(parsed, dict) else None
+                acct_field_str = str(acct_field) if acct_field is not None else ""
+                if account_number and len(account_number) >= 4 and account_number[-4:] not in acct_field_str:
                     return transactions
 
                 # Add user_id, account_number, and email_metadata_id to transaction data
@@ -606,7 +672,6 @@ class GmailService:
                 )
                 if email_metadata:
                     parsed["email_metadata_id"] = email_metadata.id
-
 
                 if account_number:
                     # Try to find existing account by account number
@@ -640,11 +705,9 @@ class GmailService:
             else:
                 # Log that no transaction data could be parsed
                 logger.debug(f"No transaction data parsed from message: {subject[:50]}...")
-            
+        
         except Exception as e:
             logger.error(f"Error extracting transactions from message {message.get('id', 'unknown')}: {e}")
-        finally:
-            self.db.close_session(db_session)
         
         return transactions
     

@@ -733,7 +733,6 @@ class CategoryRepository:
                 session.rollback()
                 logger.error(f"Default pattern fallback failed: {str(e)}")
 
-            logger.info(f"Could not auto-categorize transaction {transaction_id}")
             return transaction
 
         except Exception as e:

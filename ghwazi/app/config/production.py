@@ -78,7 +78,9 @@ class ProductionConfig(Config):
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI")
-
+    GMAIL_FIRST_SYNC_DAYS = os.environ.get("GMAIL_FIRST_SYNC_DAYS", 180)
+    GMAIL_SYNC_STUCK_MINUTES = int(os.environ.get("GMAIL_SYNC_STUCK_MINUTES", 15))
+    GMAIL_SYNC_COOLDOWN_SECONDS = int(os.environ.get("GMAIL_SYNC_COOLDOWN_SECONDS", 60))
     # CSRF protection enabled
     WTF_CSRF_ENABLED = True
 
