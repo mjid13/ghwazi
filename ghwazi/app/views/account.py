@@ -138,15 +138,26 @@ def _validate_account_number(raw: str) -> tuple[bool, str, str]:
     """
     Validate account number string.
     Returns (is_valid, normalized_value, error_message).
-    Normalization trims spaces; keeps leading zeros; allows only digits; length 6–20.
+    Normalization:
+    - Converts Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩/۰۱۲۳۴۵۶۷۸۹) to ASCII 0-9
+    - Strips all non-digit characters (keeps leading zeros)
+    - Enforces length between 6 and 20 digits
     """
     if raw is None:
         return False, "", "Account number is required."
-    s = str(raw).strip()
+    s = str(raw)
+    # Translate Arabic-Indic digits to ASCII
+    trans = {
+        ord('٠'): '0', ord('١'): '1', ord('٢'): '2', ord('٣'): '3', ord('٤'): '4',
+        ord('٥'): '5', ord('٦'): '6', ord('٧'): '7', ord('٨'): '8', ord('٩'): '9',
+        ord('۰'): '0', ord('۱'): '1', ord('۲'): '2', ord('۳'): '3', ord('۴'): '4',
+        ord('۵'): '5', ord('۶'): '6', ord('۷'): '7', ord('۸'): '8', ord('۹'): '9',
+    }
+    s = s.translate(trans)
+    # Keep digits only
+    s = ''.join(ch for ch in s if ch.isdigit())
     if not s:
         return False, "", "Account number is required."
-    if not s.isdigit():
-        return False, s, "Account number must contain digits only."
     if not (6 <= len(s) <= 20):
         return False, s, "Account number must be between 6 and 20 digits."
     return True, s, ""

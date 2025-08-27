@@ -13,6 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const accountNumberInput = document.getElementById('account_number');
     const validationMessage = document.getElementById('account-validation-message');
 
+    // Normalize Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩ and ۰۱۲۳۴۵۶۷۸۹) to ASCII 0-9
+    function normalizeDigits(str) {
+        if (!str) return str;
+        return str
+            .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660))
+            .replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0));
+    }
+
     // Account number input masking and validation
     function formatAccountNumber(value) {
         // Remove all non-digits
@@ -50,7 +58,8 @@ document.addEventListener('DOMContentLoaded', function() {
     accountNumberInput.addEventListener('input', function(e) {
         const cursorPosition = e.target.selectionStart;
         const oldValue = e.target.value;
-        const formatted = formatAccountNumber(e.target.value);
+        const normalized = normalizeDigits(e.target.value);
+        const formatted = formatAccountNumber(normalized);
         const validation = validateAccountNumber(formatted);
 
         // Update input value with formatting
@@ -101,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
     accountNumberInput.addEventListener('paste', function(e) {
         e.preventDefault();
         const paste = (e.clipboardData || window.clipboardData).getData('text');
-        const digits = paste.replace(/\D/g, '');
+        const digits = normalizeDigits(paste).replace(/\D/g, '');
         if (digits.length <= 16) {
             e.target.value = formatAccountNumber(digits);
             e.target.dispatchEvent(new Event('input'));
@@ -188,6 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
 #account_number {
     font-family: 'Courier New', monospace;
     letter-spacing: 1px;
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: left;
 }
 </style>
 {% endblock %}
@@ -218,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="account_number" class="form-label">{{ _("Account Number") }} *</label>
-                        <input type="text" class="form-control" id="account_number" name="account_number" value="{{ account.account_number }}"  required autocomplete="off" placeholder="0000 0000 0000 0000" maxlength="19">
+                        <input type="text" class="form-control" id="account_number" name="account_number" value="{{ account.account_number }}" dir="ltr" inputmode="numeric" required autocomplete="off" placeholder="0000 0000 0000 0000" maxlength="19">
                         <div id="account-validation-message" class="form-text validation-message" style="display: none;"></div>
                         <div class="form-text">{{ _("Account number must be 16 digits.") }} </div>
                     </div>
