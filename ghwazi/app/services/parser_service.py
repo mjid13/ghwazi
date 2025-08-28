@@ -128,9 +128,20 @@ class TransactionParser:
             if name:
                 return name
 
+        # 2) Fallback: try explicit "at NAME" pattern
+        counterparty_re1 = re.compile(r"(?:at)\s+([A-Z](?:[A-Z\s]+[A-Z]))", re.IGNORECASE)
+        counterparty_match1 = counterparty_re1.search(email_text)
+        if counterparty_match1:
+            name = " ".join(counterparty_match1.group(1).split())
+            if name.upper().startswith("TRANSFER"):
+                name = name[8:].strip()  # Remove 'TRANSFER'
+            if name.endswith("from your a") or name.endswith("in your a"):
+                name = " ".join(name.split()[:-3]).strip()
+            return name
+
         # 2) Fallback: try explicit "from/to NAME" pattern
-        counterparty_re1 = re.compile(r"(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))", re.IGNORECASE)
-        counterparty_match = counterparty_re1.search(email_text)
+        counterparty_re2 = re.compile(r"(?:from|to)\s+([A-Z](?:[A-Z\s]+[A-Z]))", re.IGNORECASE)
+        counterparty_match = counterparty_re2.search(email_text)
         if counterparty_match:
             name = " ".join(counterparty_match.group(1).split())
             if name.upper().startswith("TRANSFER"):
@@ -140,8 +151,8 @@ class TransactionParser:
             return name
 
         # 3) Last resort: uppercase block between newlines
-        counterparty_re2 = re.compile(r"\n([A-Z][A-Z\s]{4,})\n", re.MULTILINE)
-        names = counterparty_re2.findall(email_text)
+        counterparty_re3 = re.compile(r"\n([A-Z][A-Z\s]{4,})\n", re.MULTILINE)
+        names = counterparty_re3.findall(email_text)
         if names:
             name = " ".join(names[0].split())
             if name.upper().startswith("TRANSFER"):
@@ -391,7 +402,7 @@ class TransactionParser:
                 "email_id": email_data.get("id"),
                 "currency": extracted_data.get("currency", "OMR"),
                 "transaction_content": clean_text,
-                "account_number": extracted_data.get("account_number"),
+                "account_number": extracted_data.get("account_number") if extracted_data.get("account_number") else "XXXX0000",
                 "transaction_type": extracted_data.get("transaction_type"),
                 "date": extracted_data.get("date"),
                 "transaction_details": extracted_data.get("transaction_details"),

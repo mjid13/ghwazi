@@ -118,7 +118,8 @@ class GmailService:
             return []
     
     def search_messages(self, oauth_user: OAuthUser, gmail_config: EmailAuthConfig,
-                       max_results: int = 50) -> List[Dict]:
+                       max_results: int = 50, override_senders: Optional[List[str]] = None,
+                       override_subjects: Optional[List[str]] = None, after_epoch: Optional[int] = None) -> List[Dict]:
         """
         Search for messages based on Gmail configuration.
         
@@ -147,29 +148,26 @@ class GmailService:
                 else:
                     query_parts.append(label_query)
             
-            # Add sender filters
-            sender_filters = gmail_config.sender_filter_list
+            # Add sender filters (allow overrides for per-account sync)
+            sender_filters = override_senders if override_senders is not None else gmail_config.sender_filter_list
             if sender_filters:
                 sender_query = ' OR '.join([f'from:{sender}' for sender in sender_filters])
                 if len(sender_filters) > 1:
                     query_parts.append(f'({sender_query})')
                 else:
                     query_parts.append(sender_query)
-            
-            # Add subject filters
-            subject_filters = gmail_config.subject_filter_list
+
+            # Add subject filters (allow overrides for per-account sync)
+            subject_filters = override_subjects if override_subjects is not None else gmail_config.subject_filter_list
             if subject_filters:
-                subject_query = ' OR '.join([f'subject:{subject}' for subject in subject_filters])
+                subject_query = ' OR '.join([f'subject:"{subject}"' for subject in subject_filters])
                 if len(subject_filters) > 1:
                     query_parts.append(f'({subject_query})')
                 else:
                     query_parts.append(subject_query)
-            
+
             # Add date filter for new messages
-            # Use incremental sync only if we have previously processed at least one message.
-            # Otherwise, treat as first-time sync and use a reasonable historical window.
-            # Determine if this is a first-time sync based on absence of any last_sync_at
-            is_first_sync = not bool(gmail_config.last_sync_at)
+            # Prefer explicit after_epoch (per-account cutoff) when provided; otherwise, fall back to global config.
             first_window_days = 180
             try:
                 # Prefer app config when available
@@ -184,31 +182,37 @@ class GmailService:
             except Exception:
                 pass
 
-            if not is_first_sync and gmail_config.last_sync_at:
-                # Only get messages newer than last completed sync, using epoch seconds for time precision
-                cutoff_dt = gmail_config.last_sync_at
-                try:
-                    if cutoff_dt.tzinfo is None:
-                        cutoff_dt_utc = cutoff_dt.replace(tzinfo=timezone.utc)
-                    else:
-                        cutoff_dt_utc = cutoff_dt.astimezone(timezone.utc)
-                    cutoff_epoch = int(cutoff_dt_utc.timestamp())
-                except Exception:
-                    # Fallback to date-only if timestamp conversion fails
-                    cutoff_epoch = None
-                if cutoff_epoch is not None:
-                    query_parts.append(f'after:{cutoff_epoch}')
-                    logger.info(
-                        f"Using incremental Gmail sync after epoch {cutoff_epoch} (UTC {cutoff_dt.isoformat()}), has last_sync_at"
-                    )
-                else:
-                    last_sync_date = cutoff_dt.strftime('%Y/%m/%d')
-                    query_parts.append(f'after:{last_sync_date}')
-                    logger.info(f"Using incremental Gmail sync after:{last_sync_date} (fallback, has last_sync_at)")
+            if after_epoch is not None:
+                query_parts.append(f'after:{after_epoch}')
+                logger.info(f"Using override after epoch for search: {after_epoch}")
             else:
-                # First sync: fetch a historical window to seed data
-                query_parts.append(f'newer_than:{first_window_days}d')
-                logger.info(f"Using first Gmail sync window newer_than:{first_window_days}d (no last_sync_at)")
+                # Fall back to global gmail_config.last_sync_at if available; otherwise use first-window
+                is_first_sync = not bool(gmail_config.last_sync_at)
+                if not is_first_sync and gmail_config.last_sync_at:
+                    # Only get messages newer than last completed sync, using epoch seconds for time precision
+                    cutoff_dt = gmail_config.last_sync_at
+                    try:
+                        if cutoff_dt.tzinfo is None:
+                            cutoff_dt_utc = cutoff_dt.replace(tzinfo=timezone.utc)
+                        else:
+                            cutoff_dt_utc = cutoff_dt.astimezone(timezone.utc)
+                        cutoff_epoch = int(cutoff_dt_utc.timestamp())
+                    except Exception:
+                        # Fallback to date-only if timestamp conversion fails
+                        cutoff_epoch = None
+                    if cutoff_epoch is not None:
+                        query_parts.append(f'after:{cutoff_epoch}')
+                        logger.info(
+                            f"Using incremental Gmail sync after epoch {cutoff_epoch} (UTC {cutoff_dt.isoformat()}), has last_sync_at"
+                        )
+                    else:
+                        last_sync_date = cutoff_dt.strftime('%Y/%m/%d')
+                        query_parts.append(f'after:{last_sync_date}')
+                        logger.info(f"Using incremental Gmail sync after:{last_sync_date} (fallback, has last_sync_at)")
+                else:
+                    # First sync: fetch a historical window to seed data
+                    query_parts.append(f'newer_than:{first_window_days}d')
+                    logger.info(f"Using first Gmail sync window newer_than:{first_window_days}d (no last_sync_at)")
             
             # Combine query parts
             query = ' '.join(query_parts) if query_parts else 'in:inbox'
@@ -434,7 +438,15 @@ class GmailService:
             if not gmail_config:
                 return False, "Gmail sync not enabled", {}
 
-            # Guard: prevent concurrent syncs using DB row lock and clean up stale 'syncing'
+            # Load target account and bank for per-account sync
+            account = db_session.query(Account).filter_by(user_id=user_id, account_number=account_number).first()
+            if not account:
+                return False, "Account not found", {}
+            bank = account.bank
+            if not bank:
+                return False, "Account has no associated bank", {}
+
+            # Per-account guard: prevent concurrent syncs on the same account across processes
             try:
                 from flask import current_app
                 stuck_minutes = int(current_app.config.get('GMAIL_SYNC_STUCK_MINUTES', 15))
@@ -443,53 +455,65 @@ class GmailService:
                 stuck_minutes = 15
                 cooldown_sec = 60
 
-            # Acquire row-level lock on the config to coordinate across processes
             try:
-                locked_cfg = (
-                    db_session.query(EmailAuthConfig)
-                    .filter_by(oauth_user_id=oauth_user.id, enabled=True)
+                locked_acc = (
+                    db_session.query(Account)
+                    .filter_by(id=account.id)
                     .with_for_update(nowait=False)
-                    .one_or_none()
+                    .one()
                 )
-                if not locked_cfg:
-                    return False, "Gmail sync not enabled", {}
-                gmail_config = locked_cfg
-                logger.debug(f"Sync status before start: {gmail_config.sync_status}")
+                logger.debug(f"Account sync status before start: {locked_acc.sync_status}")
                 # Evaluate current status under the lock
-                if gmail_config.sync_status == 'syncing':
-                    last_update = gmail_config.updated_at
+                if locked_acc.sync_status == 'syncing':
+                    last_update = locked_acc.updated_at
                     is_stale = True
                     if last_update:
                         age_sec = (datetime.utcnow() - last_update).total_seconds()
                         is_stale = age_sec > stuck_minutes * 60
                     if is_stale:
-                        stale_msg = f"Previous sync stuck > {stuck_minutes} minutes; resetting"
+                        stale_msg = f"Previous account sync stuck > {stuck_minutes} minutes; resetting"
                         logger.warning(stale_msg)
-                        gmail_config.update_sync_status('error', error=stale_msg)
+                        locked_acc.update_sync_status('error', error=stale_msg)
                         db_session.commit()
                     else:
-                        logger.info("Gmail sync requested but one is already running (recent). Skipping new start.")
+                        logger.info("Account sync requested but one is already running (recent). Skipping new start.")
                         db_session.commit()  # release lock
-                        return False, "Sync already in progress", {}
+                        return False, "Sync already in progress for this account", {}
 
-                # Respect cooldown after recent completion
-                if gmail_config.sync_status == 'completed' and gmail_config.updated_at:
-                    age_sec = (datetime.utcnow() - gmail_config.updated_at).total_seconds()
+                # Respect cooldown after recent completion for this account
+                if locked_acc.sync_status == 'completed' and locked_acc.updated_at:
+                    age_sec = (datetime.utcnow() - locked_acc.updated_at).total_seconds()
                     if age_sec < cooldown_sec:
-                        logger.info(f"Gmail sync requested within cooldown window ({int(age_sec)}s < {cooldown_sec}s). Skipping.")
+                        logger.info(f"Account sync requested within cooldown window ({int(age_sec)}s < {cooldown_sec}s). Skipping.")
                         db_session.commit()  # release lock
-                        return False, "Sync recently completed; cooldown in effect", {}
+                        return False, "Account sync recently completed; cooldown in effect", {}
 
                 # Mark this run as syncing while holding the lock
-                gmail_config.update_sync_status('syncing')
+                locked_acc.update_sync_status('syncing')
                 db_session.commit()
             except Exception as guard_e:
-                logger.error(f"Error during sync guard: {guard_e}")
+                logger.error(f"Error during per-account sync guard: {guard_e}")
 
+            logger.debug("Starting Gmail message search (per-account)")
+            # Build per-account bank-based filters
+            senders = [s.strip() for s in (bank.email_address or '').split(',') if s.strip()]
+            subjects = [s.strip() for s in (bank.email_subjects or '').split(',') if s.strip()]
+            # Compute per-account cutoff epoch
+            cutoff_dt = account.last_sync_at
+            try:
+                after_epoch = int(cutoff_dt.replace(tzinfo=timezone.utc).timestamp()) if cutoff_dt else None
+            except Exception:
+                after_epoch = None
 
-            logger.debug("Starting Gmail message search")
-            # Search and process messages
-            messages = self.search_messages(oauth_user, gmail_config, max_results=200)
+            # Search and process messages with overrides
+            messages = self.search_messages(
+                oauth_user,
+                gmail_config,
+                max_results=200,
+                override_senders=senders,
+                override_subjects=subjects,
+                after_epoch=after_epoch,
+            )
 
             stats = {
                 'messages_found': len(messages),
@@ -498,10 +522,10 @@ class GmailService:
                 'errors': 0
             }
             logger.info(f"Found {stats['messages_found']} messages for user {oauth_user.email}")
-            # Enforce strict cutoff: skip any messages received at or before last_sync_at
-            cutoff = gmail_config.last_sync_at if gmail_config.last_sync_at else None
+            # Enforce strict cutoff: skip any messages received at or before account.last_sync_at
+            cutoff = account.last_sync_at if account.last_sync_at else None
 
-            logger.info(f"Syncing messages with cutoff {cutoff}")
+            logger.info(f"Syncing messages with per-account cutoff {cutoff}")
             # Process each message for financial data
             for message in messages:
                 try:
@@ -584,23 +608,27 @@ class GmailService:
             logger.debug(f"last_message_id: {last_message_id}")
             logger.debug(f"stats: {stats}")
 
-            # Mark sync as completed (even if no messages found). This sets last_sync_at; message_id may be None.
-            gmail_config.update_sync_status('completed', message_id=last_message_id)
-            logger.info(f"Sync completed: {stats['messages_processed']} messages processed, {stats['transactions_created']} transactions created, {stats['errors']} errors")
-            db_session.commit()
-
-            # Reconcile: ensure status persisted as 'completed' and not left as 'syncing' by any race.
+            # Mark per-account sync as completed (even if no messages found). This sets account.last_sync_at
             try:
-                cfg = db_session.get(EmailAuthConfig, gmail_config.id)
-                if cfg and cfg.sync_status != 'completed':
-                    logger.warning(
-                        f"Sync status persisted as '{cfg.sync_status}' after completion; forcing 'completed'."
-                    )
-                    cfg.update_sync_status('completed', message_id=last_message_id)
-                    db_session.commit()
+                target_acc = (
+                    db_session.query(Account)
+                    .filter_by(id=account.id)
+                    .with_for_update(nowait=False)
+                    .one_or_none()
+                )
+                if not target_acc:
+                    target_acc = account
+                target_acc.update_sync_status('completed', message_id=last_message_id)
+                db_session.commit()
             except Exception as recon_e:
-                logger.error(f"Error during sync status reconciliation: {recon_e}")
-            
+                logger.error(f"Error updating account sync status to completed: {recon_e}")
+                try:
+                    account.update_sync_status('completed', message_id=last_message_id)
+                    db_session.commit()
+                except Exception:
+                    pass
+
+            logger.info(f"Sync completed: {stats['messages_processed']} messages processed, {stats['transactions_created']} transactions created, {stats['errors']} errors")
             return True, f"Sync completed: {stats['messages_processed']} messages processed", stats
             
         except Exception as e:
@@ -644,12 +672,14 @@ class GmailService:
 
             # Try to parse transaction data using the parser service
             parsed = self.parser.parse_email(message, subject)
-            logger.debug(f"Parsed account check for {account_number}: parsed account={parsed.get('account_number') if isinstance(parsed, dict) else None}")
             if parsed:
                 acct_field = parsed.get("account_number") if isinstance(parsed, dict) else None
                 acct_field_str = str(acct_field) if acct_field is not None else ""
-                if account_number and len(account_number) >= 4 and account_number[-3:] not in acct_field_str:
-                    return transactions
+                if "payment to " not in message.get("subject").strip().lower():
+                    logger.debug(f"Parsed account check for {account_number}: parsed account={parsed.get('account_number') if isinstance(parsed, dict) else None}")
+
+                    if account_number and len(account_number) >= 4 and account_number[-3:] not in acct_field_str:
+                        return transactions
 
                 # Add user_id, account_number, and email_metadata_id to transaction data
                 parsed["user_id"] = user_id

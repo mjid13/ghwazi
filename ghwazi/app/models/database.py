@@ -347,11 +347,12 @@ class Database:
                         )
                         # This might fail if counterparties table doesn't exist yet, which is fine
 
-            # Check if accounts table has bank_id column
+            # Check if accounts table has required columns
             if "accounts" in inspector.get_table_names():
                 columns = [
                     column["name"] for column in inspector.get_columns("accounts")
                 ]
+                # Add bank_id if missing
                 if "bank_id" not in columns:
                     try:
                         # Add bank_id column to accounts table
@@ -386,6 +387,25 @@ class Database:
                             logger.error(
                                 f"All attempts to add bank_id column to accounts table failed: {str(e2)}"
                             )
+                # Add per-account Gmail sync columns if missing (robust approach)
+                try:
+                    from sqlalchemy.sql import text
+                    with self.engine.connect() as connection:
+                        if "last_sync_at" not in columns:
+                            connection.execute(text("ALTER TABLE accounts ADD COLUMN last_sync_at DATETIME"))
+                            logger.info("Added last_sync_at column to accounts table")
+                        if "last_sync_message_id" not in columns:
+                            connection.execute(text("ALTER TABLE accounts ADD COLUMN last_sync_message_id VARCHAR(255)"))
+                            logger.info("Added last_sync_message_id column to accounts table")
+                        if "sync_status" not in columns:
+                            connection.execute(text("ALTER TABLE accounts ADD COLUMN sync_status VARCHAR(50) DEFAULT 'idle'"))
+                            logger.info("Added sync_status column to accounts table")
+                        if "sync_error" not in columns:
+                            connection.execute(text("ALTER TABLE accounts ADD COLUMN sync_error TEXT"))
+                            logger.info("Added sync_error column to accounts table")
+                        connection.commit()
+                except Exception as e:
+                    logger.error(f"Error adding per-account sync columns to accounts table: {str(e)}")
 
             # Migrate existing counterparty data
             # try:
@@ -775,13 +795,13 @@ class Database:
                 {
                     "name": "National Bank of Oman (NBO)",
                     "email_address": "nbo@nbo.co.om",
-                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "email_subjects": "Transaction Alert, Payment to",
                     "currency": "OMR",
                 },
                 {
                     "name": "Bank Muscat",
                     "email_address": "noreply@bankmuscat.com",
-                    "email_subjects": "Account Transaction,Transaction Alert,Account Statement",
+                    "email_subjects": "Account Transaction",
                     "currency": "OMR",
                 },
                 {

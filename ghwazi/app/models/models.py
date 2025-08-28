@@ -173,6 +173,13 @@ class Account(Base):
     branch = Column(String(200), nullable=True)
     balance = Column(Float, default=0.0)
     currency = Column(String(10), default="OMR")  # Kept for backward compatibility
+
+    # Per-account Gmail sync state (robust approach)
+    last_sync_at = Column(DateTime, nullable=True)
+    last_sync_message_id = Column(String(255), nullable=True)
+    sync_status = Column(String(50), default='idle')  # idle, syncing, completed, error
+    sync_error = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -187,6 +194,16 @@ class Account(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "account_number", name="_user_account_uc"),
     )
+
+    def update_sync_status(self, status: str, error: str | None = None, message_id: str | None = None):
+        """Update per-account sync status and metadata."""
+        self.sync_status = status
+        self.sync_error = error
+        if status == 'completed':
+            self.last_sync_at = datetime.utcnow()
+            if message_id:
+                self.last_sync_message_id = message_id
+        self.updated_at = datetime.utcnow()
 
 class Transaction(Base):
     """Transaction model representing a financial transaction."""
