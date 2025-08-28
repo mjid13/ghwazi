@@ -185,6 +185,12 @@ msgstr "الوصف"
 msgid "Category"
 msgstr "الفئة"
 
+msgid "Select a category"
+msgstr "أختر الفئة"
+
+msgid "This will categorize all transactions with this counterparty and description, and create mappings for future transactions."
+msgstr "سيؤدي ذلك إلى تصنيف جميع المعاملات مع هذا الطرف المقابل والوصف ، وإنشاء تعيينات للمعاملات المستقبلية."
+
 msgid "Sender/Receiver"
 msgstr "المرسل/المستلم"
 
@@ -929,9 +935,6 @@ msgstr "إعداد الميزانيات"
 msgid "Create Budget"
 msgstr "إنشاء ميزانية"
 
-msgid "Category"
-msgstr "الفئة"
-
 msgid "Choose a category..."
 msgstr "اختر فئة..."
 
@@ -965,8 +968,6 @@ msgstr "ميزانية نشطة"
 msgid "Start tracking immediately"
 msgstr "ابدأ التتبع فوراً"
 
-msgid "Create Budget"
-msgstr "إنشاء الميزانية"
 
 msgid "Reset"
 msgstr "إعادة تعيين"
@@ -995,9 +996,6 @@ msgstr "تفعيل"
 msgid "Disable"
 msgstr "إلغاء التفعيل"
 
-msgid "Delete"
-msgstr "حذف"
-
 msgid "Budget"
 msgstr "الميزانية"
 
@@ -1022,8 +1020,6 @@ msgstr "لقد تجاوزت الإنفاق بـ ر.ع %(amount)s"
 msgid "Approaching Limit"
 msgstr "اقتراب من الحد"
 
-msgid "% of budget used"
-msgstr "% من الميزانية تم استخدامها"
 
 msgid "No budgets configured"
 msgstr "لم يتم تكوين أي ميزانيات"
@@ -1105,9 +1101,6 @@ msgstr "الأطراف المقابلة هم الأفراد أو الجهات ا
 msgid "Choice Account"
 msgstr "اختر الحساب"
 
-msgid "All Accounts"
-msgstr "جميع الحسابات"
-
 msgid "Current Category"
 msgstr "الفئة الحالية"
 
@@ -1130,8 +1123,15 @@ msgstr "مرحباً بعودتك، %(username)s! 👋"
 msgid "Track your finances and your transactions all in one place."
 msgstr "تتبّع أموالك ومعاملاتك في مكان واحد."
 
+
+msgid "No counterparties found. Process some transactions first"
+msgstr "لم يتم العثور على الأطراف المقابلة. معالجة بعض المعاملات أولاً."
+
 msgid "Auto-Categorize"
 msgstr "التصنيف التلقائي"
+
+msgid "Categorize"
+msgstr "التصنيف"
 
 msgid "Sync Gmail"
 msgstr "مزامنة Gmail"
@@ -1569,9 +1569,6 @@ msgstr "تحديث جميع المعاملات من هذا الطرف المقا
 msgid "Choose whether to update the category for this transaction only or for all transactions from the same counterparty"
 msgstr "اختر ما إذا كنت تريد تحديث الفئة لهذه المعاملة فقط أو لجميع المعاملات من الطرف المقابل نفسه"
 
-msgid "Additional Details"
-msgstr "تفاصيل إضافية"
-
 msgid "Additional transaction details or notes."
 msgstr "تفاصيل أو ملاحظات إضافية حول المعاملة."
 
@@ -1580,9 +1577,6 @@ msgstr "تم إنشاء هذه المعاملة من بريد إلكتروني �
 
 msgid "View details"
 msgstr "عرض التفاصيل"
-
-msgid "Subject:"
-msgstr "الموضوع:"
 
 msgid "Content:"
 msgstr "المحتوى:"

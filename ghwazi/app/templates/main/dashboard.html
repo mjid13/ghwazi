@@ -42,7 +42,7 @@
                 </form>
                 <form method="post" action="{{ url_for('oauth.sync_gmail') }}" style="display:inline;" class="sync-gmail-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-outline-warning">
+                    <button type="submit" class="btn btn-warning">
                         <i class="bi bi-arrow-repeat me-2"></i>{{ _('Sync Gmail') }}
                     </button>
                 </form>
@@ -213,7 +213,6 @@
                         <div class="col-12">
                             <div class="quick-range d-flex flex-wrap gap-2 overflow-auto pt-1" aria-label="Date range filter">
                                 <button type="button" class="btn btn-sm btn-primary quick-range-btn active" data-range="overall">{{ _('Overall') }}</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="2w">{{ _('2 Weeks') }}</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="1m">{{ _('1 Month') }}</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="3m">{{ _('3 Months') }}</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary quick-range-btn" data-range="6m">{{ _('6 Months') }}</button>

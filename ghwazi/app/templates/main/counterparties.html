@@ -144,22 +144,22 @@
                 <input type="hidden" id="modal-counterparty_name" name="counterparty_name">
                 <input type="hidden" id="modal-description" name="description">
                 <div class="modal-header">
-                    <h5 class="modal-title">_("Categorize Counterparty</h5>
+                    <h5 class="modal-title">_("Categorize Counterparty")</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Counterparty</label>
+                        <label class="form-label">_("Counterparty")</label>
                         <input type="text" id="modal-counterparty_name-display" class="form-control" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label">_("Description")</label>
                         <input type="text" id="modal-description-display" class="form-control" readonly>
                     </div>
                     <div class="mb-3">
-                        <label for="modal-category_id" class="form-label">Category</label>
+                        <label for="modal-category_id" class="form-label">_("Category")</label>
                         <select class="form-select" id="modal-category_id" name="category_id" required>
-                            <option value="">Select a category</option>
+                            <option value="">_("Select a category")</option>
                             {% for category in categories %}
                             <option value="{{ category.id }}" {% if category.id == category_id %}selected{% endif %}>{{ category.name }}</option>
                             {% endfor %}
