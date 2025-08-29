@@ -13,7 +13,7 @@ from flask import Flask, session, redirect, url_for, flash, request, jsonify
 from flask_babel import Babel, get_locale
 
 from .views.email import email_tasks, email_tasks_lock, scraping_accounts
-
+from .models.database import Database
 from .config.base import Config
 from .extensions import db, migrate, limiter, csrf
 from .utils.safe_session_interface import SafeCookieSessionInterface
@@ -82,6 +82,15 @@ def create_app(config_class=Config):
 
     # Register request handlers
     _register_request_handlers(app)
+
+    try:
+        dbs = Database()
+        dbs.connect()
+        dbs.create_tables()
+        app.logger.info("Database initialized successfully!")
+    except Exception as e:
+        app.logger.error("Error initializing database: %s", e)
+
 
     return app
 
