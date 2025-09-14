@@ -4,6 +4,17 @@
 
 {% block content %}
 <div class="row g-4">
+    {% if reconnect_required %}
+    <div class="col-12">
+        <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+            <div>
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Your Google connection is not active. Please reconnect to enable Gmail sync.
+            </div>
+            <a href="{{ reconnect_url }}" class="btn btn-sm btn-primary">Reconnect Google</a>
+        </div>
+    </div>
+    {% endif %}
     <div class="col-12">
         <div class="welcome-section p-4 rounded-4 bg-primary bg-opacity-10 position-relative overflow-hidden">
             <div class="position-absolute top-0 end-0 p-3">

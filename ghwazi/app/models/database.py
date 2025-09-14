@@ -134,6 +134,14 @@ class Database:
             return True
 
         try:
+            # Ensure all model metadata is registered before creating tables
+            # Importing model modules populates Base.metadata with all tables
+            try:
+                from ..models import models as _models  # noqa: F401
+                from ..models import user as _user      # noqa: F401
+            except Exception as import_err:
+                logger.warning(f"Could not import models before create_all: {import_err}")
+
             # Check if tables exist and have user_id column
             from sqlalchemy import Column, ForeignKey, Integer, inspect
 

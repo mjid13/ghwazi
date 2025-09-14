@@ -16,6 +16,11 @@ from ..utils.decorators import login_required
 # Create blueprint
 oauth_bp = Blueprint("oauth", __name__)
 
+# Alias route for connecting/reconnecting Google from UI buttons
+@oauth_bp.route("/google/connect")
+def google_connect():
+    return redirect(url_for("oauth.google_login"))
+
 # Initialize services
 oauth_service = GoogleOAuthService()
 gmail_service = GmailService()

@@ -401,6 +401,22 @@ def dashboard():
                 logger.error(f"Error loading budget data for dashboard: {str(e)}")
                 budgets = []
 
+            # Determine if Google reconnect is required
+            reconnect_required = False
+            reconnect_url = url_for('oauth.google_connect')
+            try:
+                from ..models.models import OAuthUser as _OAuthUser
+                from ..services.gmail_service import GmailService as _GmailService
+                ou = db_session.query(_OAuthUser).filter_by(user_id=user_id, provider='google').first()
+                if not ou or not ou.is_active:
+                    reconnect_required = True
+                else:
+                    if _GmailService().get_gmail_service(ou) is None:
+                        reconnect_required = True
+            except Exception as _e:
+                logger.debug(f"Reconnect check failed: {_e}")
+                # Don't block dashboard on reconnect check
+
             return render_template(
                 "main/dashboard.html",
                 categories=True if len(category_labels) > 0 else False,
@@ -410,6 +426,8 @@ def dashboard():
                 chart_data=chart_data,
                 show_charts=True if accounts else False,  # Only show charts if accounts exist
                 budgets=budgets,  # Add budget data to template
+                reconnect_required=reconnect_required,
+                reconnect_url=reconnect_url,
             )
 
     except Exception as e:

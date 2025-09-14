@@ -305,6 +305,7 @@ class GoogleOAuthService:
         try:
             # Import current_app here and handle context issues
             from flask import current_app
+            from google.auth.exceptions import RefreshError
 
             # Try to get config from current_app, fallback to environment variables
             try:
@@ -333,7 +334,18 @@ class GoogleOAuthService:
             )
 
             # Refresh the token
-            credentials.refresh(Request())
+            try:
+                credentials.refresh(Request())
+            except RefreshError as e:
+                msg = (e.args[0] if e.args else "") or ""
+                if 'invalid_grant' in str(msg):
+                    logger.error(f"Refresh token invalid/revoked for user {oauth_user.email}: {msg}")
+                    # Mark user inactive and clear tokens to force re-consent
+                    with database_session() as db_session:
+                        oauth_user.revoke_access()
+                    return False
+                logger.error(f"Google refresh error for user {oauth_user.email}: {e}")
+                return False
 
             # Update stored tokens
             with database_session() as db_session:

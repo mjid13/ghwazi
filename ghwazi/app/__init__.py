@@ -91,6 +91,19 @@ def create_app(config_class=Config):
     except Exception as e:
         app.logger.error("Error initializing database: %s", e)
 
+    # Log Google OAuth configuration presence (not values)
+    try:
+        cid = app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID')
+        csec = app.config.get('GOOGLE_CLIENT_SECRET') or os.environ.get('GOOGLE_CLIENT_SECRET')
+        redirect_uri = app.config.get('GOOGLE_REDIRECT_URI') or os.environ.get('GOOGLE_REDIRECT_URI')
+        app.logger.info(
+            "Google OAuth config: client_id=%s, client_secret=%s, redirect_uri=%s",
+            'set' if bool(cid) else 'missing',
+            'set' if bool(csec) else 'missing',
+            redirect_uri or 'missing'
+        )
+    except Exception as _e:
+        app.logger.debug(f"Google OAuth config diagnostics failed: {_e}")
 
     return app
 
