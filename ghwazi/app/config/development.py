@@ -12,6 +12,7 @@ class DevelopmentConfig(Config):
 
     DEBUG = True
     TESTING = False
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
     SECURITY_HEADERS = {
         'FRAME_OPTIONS': 'SAMEORIGIN',
     }

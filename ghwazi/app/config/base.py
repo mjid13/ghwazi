@@ -14,7 +14,7 @@ class Config:
     """Base configuration class."""
 
     # Flask settings
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-change-in-production"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
 
     # Database settings
     SQLALCHEMY_DATABASE_URI = (

@@ -36,6 +36,9 @@ def create_app(config_class=Config):
     app.jinja_env.filters['format_currency_rtl'] = format_currency_rtl
     app.jinja_env.filters['account_number_rtl'] = format_account_number_rtl
 
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError("SECRET_KEY must be set via environment variables.")
+
     # Initialize session management
     _initialize_session_management(app)
 
@@ -338,12 +341,10 @@ def _register_blueprints(app):
 
 
 def _configure_csrf_exemptions(app):
-    """Configure CSRF exemptions for API and health endpoints."""
+    """Configure CSRF exemptions for non-cookie authenticated endpoints."""
     try:
-        from .views.api import api_bp
-        from .views.health import health_bp
-        csrf.exempt(api_bp)
-        csrf.exempt(health_bp)
+        # No blanket CSRF exemptions; protect cookie-authenticated endpoints by default.
+        pass
     except Exception as e:
         app.logger.warning(f"Could not configure CSRF exemptions: {e}")
 

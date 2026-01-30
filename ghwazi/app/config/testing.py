@@ -12,6 +12,7 @@ class TestingConfig(Config):
 
     DEBUG = False
     TESTING = True
+    SECRET_KEY = os.environ.get("SECRET_KEY", "test-secret-key")
 
     # Use in-memory SQLite database for testing
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
