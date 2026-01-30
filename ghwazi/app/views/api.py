@@ -461,12 +461,46 @@ def upload_pdf():
             flash("No selected file", "error")
             return redirect(url_for("dashboard"))
 
-        if file and allowed_file(file.filename):
+        # Enforce strict PDF handling
+        max_size = current_app.config.get("MAX_CONTENT_LENGTH")
+        content_length = request.content_length
+        if max_size is not None and content_length and content_length > max_size:
+            message = f"File is too large. Maximum allowed size is {int(max_size / (1024 * 1024))} MB."
+            if is_ajax:
+                return jsonify({"success": False, "message": message}), 413
+            flash(message, "error")
+            return redirect(url_for("dashboard"))
+
+        if file and allowed_file(file.filename, {"pdf"}):
+            # Validate MIME and magic bytes
+            try:
+                head = file.stream.read(5)
+                file.stream.seek(0)
+                magic_ok = isinstance(head, (bytes, bytearray)) and head.startswith(b"%PDF-")
+                mimetype = getattr(file, "mimetype", None) or ""
+                mimetype_ok = mimetype == "application/pdf"
+                if not (magic_ok or mimetype_ok):
+                    message = "Invalid file: not a PDF. Please upload a valid PDF file."
+                    if is_ajax:
+                        return jsonify({"success": False, "message": message}), 400
+                    flash(message, "error")
+                    return redirect(url_for("dashboard"))
+            except Exception as e:
+                logger.warning(f"Failed to inspect uploaded file header: {e}")
+                message = "Could not validate uploaded file. Please try again with a valid PDF."
+                if is_ajax:
+                    return jsonify({"success": False, "message": message}), 400
+                flash(message, "error")
+                return redirect(url_for("dashboard"))
+
+            # Ensure upload folder exists
+            upload_dir = current_app.config["UPLOAD_FOLDER"]
+            os.makedirs(upload_dir, exist_ok=True)
             # Generate a unique filename to avoid collisions
             filename = secure_filename(
                 f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
             )
-            filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+            filepath = os.path.join(upload_dir, filename)
             file.save(filepath)
 
             try:
