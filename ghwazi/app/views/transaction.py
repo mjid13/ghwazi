@@ -146,7 +146,7 @@ def export_transactions(account_number):
         )
     except Exception as e:
         logger.error(f"Error exporting transactions: {str(e)}")
-        flash(f"Error exporting transactions: {str(e)}", "error")
+        flash("Error exporting transactions.", "error")
         return redirect(
             url_for("account.account_details", account_number=account_number)
         )
@@ -299,7 +299,7 @@ def edit_transaction(transaction_id):
         )
     except Exception as e:
         logger.error(f"Error editing transaction: {str(e)}")
-        flash(f"Error editing transaction: {str(e)}", "error")
+        flash("Error editing transaction.", "error")
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
@@ -361,9 +361,9 @@ def delete_transaction(transaction_id):
         logger.error(f"Error deleting transaction: {str(e)}")
         if is_ajax:
             return jsonify(
-                {"success": False, "message": f"Error deleting transaction: {str(e)}"}
+                {"success": False, "message": "Error deleting transaction"}
             )
-        flash(f"Error deleting transaction: {str(e)}", "error")
+        flash("Error deleting transaction", "error")
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
@@ -486,10 +486,10 @@ def update_transaction_category(transaction_id):
             return jsonify(
                 {
                     "success": False,
-                    "message": f"Error updating transaction category: {str(e)}",
+                    "message": "Error updating transaction category",
                 }
             )
-        flash(f"Error updating transaction category: {str(e)}", "error")
+        flash("Error updating transaction category", "error")
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)

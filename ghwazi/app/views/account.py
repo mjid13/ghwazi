@@ -87,9 +87,9 @@ def _start_account_sync_background(user_id: int, account_number: str):
                         logger.error(f"Error during auto-categorization after sync: {str(e)}")
                         # Don't fail the entire sync due to categorization errors
                         if isinstance(stats, dict):
-                            stats['auto_categorize_error'] = str(e)
+                            stats['auto_categorize_error'] = "Auto-categorization failed."
                         else:
-                            stats = {'auto_categorize_error': str(e)}
+                            stats = {'auto_categorize_error': "Auto-categorization failed."}
 
                 with _sync_tasks_lock:
                     task = _account_sync_tasks.get(account_number)
@@ -110,7 +110,7 @@ def _start_account_sync_background(user_id: int, account_number: str):
                         if oauth_user:
                             cfg = sess.query(EmailAuthConfig).filter_by(oauth_user_id=oauth_user.id, enabled=True).first()
                             if cfg and cfg.sync_status == 'syncing':
-                                cfg.update_sync_status('error', error=f'Background thread exception: {e}')
+                                cfg.update_sync_status('error', error='Background thread exception')
                                 sess.commit()
                     except Exception:
                         try:
@@ -126,7 +126,7 @@ def _start_account_sync_background(user_id: int, account_number: str):
                     task = _account_sync_tasks.get(account_number)
                     if task is not None:
                         task['status'] = 'error'
-                        task['message'] = str(e)
+                        task['message'] = "Sync failed."
                         task['end_time'] = time.time()
 
     t = Thread(target=_job, daemon=True)
@@ -184,7 +184,7 @@ def accounts():
         return render_template("account/accounts.html", summaries=summaries)
     except Exception as e:
         logger.error(f"Error getting account summaries: {str(e)}")
-        flash(f"Error getting account summaries: {str(e)}", "error")
+        flash("Error getting account summaries.", "error")
         return redirect(url_for("main.dashboard"))
     finally:
         db.close_session(db_session)
@@ -458,7 +458,7 @@ def edit_account(account_id):
         )
     except Exception as e:
         logger.error(f"Error editing account: {str(e)}")
-        flash(f"Error editing account: {str(e)}", "error")
+        flash("Error editing account.", "error")
         return redirect(url_for("main.dashboard"))
     finally:
         db.close_session(db_session)
@@ -537,9 +537,9 @@ def update_balance(account_id):
         logger.error(f"Error updating balance: {str(e)}")
         if is_ajax:
             return jsonify(
-                {"success": False, "message": f"Error updating balance: {str(e)}"}
+                {"success": False, "message": "Error updating balance"}
             )
-        flash(f"Error updating balance: {str(e)}", "error")
+        flash("Error updating balance", "error")
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
@@ -597,9 +597,9 @@ def delete_account(account_id):
         logger.error(f"Error deleting account: {str(e)}")
         if is_ajax:
             return jsonify(
-                {"success": False, "message": f"Error deleting account: {str(e)}"}
+                {"success": False, "message": "Error deleting account"}
             )
-        flash(f"Error deleting account: {str(e)}", "error")
+        flash("Error deleting account", "error")
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
@@ -724,10 +724,10 @@ def account_details(account_number):
             return jsonify(
                 {
                     "success": False,
-                    "message": f"Error getting account details: {str(e)}",
+                    "message": "Error getting account details",
                 }
             )
-        flash(f"Error getting account details: {str(e)}", "error")
+        flash("Error getting account details", "error")
         return redirect(url_for("account.accounts"))
     finally:
         db.close_session(db_session)
@@ -743,7 +743,7 @@ def preview_email_filters(bank_id):
         return jsonify(preview)
     except Exception as e:
         logger.error(f"Error getting email filter preview: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': "Error getting email filter preview"}), 500
 
 
 

@@ -252,7 +252,7 @@ def process_emails_task(
         logger.error(f"Error in background task: {str(e)}")
         with email_tasks_lock:
             email_tasks[task_id]["status"] = "error"
-            email_tasks[task_id]["message"] = str(e)
+            email_tasks[task_id]["message"] = "Email processing failed."
     finally:
         # Remove the account from scraping_accounts
         with email_tasks_lock:
@@ -278,7 +278,7 @@ def email_configs():
         return render_template("email/email_configs.html", email_configs=email_configs)
     except Exception as e:
         logger.error(f"Error listing email configurations: {str(e)}")
-        flash(f"Error listing email configurations: {str(e)}", "error")
+        flash("Error listing email configurations.", "error")
         return redirect(url_for("main.dashboard"))
     finally:
         db.close_session(db_session)
@@ -406,7 +406,7 @@ def add_email_config():
         return render_template("email/add_email_config.html", banks=banks)
     except Exception as e:
         logger.error(f"Error adding email configuration: {str(e)}")
-        flash(f"Error adding email configuration: {str(e)}", "error")
+        flash("Error adding email configuration.", "error")
         return redirect(url_for("email.email_configs"))
     finally:
         db.close_session(db_session)
@@ -579,7 +579,7 @@ def edit_email_config(config_id):
         )
     except Exception as e:
         logger.error(f"Error editing email configuration: {str(e)}")
-        flash(f"Error editing email configuration: {str(e)}", "error")
+        flash("Error editing email configuration.", "error")
         return redirect(url_for("email.email_configs"))
     finally:
         db.close_session(db_session)
@@ -630,7 +630,7 @@ def delete_email_config(config_id):
         return redirect(url_for("email.email_configs"))
     except Exception as e:
         logger.error(f"Error deleting email configuration: {str(e)}")
-        flash(f"Error deleting email configuration: {str(e)}", "error")
+        flash("Error deleting email configuration.", "error")
         return redirect(url_for("email.email_configs"))
     finally:
         db.close_session(db_session)
@@ -694,7 +694,7 @@ def parse_email():
                     flash("Failed to save transaction to database", "error")
             except Exception as e:
                 logger.error(f"Error saving transaction to database: {str(e)}")
-                flash(f"Error saving to database: {str(e)}", "error")
+                flash("Error saving to database", "error")
             finally:
                 db.close_session(db_session)
 
@@ -858,7 +858,7 @@ def test_email_connection(config_id):
 
     except Exception as e:
         logger.error(f"Error testing email connection: {str(e)}")
-        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+        return jsonify({"success": False, "message": "Error testing email connection"}), 500
     finally:
         db.close_session(db_session)
 
@@ -1016,7 +1016,7 @@ def fetch_emails():
         logger.error(f"Unexpected error in fetch_emails: {str(e)}")
         if is_ajax:
             return jsonify(
-                {"success": False, "message": f"An unexpected error occurred: {str(e)}"}
+                {"success": False, "message": "An unexpected error occurred"}
             )
         flash("An unexpected error occurred", "error")
         return redirect(url_for("dashboard"))

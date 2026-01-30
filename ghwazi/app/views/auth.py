@@ -79,7 +79,7 @@ def register():
 
         except Exception as e:
             logger.error(f"Error registering user: {str(e)}")
-            flash(f"Error registering user: {str(e)}", "error")
+            flash("Error registering user. Please try again.", "error")
             return render_template("auth/register.html")
         finally:
             db.close_session(db_session)
