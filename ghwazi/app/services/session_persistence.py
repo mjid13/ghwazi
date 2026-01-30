@@ -495,22 +495,49 @@ class SessionPersistenceManager:
         
         return stats
     
-    def backup_sessions(self, backup_path: str) -> bool:
-        """Create a backup of session data."""
+    def _get_backup_root(self) -> Path:
+        """Get the fixed backup directory for session backups."""
+        if current_app:
+            app_instance_path = getattr(current_app, 'instance_path', '.')
+            backup_root = Path(app_instance_path) / "backups" / "sessions"
+        elif self.db_path:
+            backup_root = self.db_path.parent / "backups" / "sessions"
+        else:
+            backup_root = Path("./backups/sessions")
+        backup_root.mkdir(parents=True, exist_ok=True)
+        return backup_root
+
+    def _build_backup_path(self, backup_name: Optional[str] = None) -> Path:
+        """Create a safe backup path within the fixed backup root."""
+        safe_root = self._get_backup_root().resolve()
+        if backup_name:
+            safe_name = Path(str(backup_name)).name
+        else:
+            safe_name = f"session_backup_{int(time.time())}.db"
+        if not safe_name.endswith(".db"):
+            safe_name = f"{safe_name}.db"
+        backup_file = (safe_root / safe_name).resolve()
+        if not str(backup_file).startswith(str(safe_root) + os.sep):
+            raise ValueError("Invalid backup path")
+        return backup_file
+
+    def backup_sessions(self, backup_name: Optional[str] = None) -> Optional[Path]:
+        """Create a backup of session data in a fixed directory."""
+        if self._backend != "sqlite":
+            logger.error("Session backups are only supported for SQLite persistence")
+            return None
         try:
-            backup_file = Path(backup_path)
-            backup_file.parent.mkdir(parents=True, exist_ok=True)
-            
+            backup_file = self._build_backup_path(backup_name)
             # Create backup by copying database
             import shutil
             shutil.copy2(self.db_path, backup_file)
-            
+
             logger.info(f"Session database backed up to {backup_file}")
-            return True
-            
+            return backup_file
+
         except Exception as e:
             logger.error(f"Failed to backup sessions: {e}")
-            return False
+            return None
     
     def restore_sessions(self, backup_path: str) -> bool:
         """Restore session data from backup."""

@@ -3,7 +3,6 @@ Session management endpoints for monitoring and administration.
 """
 
 import logging
-import time
 from datetime import datetime
 
 from flask import Blueprint, jsonify, render_template, request, session, flash, redirect, url_for
@@ -327,15 +326,10 @@ def backup_sessions():
     
     try:
         persistence_manager = get_persistence_manager()
-        backup_path = request.json.get('backup_path') if request.json else None
+        backup_file = persistence_manager.backup_sessions()
         
-        if not backup_path:
-            backup_path = f"/tmp/session_backup_{int(time.time())}.db"
-        
-        success = persistence_manager.backup_sessions(backup_path)
-        
-        if success:
-            return jsonify({'message': f'Sessions backed up to {backup_path}'})
+        if backup_file:
+            return jsonify({'message': f'Sessions backed up to {backup_file}'})
         else:
             return jsonify({'error': 'Backup failed'}), 500
             
