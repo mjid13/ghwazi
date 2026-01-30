@@ -183,28 +183,19 @@ class Database:
                         from sqlalchemy.sql import text
 
                         with self.engine.connect() as connection:
-                            # Create a default user if none exists
+                            # Add nullable user_id column without implicit defaults
                             connection.execute(
                                 text(
-                                    """
-                                    INSERT OR IGNORE INTO users (id, username, email, password_hash, created_at, updated_at)
-                                    VALUES (1, 'default_user', 'default@example.com', 'pbkdf2:sha256:150000$abc123',
-                                            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                                    """
-                                )
-                            )
-
-                            # Add user_id column with default value
-                            connection.execute(
-                                text(
-                                    f"ALTER TABLE {table_name} ADD COLUMN user_id INTEGER REFERENCES users(id) DEFAULT 1"
+                                    f"ALTER TABLE {table_name} ADD COLUMN user_id INTEGER REFERENCES users(id)"
                                 )
                             )
 
                             # Commit the transaction
                             connection.commit()
 
-                        logger.info(f"Added user_id column to {table_name} table")
+                        logger.info(
+                            f"Added user_id column to {table_name} table without default; existing rows require explicit ownership assignment"
+                        )
 
             # Ensure users table has role column
             if "users" in inspector.get_table_names():
