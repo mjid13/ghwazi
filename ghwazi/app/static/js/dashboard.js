@@ -92,12 +92,18 @@ function initPdfUploadForm() {
         const formData = new FormData(pdfUploadForm);
         
         // Send AJAX request
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfTokenMeta) {
+            headers['X-CSRFToken'] = csrfTokenMeta.getAttribute('content');
+        }
+
         fetch(pdfUploadForm.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers
         })
         .then(response => response.json())
         .then(data => {

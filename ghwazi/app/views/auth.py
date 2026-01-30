@@ -150,7 +150,7 @@ def login():
     return render_template("auth/login.html")
 
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["POST"])
 def logout():
     """Log out a user with enhanced session cleanup."""
     from ..services.session_service import SessionService
