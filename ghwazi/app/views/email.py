@@ -16,6 +16,7 @@ from ..models.transaction import TransactionRepository
 from ..services.email_service import EmailService
 from ..services.parser_service import TransactionParser
 from ..utils.decorators import login_required
+from ..utils.helpers import allowed_file
 
 # Create blueprint
 email_bp = Blueprint("email", __name__)
@@ -710,9 +711,34 @@ def parse_email():
             flash("No selected file", "error")
             return redirect(url_for("main.dashboard"))
 
-        if file:
+        max_size = current_app.config.get("MAX_CONTENT_LENGTH")
+        content_length = request.content_length
+        if max_size is not None and content_length and content_length > max_size:
+            message = f"File is too large. Maximum allowed size is {int(max_size / (1024 * 1024))} MB."
+            flash(message, "error")
+            return redirect(url_for("main.dashboard"))
+
+        if file and allowed_file(file.filename, {"eml", "txt"}):
+            mimetype = getattr(file, "mimetype", None) or ""
+            if not (mimetype.startswith("text/") or mimetype == "message/rfc822"):
+                flash("Invalid file type. Please upload a .eml or .txt email file.", "error")
+                return redirect(url_for("main.dashboard"))
+
+            try:
+                head = file.stream.read(4096)
+                file.stream.seek(0)
+                if b"\x00" in head:
+                    flash("Invalid file content. Please upload a text-based email file.", "error")
+                    return redirect(url_for("main.dashboard"))
+            except Exception as e:
+                logger.warning(f"Failed to inspect uploaded email file header: {e}")
+                flash("Could not validate uploaded file. Please try again.", "error")
+                return redirect(url_for("main.dashboard"))
+
             filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+            upload_dir = current_app.config["UPLOAD_FOLDER"]
+            os.makedirs(upload_dir, exist_ok=True)
+            filepath = os.path.join(upload_dir, filename)
             file.save(filepath)
 
             try:
@@ -731,8 +757,11 @@ def parse_email():
                 os.remove(filepath)
             except Exception as e:
                 logger.error(f"Error reading uploaded file: {str(e)}")
-                flash(f"Error reading file: {str(e)}", "error")
+                flash("Error reading file", "error")
                 return redirect(url_for("main.dashboard"))
+        else:
+            flash("File type not allowed. Please upload a .eml or .txt email file.", "error")
+            return redirect(url_for("main.dashboard"))
 
     else:
         flash("Invalid source", "error")
