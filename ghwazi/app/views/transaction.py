@@ -199,6 +199,19 @@ def edit_transaction(transaction_id):
             logger.info(f"Counterparty name: {counterparty_name}")
             category_id = request.form.get("category")
             category_update_scope = request.form.get("category_update_scope", "single")
+            if category_id:
+                category = (
+                    db_session.query(Category.id)
+                    .filter(Category.id == category_id, Category.user_id == user_id)
+                    .first()
+                )
+                if not category:
+                    flash("Invalid category selection", "error")
+                    return render_template(
+                        "main/edit_transaction.html",
+                        transaction=transaction,
+                        categories=categories,
+                    )
 
             # Only include transaction_type if provided by the form to avoid overwriting existing value
             tx_type = request.form.get("transaction_type")
@@ -210,7 +223,7 @@ def edit_transaction(transaction_id):
                 ),
                 "description": request.form.get("description", ""),
                 "transaction_details": request.form.get("transaction_details", ""),
-                "category_id": category_id,
+                "category_id": int(category_id) if category_id else None,
                 **({"transaction_type": tx_type} if tx_type else {}),
             }
             updated_transaction = TransactionRepository.update_transaction(
@@ -399,6 +412,38 @@ def update_transaction_category(transaction_id):
                     account_number=transaction.account.account_number,
                 )
             )
+        try:
+            category_id = int(category_id)
+        except ValueError:
+            if is_ajax:
+                return jsonify({"success": False, "message": "Invalid category ID"})
+            flash("Invalid category ID", "error")
+            return redirect(
+                url_for(
+                    "account.account_details",
+                    account_number=transaction.account.account_number,
+                )
+            )
+        category = (
+            db_session.query(Category)
+            .filter(Category.id == category_id, Category.user_id == user_id)
+            .first()
+        )
+        if not category:
+            if is_ajax:
+                return jsonify(
+                    {
+                        "success": False,
+                        "message": "Category not found or not authorized",
+                    }
+                )
+            flash("Category not found or not authorized", "error")
+            return redirect(
+                url_for(
+                    "account.account_details",
+                    account_number=transaction.account.account_number,
+                )
+            )
 
         # Update the transaction category
         transaction_data = {"category_id": category_id}
@@ -408,10 +453,7 @@ def update_transaction_category(transaction_id):
 
         if updated_transaction:
             # Get the category name for the response
-            category = (
-                db_session.query(Category).filter(Category.id == category_id).first()
-            )
-            category_name = category.name if category else "Uncategorized"
+        category_name = category.name if category else "Uncategorized"
 
             if is_ajax:
                 return jsonify(

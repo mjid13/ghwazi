@@ -5,8 +5,15 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import String, or_, cast
 from sqlalchemy.orm import Session
 
-from .models import (Account, Counterparty, EmailManuConfigs, EmailMetadata,
-                     Transaction, TransactionType)
+from .models import (
+    Account,
+    Category,
+    Counterparty,
+    EmailManuConfigs,
+    EmailMetadata,
+    Transaction,
+    TransactionType,
+)
 from .user import User
 
 logger = logging.getLogger(__name__)
@@ -641,6 +648,35 @@ class TransactionRepository:
                     else:
                         # If counterparty_name is empty, set counterparty_id to None
                         transaction.counterparty_id = None
+
+            transaction_data = dict(transaction_data)
+            if "category_id" in transaction_data:
+                raw_category_id = transaction_data.pop("category_id")
+                if raw_category_id in (None, "", "null"):
+                    transaction.category_id = None
+                else:
+                    try:
+                        category_id = int(raw_category_id)
+                    except (TypeError, ValueError):
+                        logger.error(
+                            f"Invalid category_id '{raw_category_id}' for transaction {transaction_id}"
+                        )
+                        return None
+                    category = (
+                        session.query(Category)
+                        .filter(Category.id == category_id)
+                        .first()
+                    )
+                    if (
+                        not category
+                        or not transaction.account
+                        or category.user_id != transaction.account.user_id
+                    ):
+                        logger.error(
+                            f"Category {category_id} not authorized for transaction {transaction_id}"
+                        )
+                        return None
+                    transaction.category_id = category_id
 
             # Update transaction fields
             for key, value in transaction_data.items():
