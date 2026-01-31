@@ -118,6 +118,11 @@
     flex-direction: row-reverse;
 }
 
+
+[dir="rtl"] .app-sidebar-link {
+    justify-content: flex-end;
+}
+
 [dir="rtl"] body.sidebar-collapsed .app-sidebar-link {
     justify-content: center;
 }
