@@ -1127,8 +1127,15 @@ msgid "Track your finances and your transactions all in one place."
 msgstr "تتبّع أموالك ومعاملاتك في مكان واحد."
 
 
-msgid "No counterparties found. Process some transactions first"
+msgid "No counterparties found. Process some transactions first."
 msgstr "لم يتم العثور على الأطراف المقابلة. معالجة بعض المعاملات أولاً."
+
+
+msgid "This is only a example of Terms of Service"
+msgstr "هذا مجرد مثال على شروط الخدمة"
+
+msgid "Welcome to Ghwazi Money Tracker. This is only an example of Privacy Policy."
+msgstr "مرحبا بكم في  'غوازي'  المتتبع المالي الشخصي . هذا مجرد مثال على سياسة الخصوصية."
 
 msgid "Auto-Categorize"
 msgstr "التصنيف التلقائي"
