@@ -17,17 +17,18 @@ class CSRFVerifier:
     
     def __init__(self, app_root):
         self.app_root = Path(app_root)
-        self.templates_dir = self.app_root / "app" / "templates"
-        self.views_dir = self.app_root / "app"
+        self.templates_dir = self.app_root / "ghwazi" / "app" / "templates"
+        self.views_dir = self.app_root / "ghwazi" / "app"
         self.errors = []
         self.warnings = []
         
     def verify_csrf_setup(self):
         """Verify CSRF is properly configured in the application."""
         print("🔍 Verifying CSRF setup...")
+        print(f'CSRF verification initiated for {self.app_root}')
         
         # Check extensions.py
-        extensions_file = self.app_root / "app" / "extensions.py"
+        extensions_file = self.app_root / "ghwazi" / "app" / "extensions.py"
         if extensions_file.exists():
             content = extensions_file.read_text()
             if "CSRFProtect" in content and "csrf = CSRFProtect()" in content:
@@ -38,7 +39,7 @@ class CSRFVerifier:
             self.errors.append("extensions.py not found")
             
         # Check app initialization
-        init_file = self.app_root / "app" / "__init__.py"
+        init_file = self.app_root / "ghwazi" / "app" / "__init__.py"
         if init_file.exists():
             content = init_file.read_text()
             if "csrf.init_app" in content:
@@ -47,7 +48,7 @@ class CSRFVerifier:
                 self.warnings.append("CSRF initialization not found in app factory")
         
         # Check configuration
-        config_file = self.app_root / "app" / "config" / "base.py"
+        config_file = self.app_root / "ghwazi" / "app" / "config" / "base.py"
         if config_file.exists():
             content = config_file.read_text()
             if "WTF_CSRF" in content:
