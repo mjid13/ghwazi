@@ -1,0 +1,56 @@
+<nav class="app-sidebar-nav">
+    <div class="app-sidebar-section">
+        <span class="app-sidebar-label">{{ _('Overview') }}</span>
+        <a class="app-sidebar-link" href="{{ url_for('main.dashboard') }}" data-sidebar-label="{{ _('Dashboard') }}">
+            <i class="bi bi-grid-1x2"></i>
+            <span class="app-sidebar-text">{{ _('Dashboard') }}</span>
+        </a>
+    </div>
+
+    <div class="app-sidebar-section">
+        <span class="app-sidebar-label">{{ _('Accounts') }}</span>
+        <a class="app-sidebar-link" href="{{ url_for('account.accounts') }}" data-sidebar-label="{{ _('All Accounts') }}">
+            <i class="bi bi-bank"></i>
+            <span class="app-sidebar-text">{{ _('All Accounts') }}</span>
+        </a>
+        <a class="app-sidebar-link" href="{{ url_for('account.add_account') }}" data-sidebar-label="{{ _('Add Account') }}">
+            <i class="bi bi-plus-circle"></i>
+            <span class="app-sidebar-text">{{ _('Add Account') }}</span>
+        </a>
+    </div>
+
+    <div class="app-sidebar-section">
+        <span class="app-sidebar-label">{{ _('Transactions') }}</span>
+        <a class="app-sidebar-link" href="{{ url_for('main.upload_statement') }}" data-sidebar-label="{{ _('Import PDF') }}">
+            <i class="bi bi-file-earmark-arrow-up"></i>
+            <span class="app-sidebar-text">{{ _('Import PDF') }}</span>
+        </a>
+        <a class="app-sidebar-link" href="{{ url_for('budget.dashboard') }}" data-sidebar-label="{{ _('Budgets') }}">
+            <i class="bi bi-wallet2"></i>
+            <span class="app-sidebar-text">{{ _('Budgets') }}</span>
+        </a>
+        <a class="app-sidebar-link" href="{{ url_for('category.categories') }}" data-sidebar-label="{{ _('Categories') }}">
+            <i class="bi bi-tags"></i>
+            <span class="app-sidebar-text">{{ _('Categories') }}</span>
+        </a>
+        <a class="app-sidebar-link" href="{{ url_for('main.counterparties') }}" data-sidebar-label="{{ _('Counterparties') }}">
+            <i class="bi bi-people"></i>
+            <span class="app-sidebar-text">{{ _('Counterparties') }}</span>
+        </a>
+    </div>
+
+    <div class="app-sidebar-section">
+        <span class="app-sidebar-label">{{ _('Preferences') }}</span>
+        <a class="app-sidebar-link" href="{{ url_for('main.profile') }}" data-sidebar-label="{{ _('Profile') }}">
+            <i class="bi bi-person"></i>
+            <span class="app-sidebar-text">{{ _('Profile') }}</span>
+        </a>
+        <form class="app-sidebar-action" method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="app-sidebar-link app-sidebar-logout">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="app-sidebar-text">{{ _('Logout') }}</span>
+            </button>
+        </form>
+    </div>
+</nav>

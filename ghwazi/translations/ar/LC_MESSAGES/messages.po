@@ -979,7 +979,10 @@ msgid "budget"
 msgstr "ميزانية"
 
 msgid "budgets"
-msgstr "ميزانيات"
+msgstr "الميزانيات"
+
+msgid "Budgets"
+msgstr "الميزانيات"
 
 msgid "configured"
 msgstr "تم تكوينها"
@@ -1519,6 +1522,24 @@ msgstr "اختيار لغة غير صالح"
 
 msgid "Language updated"
 msgstr "تم تحديث اللغة"
+
+msgid "Theme"
+msgstr "المظهر"
+
+msgid "Import PDF"
+msgstr "استيراد ملف PDF"
+
+msgid "Preferences"
+msgstr "التفضيلات"
+
+msgid "Overview"
+msgstr "نظرة عامة"
+
+msgid "Your Google connection is not active. Please reconnect to enable Gmail sync."
+msgstr "اتصال Google غير نشط. يرجى إعادة الاتصال لتمكين مزامنة Gmail."
+
+msgid "Reconnect Google"
+msgstr "إعادة الاتصال بـ Google"
 
 # ---------- Edit Transaction page ----------
 msgid "Edit Transaction"
